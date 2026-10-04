@@ -155,6 +155,17 @@ if (store) {
     store.set({ openShortcut: "" });
     renderShortcut("");
   });
+  const clearDeadlinesBtn = document.getElementById("clearDeadlines");
+  clearDeadlinesBtn?.addEventListener("click", () => {
+    store.remove("acx:deadlines:v1", () => {
+      if (clearDeadlinesBtn) {
+        clearDeadlinesBtn.textContent = "Cleared";
+        setTimeout(() => {
+          clearDeadlinesBtn.textContent = "Clear";
+        }, 1200);
+      }
+    });
+  });
   chrome.storage.onChanged?.addListener((c) => {
     if (c.openShortcutEnabled) {
       shortcutEnabled.checked = c.openShortcutEnabled.newValue;
@@ -173,6 +184,7 @@ if (store) {
   texts.forEach((t) => t.closest(".row")?.remove());
   selects.forEach((t) => t.closest(".row")?.remove());
   shortcutBtn.closest(".row")?.remove();
+  document.getElementById("clearDeadlines")?.closest(".row")?.remove();
 }
 
 // Page gate ── enable the quiz action only on a study domain.

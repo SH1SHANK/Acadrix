@@ -95,7 +95,16 @@ export class UnfoldRuntime {
 
     // 4. Initial assessment check
     this.detect();
-  }
+/* @extension-only-start */
+    // 5. Extension portal decor initialization
+    try {
+      if (typeof initPortalDecor === "function") {
+        this.portalDecor = initPortalDecor();
+      }
+    } catch (err) {
+      console.error("[Unfold Runtime] Portal decor initialization failed:", err);
+    }
+/* @extension-only-end */  }
 
   loadSettings() {
     try {
@@ -510,7 +519,12 @@ export class UnfoldRuntime {
     this.isDestroyed = true;
     if (this.orchestrator) {
       this.orchestrator.cancel();
-    }
+    }/* @extension-only-start */
+    try {
+      this.portalDecor?.destroy?.();
+      this.portalDecor = null;
+    } catch {}
+/* @extension-only-end */
     this.stopObserver();
     if (this.boundKeydown) {
       document.removeEventListener("keydown", this.boundKeydown, true);

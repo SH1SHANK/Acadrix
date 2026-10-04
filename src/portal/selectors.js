@@ -69,5 +69,36 @@ export const IITM_SELECTORS = Object.freeze({
     infoBanner: ".info-banner",
     sidebar: "nav.app-bar, .side-nav, #side-nav-content",
     main: "main.app-main",
-  },
+  },/* @extension-only-start */
+
+  // Portal decoration & deadline selectors (Extension only)
+  decor: {
+    courseKey: ".top-bar-title, .side-nav-title",
+    topBarTitle: ".top-bar-title",
+    sideNavTitle: ".side-nav-title",
+    sidebarContainer: "#side-nav-content, app-course-outline-side-nav, .side-nav-content, .side-nav",
+    unitContainer: ".unit-container",
+    unitHeader: ".unit-header",
+    unitTitle: ".unit-header .unit-title, .unit-title",
+    childContainer: ".child-container",
+    childRow: "button.child-row",
+    childType: ".child-type",
+    childTitle: ".child-title",
+    startPageRoot: "app-assessment-start-page",
+    startPageTitle: "app-title-bar h1.title, h1.title",
+    startPageBreadcrumb: "nav.breadcrumb .breadcrumb-item.current",
+    startPageCardRow: ".card-row",
+    startPageKey: ".key",
+    startPageValue: ".value",
+    startPageDeadline: ".due-label",
+    gradesRoot: "app-grades, .grades",
+    gradesModule: ".module-container",
+    gradesModuleTitle: ".module-title",
+    gradesDesktopItem: ".desktop-container .item:not(.column-header)",
+    gradesItemTitleLink: ".item-title a",
+    gradesItemSubtitle: ".item-subtitle",
+    gradesPendingExclude: ".due-date-pending-or-evaluation-pending",
+    decorHost: "acx-portal-decor",
+    decorAttr: "data-acx-decor",
+  },/* @extension-only-end */
 });

@@ -77,6 +77,11 @@ export const EXTENSION_MODULES = [
   "src/ui/reader-ai.js",
   "src/ui/reader-import.js",
   "src/ui/reader.js",
+  "src/portal-decor/core.js",
+  "src/portal-decor/storage.js",
+  "src/portal-decor/capture.js",
+  "src/portal-decor/decorator.js",
+  "src/portal-decor/index.js",
   "src/core/lifecycle.js",
   "src/core/runtime.js",
 ];

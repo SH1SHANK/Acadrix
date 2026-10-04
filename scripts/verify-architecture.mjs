@@ -492,6 +492,121 @@ check("Export Orchestration is decoupled from IITM DOM and isolated from bookmar
   }
 });
 
+// 14. Verify Portal Decor module purity and isolation
+check("Portal decor is strictly read-and-decorate without network, navigation, or portal DOM mutation", () => {
+  const decorFiles = getAllFiles("src/portal-decor");
+  if (decorFiles.length === 0) {
+    throw new Error("No files found in src/portal-decor");
+  }
+
+  const forbiddenDecorPatterns = [
+    /\.click\s*\(/,
+    /\bdispatchEvent\s*\(/,
+    /\blocation\s*=/,
+    /\blocation\.(?:assign|replace|href)\b/,
+    /\bhistory\./,
+    /\bfetch\s*\(/,
+    /\bXMLHttpRequest\b/,
+    /\bWebSocket\b/,
+    /\bsendBeacon\s*\(/,
+    /\beval\s*\(/,
+    /\bnew\s+Function\b/,
+    /document\.write/,
+  ];
+
+  for (const file of decorFiles) {
+    const content = readFileSync(file, "utf8");
+    for (const pat of forbiddenDecorPatterns) {
+      if (pat.test(content)) {
+        throw new Error(`File ${file} contains forbidden portal-decor pattern: ${pat}`);
+      }
+    }
+
+    // Check for raw selector strings: querySelector / querySelectorAll must use IITM_SELECTORS
+    const rawSelectorMatch = content.match(/\.(?:querySelector|querySelectorAll)\s*\(\s*["'`][^"'`]+["'`]\s*\)/);
+    if (rawSelectorMatch) {
+      throw new Error(`File ${file} contains raw selector string in querySelector: ${rawSelectorMatch[0]}; must use IITM_SELECTORS`);
+    }
+  }
+});
+
+// 15. Verify Portal Decor is isolated from bookmarklet and has zero cross-layer coupling
+check("Portal decor is isolated from bookmarklet and decoupled from Reader/exporters/bridge", () => {
+  const buildMjsContent = readFileSync("build.mjs", "utf8");
+  const bookmarkletModules = buildMjsContent.match(/(?:const|export const)\s+BOOKMARKLET_MODULES\s*=\s*\[([\s\S]*?)\];/)?.[1] || "";
+  if (bookmarkletModules.includes("src/portal-decor")) {
+    throw new Error("Portal decor modules must remain absent from BOOKMARKLET_MODULES");
+  }
+
+  const extensionModules = buildMjsContent.match(/(?:const|export const)\s+EXTENSION_MODULES\s*=\s*\[([\s\S]*?)\];/)?.[1] || "";
+  const requiredDecorModules = [
+    "src/portal-decor/core.js",
+    "src/portal-decor/storage.js",
+    "src/portal-decor/capture.js",
+    "src/portal-decor/decorator.js",
+    "src/portal-decor/index.js",
+  ];
+  for (const mod of requiredDecorModules) {
+    if (!extensionModules.includes(mod)) {
+      throw new Error(`EXTENSION_MODULES is missing required portal-decor module: ${mod}`);
+    }
+  }
+
+  const builtSource = readFileSync("bookmarklet/bookmarklet-source.js", "utf8");
+  const builtText = readFileSync("bookmarklet/bookmarklet.txt", "utf8");
+  const decodedText = decodeURIComponent(builtText);
+  const forbiddenDecorMarkers = [
+    "acx:deadlines:v1",
+    "initPortalDecor",
+    "createPortalDecorStore",
+    "captureGrades",
+    "captureStartPage",
+    "decorateSidebar",
+    "createSidebarObserver",
+    "isPortalDecorStale",
+  ];
+
+  for (const marker of forbiddenDecorMarkers) {
+    if (builtSource.includes(marker)) {
+      throw new Error(`Bookmarklet source contains extension-only portal decor marker: "${marker}"`);
+    }
+    if (decodedText.includes(marker)) {
+      throw new Error(`Bookmarklet text contains extension-only portal decor marker: "${marker}"`);
+    }
+  }
+
+  // Cross-layer import isolation: portal-decor must not import from UI, exporters, bridge, extraction, resources, orchestration
+  const decorFiles = getAllFiles("src/portal-decor");
+  const forbiddenDecorImports = [
+    /from\s+["'][^"']*\/(?:ui|exporters|bridge|extraction|resources|orchestration)\//,
+    /from\s+["'][^"']*\/(?:reader|markdown|pdf|prompt|parser|engine|bundle|extractor)\b/,
+  ];
+  for (const file of decorFiles) {
+    const content = readFileSync(file, "utf8");
+    for (const pat of forbiddenDecorImports) {
+      if (pat.test(content)) {
+        throw new Error(`${file} contains forbidden cross-layer import: ${pat}`);
+      }
+    }
+  }
+
+  // Other subsystems (ui, exporters, bridge, extraction, resources, orchestration) must not import from portal-decor
+  const otherFiles = [
+    ...getAllFiles("src/ui"),
+    ...getAllFiles("src/exporters"),
+    ...getAllFiles("src/bridge"),
+    ...getAllFiles("src/extraction"),
+    ...getAllFiles("src/resources"),
+    ...getAllFiles("src/orchestration"),
+  ];
+  for (const file of otherFiles) {
+    const content = readFileSync(file, "utf8");
+    if (content.includes("portal-decor")) {
+      throw new Error(`${file} must not import or reference portal-decor`);
+    }
+  }
+});
+
 if (!passed) {
   console.error("\nArchitecture verification FAILED.");
   process.exit(1);
