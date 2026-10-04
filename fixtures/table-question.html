@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IITM Assessment — Table Question Fixture</title>
+</head>
+<body>
+  <app-assessment-question-view>
+    <div class="header">
+      <span class="question-header">Question 1 / 1</span>
+      <span class="question-marks">2 Marks</span>
+    </div>
+
+    <div class="chips assessment-paginator">
+      <button class="chip active">1</button>
+    </div>
+
+    <div class="question-body">
+      <div class="backend-html">
+        <p>The following truth table defines a boolean function <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>A</mi><mo separator="true">,</mo><mi>B</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(A, B)</annotation></semantics></math></span><span class="katex-html"><span class="mord mathnormal">f</span>(A,B)</span></span>:</p>
+        <table border="1" cellpadding="6">
+          <thead>
+            <tr><th>A</th><th>B</th><th>f(A, B)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>0</td><td>1</td><td>1</td></tr>
+            <tr><td>1</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>0</td></tr>
+          </tbody>
+        </table>
+        <p>Which boolean operation does <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html"><span class="mord mathnormal">f</span></span></span> represent?</p>
+      </div>
+
+      <app-assessment-question>
+        <fieldset class="mcq">
+          <div class="choices" role="radiogroup">
+            <label class="choice" role="radio"><span class="choice-letter">A</span><span class="choice-text">AND</span></label>
+            <label class="choice" role="radio"><span class="choice-letter">B</span><span class="choice-text">OR</span></label>
+            <label class="choice" role="radio"><span class="choice-letter">C</span><span class="choice-text">XOR</span></label>
+            <label class="choice" role="radio"><span class="choice-letter">D</span><span class="choice-text">NAND</span></label>
+          </div>
+        </fieldset>
+      </app-assessment-question>
+    </div>
+  </app-assessment-question-view>
+</body>
+</html>

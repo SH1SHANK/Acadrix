@@ -1,106 +1,416 @@
 <!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8" />
+<title>Unfold IITM</title>
 <style>
-  /* Grouped settings: section labels, rounded cards, hairline rows, pill toggles. */
   :root {
-    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --ink: #1a1a1e;
-    --muted: #8a8a93;
-    --backdrop: #f3f3f5;
-    --card: #ffffff;
-    --hair: #f0f0f2;
-    --track: #e3e3e8;
-    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 10px 24px -14px rgba(16,24,40,.22);
+    color-scheme: light;
+
+    /* ── 1. Brand Tokens ─────────────────────────────────────────────────── */
+    --acx-brand-accent-500: #2F4BDB;
+    --acx-brand-accent-600: #2540C2;
+    --acx-brand-accent-700: #1D33A3;
+    --acx-brand-accent-300: #8EA2FF;
+    --acx-brand-accent-200: #A9B8FF;
+    --acx-brand-accent-400: #7089F5;
+
+    --acx-brand-paper-0:   #FFFFFF;
+    --acx-brand-paper-50:  #FAFAF8;
+    --acx-brand-paper-100: #F3F3F0;
+    --acx-brand-paper-200: #E4E4DF;
+    --acx-brand-paper-300: #CFCFC8;
+    --acx-brand-ink-900:   #16181D;
+    --acx-brand-ink-600:   #5B606B;
+    --acx-brand-ink-500:   #6B707B;
+
+    --acx-brand-night-950: #0E1013;
+    --acx-brand-night-900: #15181D;
+    --acx-brand-night-800: #1C2026;
+    --acx-brand-night-700: #2A2F37;
+    --acx-brand-night-600: #3A404A;
+    --acx-brand-fog-100:   #ECEDEF;
+    --acx-brand-fog-300:   #A3A8B2;
+    --acx-brand-fog-400:   #868B95;
+
+    --acx-brand-accent-subtle-light: rgb(47 75 219 / 0.08);
+    --acx-brand-accent-subtle-dark:  rgb(142 162 255 / 0.14);
+
+    /* ── 2. Semantic UI Tokens (Light Default) ───────────────────────────── */
+    --acx-bg:             var(--acx-brand-paper-50);
+    --acx-surface:        var(--acx-brand-paper-0);
+    --acx-surface-raised: var(--acx-brand-paper-0);
+    --acx-surface-sunken: var(--acx-brand-paper-100);
+    --acx-text:           var(--acx-brand-ink-900);
+    --acx-text-muted:     var(--acx-brand-ink-600);
+    --acx-text-subtle:    var(--acx-brand-ink-500);
+    --acx-text-on-accent: var(--acx-brand-paper-0);
+    --acx-text-disabled:  var(--acx-brand-paper-300);
+    --acx-border:         var(--acx-brand-paper-200);
+    --acx-border-strong:  var(--acx-brand-paper-300);
+    --acx-accent:         var(--acx-brand-accent-500);
+    --acx-accent-hover:   var(--acx-brand-accent-600);
+    --acx-accent-active:  var(--acx-brand-accent-700);
+    --acx-accent-subtle:  var(--acx-brand-accent-subtle-light);
+    --acx-focus-ring:     var(--acx-brand-accent-500);
+
+    /* ── 3. Typography & Scale Tokens ────────────────────────────────────── */
+    --acx-font-ui:      "Satoshi Variable", "Satoshi", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --acx-font-display: "Outfit", "Satoshi Variable", system-ui, sans-serif;
+    --acx-font-mono:    "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --acx-text-wordmark:     600 18px/24px var(--acx-font-display);
+    --acx-text-ui:           500 14px/20px var(--acx-font-ui);
+    --acx-text-ui-regular:   400 14px/20px var(--acx-font-ui);
+    --acx-text-small:        400 13px/18px var(--acx-font-ui);
+    --acx-text-caption:      500 12px/16px var(--acx-font-ui);
+    --acx-text-mono:         400 13px/20px var(--acx-font-mono);
+    --acx-text-mono-caption: 500 12px/16px var(--acx-font-mono);
+
+    --acx-tracking-tight:    -0.01em;
+    --acx-tracking-overline: 0.04em;
+
+    --acx-space-0: 0px;
+    --acx-space-1: 4px;
+    --acx-space-2: 8px;
+    --acx-space-3: 12px;
+    --acx-space-4: 16px;
+    --acx-space-5: 20px;
+    --acx-space-6: 24px;
+
+    --acx-radius-sm:   4px;
+    --acx-radius-md:   8px;
+    --acx-radius-lg:   12px;
+    --acx-radius-full: 999px;
+
+    --acx-border-width:        1px;
+    --acx-border-width-strong: 2px;
+    --acx-focus-offset:        2px;
+
+    --acx-duration-fast: 120ms;
+    --acx-duration-base: 200ms;
+    --acx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+    --acx-control-h-sm: 28px;
+    --acx-control-h-md: 36px;
+    --acx-popup-w:      360px;
+    --acx-switch-w:     44px;
+    --acx-switch-h:     24px;
+    --acx-switch-thumb: 16px;
+    --acx-switch-shift: 20px;
+    --acx-input-max-w:  148px;
   }
-  * { box-sizing: border-box; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --acx-bg:             var(--acx-brand-night-950);
+      --acx-surface:        var(--acx-brand-night-900);
+      --acx-surface-raised: var(--acx-brand-night-800);
+      --acx-surface-sunken: var(--acx-brand-night-950);
+      --acx-text:           var(--acx-brand-fog-100);
+      --acx-text-muted:     var(--acx-brand-fog-300);
+      --acx-text-subtle:    var(--acx-brand-fog-400);
+      --acx-text-on-accent: var(--acx-brand-night-950);
+      --acx-text-disabled:  var(--acx-brand-night-600);
+      --acx-border:         var(--acx-brand-night-700);
+      --acx-border-strong:  var(--acx-brand-night-600);
+      --acx-accent:         var(--acx-brand-accent-300);
+      --acx-accent-hover:   var(--acx-brand-accent-200);
+      --acx-accent-active:  var(--acx-brand-accent-400);
+      --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
+      --acx-focus-ring:     var(--acx-brand-accent-300);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --acx-bg:             var(--acx-brand-night-950);
+    --acx-surface:        var(--acx-brand-night-900);
+    --acx-surface-raised: var(--acx-brand-night-800);
+    --acx-surface-sunken: var(--acx-brand-night-950);
+    --acx-text:           var(--acx-brand-fog-100);
+    --acx-text-muted:     var(--acx-brand-fog-300);
+    --acx-text-subtle:    var(--acx-brand-fog-400);
+    --acx-text-on-accent: var(--acx-brand-night-950);
+    --acx-text-disabled:  var(--acx-brand-night-600);
+    --acx-border:         var(--acx-brand-night-700);
+    --acx-border-strong:  var(--acx-brand-night-600);
+    --acx-accent:         var(--acx-brand-accent-300);
+    --acx-accent-hover:   var(--acx-brand-accent-200);
+    --acx-accent-active:  var(--acx-brand-accent-400);
+    --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
+    --acx-focus-ring:     var(--acx-brand-accent-300);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
   body {
-    width: 360px; margin: 0; padding: 16px;
-    font: 400 13px/1.45 var(--font);
-    color: var(--ink); background: var(--backdrop);
+    width: var(--acx-popup-w);
+    margin: var(--acx-space-0);
+    padding: var(--acx-space-4);
+    font: var(--acx-text-small);
+    color: var(--acx-text);
+    background: var(--acx-bg);
   }
 
-  .head { display: flex; align-items: baseline; gap: 8px; margin: 2px 2px 14px; }
-  .head .name { font-weight: 500; font-size: 16px; letter-spacing: -0.01em; }
-  .head .meta { margin-left: auto; color: var(--muted); font-size: 11px;
-    font-variant-numeric: tabular-nums; }
-  .head .meta a { color: var(--ink); text-decoration: none; }
-  .head .meta a:hover { text-decoration: underline; }
-  .head .meta a[hidden] { display: none; }
-
-  .section { margin: 14px 6px 7px; font-weight: 500; font-size: 11px;
-    letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
-  .section:first-of-type { margin-top: 2px; }
-
-  .panel {
-    background: var(--card); border-radius: 20px; box-shadow: var(--shadow);
-    padding: 0 16px;
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--acx-space-2);
+    margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-3);
   }
-  .row { display: flex; align-items: center; gap: 13px; padding: 15px 0; border-top: 1px solid var(--hair); }
-  .row:first-child { border-top: 0; }
-  .body { min-width: 0; }
-  .body .t { display: block; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
-  .tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
-    font-size: 9px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
-    vertical-align: 1px; color: var(--muted); background: var(--track); }
-  .tail { margin-left: auto; flex: none; }
-
-  #open {
-    width: 100%; border: 0; border-radius: 16px; margin-top: 11px;
-    padding: 14px 16px; cursor: pointer;
-    font: 500 14px var(--font); letter-spacing: -0.01em; color: #fff;
-    background: var(--ink); box-shadow: 0 1px 2px rgba(16,24,40,.12);
-    transition: transform 90ms ease, opacity 120ms ease;
+  .head .name {
+    font: var(--acx-text-wordmark);
+    letter-spacing: var(--acx-tracking-tight);
+    color: var(--acx-text);
   }
-  #open:hover { opacity: .92; }
-  #open:active { transform: translateY(1px); }
-  #open:disabled { background: #e7e7ea; color: #a8a8b0; cursor: default; box-shadow: none; transform: none; }
-
-  .switch { position: relative; width: 50px; height: 30px; display: block; cursor: pointer; }
-  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-  .switch .slider { position: absolute; inset: 0; border-radius: 999px; background: var(--track);
-    transition: background 160ms ease; }
-  .switch .slider::before {
-    content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
-    border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(16,24,40,.3);
-    transition: transform 180ms cubic-bezier(0.32,0.72,0,1);
-  }
-  .switch input:checked + .slider { background: var(--ink); }
-  .switch input:checked + .slider::before { transform: translateX(20px); }
-  .switch input:focus-visible + .slider { box-shadow: 0 0 0 3px rgba(26,26,30,.22); }
-
-  .shortcut-wrap { display: flex; align-items: center; gap: 7px; }
-  .shortcut, .shortcut-clear {
-    border: 0; border-radius: 11px; cursor: pointer;
-    font: 500 12px var(--font); color: var(--ink); background: var(--track);
-    transition: background 120ms ease, color 120ms ease, transform 90ms ease;
-  }
-  .shortcut {
-    min-width: 82px; max-width: 130px; padding: 8px 10px;
-    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  .head .meta {
+    margin-left: auto;
+    color: var(--acx-text-muted);
+    font: var(--acx-text-mono-caption);
     font-variant-numeric: tabular-nums;
   }
-  .shortcut-clear { min-width: 44px; height: 30px; padding: 0 8px; color: var(--muted); }
-  .shortcut:hover, .shortcut-clear:hover { background: #d9d9df; color: var(--ink); }
-  .shortcut:active, .shortcut-clear:active { transform: translateY(1px); }
-  .shortcut:focus-visible, .shortcut-clear:focus-visible {
-    outline: 0; box-shadow: 0 0 0 3px rgba(26,26,30,.18);
+  .head .meta a {
+    color: var(--acx-accent);
+    text-decoration: underline;
+    text-underline-offset: var(--acx-focus-offset);
   }
-  .shortcut.is-listening { color: #fff; background: var(--ink); }
-  .shortcut:disabled, .shortcut-clear:disabled {
-    opacity: .48; cursor: default; transform: none; background: var(--track); color: var(--muted);
+  .head .meta a:focus-visible {
+    outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
+    outline-offset: var(--acx-focus-offset);
+    border-radius: var(--acx-radius-sm);
+  }
+  .head .meta a[hidden] {
+    display: none;
+  }
+
+  .section {
+    margin: var(--acx-space-4) var(--acx-space-1) var(--acx-space-2);
+    font: var(--acx-text-caption);
+    letter-spacing: var(--acx-tracking-overline);
+    text-transform: uppercase;
+    color: var(--acx-text-muted);
+  }
+
+  .panel {
+    background: var(--acx-surface);
+    border-radius: var(--acx-radius-lg);
+    padding: var(--acx-space-0) var(--acx-space-4);
+    border: var(--acx-border-width) solid var(--acx-border);
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--acx-space-3);
+    min-height: var(--acx-control-h-md);
+    padding: var(--acx-space-2) var(--acx-space-0);
+    border-top: var(--acx-border-width) solid var(--acx-border);
+  }
+  .row:first-child {
+    border-top: var(--acx-space-0);
+  }
+  .body {
+    min-width: var(--acx-space-0);
+  }
+  .body .t {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--acx-space-2);
+    font: var(--acx-text-ui);
+    color: var(--acx-text);
+  }
+  .tag {
+    display: inline-block;
+    padding: var(--acx-space-0) var(--acx-space-1);
+    border-radius: var(--acx-radius-sm);
+    font: var(--acx-text-caption);
+    color: var(--acx-text-muted);
+    background: var(--acx-surface-sunken);
+    border: var(--acx-border-width) solid var(--acx-border);
+  }
+  .tail {
+    margin-left: auto;
+    flex: none;
+  }
+
+  #open {
+    width: 100%;
+    height: var(--acx-control-h-md);
+    border: var(--acx-border-width) solid var(--acx-accent);
+    border-radius: var(--acx-radius-md);
+    margin-top: var(--acx-space-3);
+    padding: var(--acx-space-0) var(--acx-space-4);
+    cursor: pointer;
+    font: var(--acx-text-ui);
+    color: var(--acx-text-on-accent);
+    background: var(--acx-accent);
+    transition:
+      background-color var(--acx-duration-fast) var(--acx-ease-standard),
+      border-color var(--acx-duration-fast) var(--acx-ease-standard),
+      color var(--acx-duration-fast) var(--acx-ease-standard);
+  }
+  #open:active {
+    background: var(--acx-accent-active);
+    border-color: var(--acx-accent-active);
+  }
+  #open:focus-visible {
+    outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
+    outline-offset: var(--acx-focus-offset);
+  }
+  #open:disabled {
+    background: var(--acx-surface-sunken);
+    border-color: var(--acx-border);
+    color: var(--acx-text-disabled);
+    cursor: not-allowed;
+  }
+
+  .switch {
+    position: relative;
+    width: var(--acx-switch-w);
+    height: var(--acx-switch-h);
+    display: block;
+    cursor: pointer;
+  }
+  .switch input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: var(--acx-space-0);
+    cursor: pointer;
+  }
+  .switch .slider {
+    position: absolute;
+    inset: var(--acx-space-0);
+    border-radius: var(--acx-radius-full);
+    background: var(--acx-surface-sunken);
+    border: var(--acx-border-width) solid var(--acx-border-strong);
+    transition:
+      background-color var(--acx-duration-fast) var(--acx-ease-standard),
+      border-color var(--acx-duration-fast) var(--acx-ease-standard);
+  }
+  .switch .slider::before {
+    content: "";
+    position: absolute;
+    top: calc(var(--acx-space-1) - var(--acx-border-width));
+    left: calc(var(--acx-space-1) - var(--acx-border-width));
+    width: var(--acx-switch-thumb);
+    height: var(--acx-switch-thumb);
+    border-radius: var(--acx-radius-full);
+    background: var(--acx-text-muted);
+    transition:
+      transform var(--acx-duration-base) var(--acx-ease-standard),
+      background-color var(--acx-duration-fast) var(--acx-ease-standard);
+  }
+  .switch input:checked + .slider {
+    background: var(--acx-accent);
+    border-color: var(--acx-accent);
+  }
+  .switch input:checked + .slider::before {
+    transform: translateX(var(--acx-switch-shift));
+    background: var(--acx-text-on-accent);
+  }
+  .switch input:focus-visible + .slider {
+    outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
+    outline-offset: var(--acx-focus-offset);
+  }
+
+  .shortcut-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--acx-space-2);
+  }
+  .shortcut,
+  .shortcut-clear {
+    height: var(--acx-control-h-sm);
+    border: var(--acx-border-width) solid var(--acx-border-strong);
+    border-radius: var(--acx-radius-md);
+    cursor: pointer;
+    background: var(--acx-surface);
+    color: var(--acx-text);
+    padding: var(--acx-space-0) var(--acx-space-3);
+    transition:
+      background-color var(--acx-duration-fast) var(--acx-ease-standard),
+      border-color var(--acx-duration-fast) var(--acx-ease-standard),
+      color var(--acx-duration-fast) var(--acx-ease-standard);
+  }
+  .shortcut {
+    font: var(--acx-text-mono-caption);
+    font-variant-numeric: tabular-nums;
+  }
+  .shortcut-clear {
+    font: var(--acx-text-caption);
+    color: var(--acx-text-muted);
+  }
+  .shortcut:active,
+  .shortcut-clear:active {
+    background: var(--acx-accent-subtle);
+  }
+  .shortcut:focus-visible,
+  .shortcut-clear:focus-visible {
+    outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
+    outline-offset: var(--acx-focus-offset);
+  }
+  .shortcut.is-listening {
+    color: var(--acx-text-on-accent);
+    background: var(--acx-accent);
+    border-color: var(--acx-accent);
+  }
+  .shortcut:disabled,
+  .shortcut-clear:disabled {
+    cursor: not-allowed;
+    background: var(--acx-surface-sunken);
+    border-color: var(--acx-border);
+    color: var(--acx-text-disabled);
   }
 
   .text-input {
-    border: 0; border-radius: 11px; padding: 8px 10px; max-width: 150px;
-    font: 500 12px var(--font); color: var(--ink); background: var(--track);
-    transition: background 120ms ease;
+    height: var(--acx-control-h-sm);
+    max-width: var(--acx-input-max-w);
+    border: var(--acx-border-width) solid var(--acx-border-strong);
+    border-radius: var(--acx-radius-md);
+    padding: var(--acx-space-0) var(--acx-space-2);
+    font: var(--acx-text-small);
+    color: var(--acx-text);
+    background: var(--acx-surface);
+    transition: border-color var(--acx-duration-fast) var(--acx-ease-standard);
   }
-  .text-input::placeholder { color: var(--muted); }
-  .text-input:hover { background: #d9d9df; }
-  .text-input:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(26,26,30,.18); }
+  .text-input::placeholder {
+    color: var(--acx-text-subtle);
+  }
+  .text-input:focus-visible {
+    border-color: var(--acx-accent);
+    outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
+    outline-offset: var(--acx-focus-offset);
+  }
 
+  @media (hover: hover) {
+    #open:hover:not(:disabled) {
+      background: var(--acx-accent-hover);
+      border-color: var(--acx-accent-hover);
+    }
+    .shortcut:hover:not(:disabled),
+    .shortcut-clear:hover:not(:disabled) {
+      background: var(--acx-accent-subtle);
+      color: var(--acx-text);
+    }
+    .text-input:hover {
+      border-color: var(--acx-text-subtle);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --acx-duration-fast: 0.01ms;
+      --acx-duration-base: 0.01ms;
+    }
+  }
 </style>
-
+</head>
+<body>
 <div class="head">
   <span class="name">[unfold]</span>
   <span class="meta"><span id="ver"></span><a id="repo" href="#" target="_blank" rel="noopener" hidden> · GitHub</a></span>
@@ -109,73 +419,76 @@
 <div class="panel">
   <div class="row">
     <span class="body"><span class="t">Extension enabled</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="enabled" checked /><span class="slider"></span></label>
+    <label class="switch tail"><input type="checkbox" data-key="enabled" aria-label="Extension enabled" checked /><span class="slider"></span></label>
   </div>
 </div>
 
-<div class="section">Quiz</div>
+<div class="section">Quiz Reader</div>
 <div class="panel">
   <div class="row">
     <span class="body"><span class="t">Auto-show launcher</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="autoLauncher" checked /><span class="slider"></span></label>
+    <label class="switch tail"><input type="checkbox" data-key="autoLauncher" aria-label="Auto-show launcher" checked /><span class="slider"></span></label>
   </div>
   <div class="row">
     <span class="body"><span class="t">Launcher position</span></span>
-    <select data-key="launcherPos" class="text-input tail">
+    <select data-key="launcherPos" aria-label="Launcher position" class="text-input tail">
       <option value="bottom-center">Bottom center</option>
-      <option value="bottom-left">Bottom left</option>
       <option value="bottom-right">Bottom right</option>
-      <option value="top-left">Top left</option>
+      <option value="bottom-left">Bottom left</option>
       <option value="top-right">Top right</option>
+      <option value="top-left">Top left</option>
+    </select>
+  </div>
+  <div class="row">
+    <span class="body"><span class="t">Theme</span></span>
+    <select data-key="theme" aria-label="Reader theme" class="text-input tail">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
     </select>
   </div>
   <div class="row">
     <span class="body"><span class="t">Compact cards</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="compact" /><span class="slider"></span></label>
+    <label class="switch tail"><input type="checkbox" data-key="compact" aria-label="Compact cards" /><span class="slider"></span></label>
   </div>
   <div class="row">
     <span class="body"><span class="t">Keyboard shortcut</span></span>
-    <label class="switch tail"><input id="shortcutEnabled" type="checkbox" data-key="openShortcutEnabled" checked /><span class="slider"></span></label>
+    <label class="switch tail"><input id="shortcutEnabled" type="checkbox" data-key="openShortcutEnabled" aria-label="Enable keyboard shortcut" checked /><span class="slider"></span></label>
   </div>
   <div class="row">
     <span class="body"><span class="t">Shortcut keys</span></span>
     <span class="shortcut-wrap tail">
-      <button id="shortcut" class="shortcut" type="button">Alt+Q</button>
-      <button id="shortcutClear" class="shortcut-clear" type="button" title="Clear shortcut">Clear</button>
+      <button id="shortcut" class="shortcut" type="button" aria-label="Shortcut keys">Alt+Q</button>
+      <button id="shortcutClear" class="shortcut-clear" type="button" aria-label="Clear keyboard shortcut" title="Clear shortcut">Clear</button>
     </span>
   </div>
 </div>
 
-<button id="open" disabled>Show all questions</button>
+<button id="open" type="button" disabled>All Questions</button>
 
-<div class="section">Interface</div>
+<div class="section">Portal Appearance</div>
 <div class="panel">
   <div class="row">
     <span class="body"><span class="t">Portal font<span class="tag">Beta</span></span></span>
     <input id="fontName" class="text-input tail" type="text" data-key="fontName"
+      aria-label="Portal font name"
       placeholder="System default" spellcheck="false" autocomplete="off"
-      title="Type any font installed on your system, e.g. Inter" />
+      title="Type any font installed on your system, e.g. Satoshi Variable" />
   </div>
-</div>
-
-<div class="section">Declutter</div>
-<div class="panel">
   <div class="row">
     <span class="body"><span class="t">Hide breadcrumbs</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="hideBreadcrumb" /><span class="slider"></span></label>
+    <label class="switch tail"><input type="checkbox" data-key="hideBreadcrumb" aria-label="Hide breadcrumbs" /><span class="slider"></span></label>
   </div>
   <div class="row">
     <span class="body"><span class="t">Hide info banners</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="hideBanner" /><span class="slider"></span></label>
+    <label class="switch tail"><input type="checkbox" data-key="hideBanner" aria-label="Hide info banners" /><span class="slider"></span></label>
   </div>
-</div>
-
-<div class="section">Focus</div>
-<div class="panel">
   <div class="row">
     <span class="body"><span class="t">Hide sidebar</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="hideSidebar" /><span class="slider"></span></label>
+    <label class="switch tail"><input type="checkbox" data-key="hideSidebar" aria-label="Hide sidebar" /><span class="slider"></span></label>
   </div>
 </div>
 
 <script src="popup.js"></script>
+</body>
+</html>

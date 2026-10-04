@@ -2,12 +2,16 @@
   "name": "unfold-iitm",
   "version": "0.2.0",
   "private": true,
-  "description": "Declutter the IITM Online Degree portal.",
+  "description": "High-fidelity assignment & document extractor for the IITM Online Degree portal.",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "check": "node --check bookmarklet/bookmarklet-source.js",
-    "verify": "node build.mjs && git diff --exit-code -- bookmarklet/bookmarklet.txt bookmarklet/install.html"
+    "check": "node --check bookmarklet/bookmarklet-source.js && node --check build/run.js",
+    "test": "node scripts/verify-architecture.mjs && node scripts/test-fixtures.mjs && node scripts/test-traversal.mjs && node scripts/test-semantic-extraction.mjs && node scripts/test-markdown-exporter.mjs && node scripts/test-resource-engine.mjs && node scripts/test-pdf-exporter.mjs && node scripts/test-export-orchestration.mjs && node scripts/test-browser-integration.mjs && node scripts/test-real-browser.mjs && node tests/test-prompt.mjs",
+    "verify": "node build.mjs && git diff --exit-code -- bookmarklet/bookmarklet.txt bookmarklet/install.html && npm test"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "katex": "^0.19.0"
+  }
 }

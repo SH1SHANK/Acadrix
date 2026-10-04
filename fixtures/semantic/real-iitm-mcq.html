@@ -1,0 +1,51 @@
+<app-assessment-question-view>
+  <div class="header">
+    <span class="question-header">Question 1 / 2</span>
+    <span class="question-marks">2.5 Marks</span>
+    <app-submission-timer>30:00</app-submission-timer>
+  </div>
+
+  <div class="chips assessment-paginator">
+    <button class="chip active">1</button>
+    <button class="chip">2</button>
+  </div>
+
+  <div class="question-body">
+    <!-- Responsive Desktop Stem -->
+    <div class="backend-html d-none d-md-block">
+      <p>Given a connected undirected graph <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo>=</mo><mo stretchy="false">(</mo><mi>V</mi><mo separator="true">,</mo><mi>E</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G = (V, E)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">G=(V,E)</span></span> with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">n</span></span> vertices.</p>
+      <p>Which of the following conditions is necessary for <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi></mrow><annotation encoding="application/x-tex">G</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">G</span></span> to be Eulerian?</p>
+    </div>
+
+    <!-- Responsive Mobile Duplicate Stem (must be deduplicated) -->
+    <div class="backend-html d-block d-md-none">
+      <p>Given a connected undirected graph <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo>=</mo><mo stretchy="false">(</mo><mi>V</mi><mo separator="true">,</mo><mi>E</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G = (V, E)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">G=(V,E)</span></span> with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">n</span></span> vertices.</p>
+      <p>Which of the following conditions is necessary for <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi></mrow><annotation encoding="application/x-tex">G</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">G</span></span> to be Eulerian?</p>
+    </div>
+
+    <app-assessment-question>
+      <ul class="choices" role="radiogroup">
+        <button class="choice" role="radio" aria-checked="false" id="opt-mcq-1">
+          <span class="choice-indicator"><span class="radio-circle"></span></span>
+          <span class="choice-letter">A.</span>
+          <span class="choice-text backend-html">Every vertex has an even degree.</span>
+        </button>
+
+        <button class="choice selected" role="radio" aria-checked="true" id="opt-mcq-2">
+          <span class="choice-indicator"><span class="radio-circle"></span></span>
+          <span class="choice-letter">B.</span>
+          <span class="choice-text backend-html">Every vertex has an odd degree.</span>
+        </button>
+
+        <button class="choice" role="radio" aria-checked="false" id="opt-mcq-3">
+          <span class="choice-indicator"><span class="radio-circle"></span></span>
+          <span class="choice-letter">C.</span>
+          <span class="choice-text backend-html">The graph contains a Hamiltonian path.</span>
+        </button>
+
+        <!-- Auxiliary control that must NOT be parsed as an option -->
+        <button class="clear-selection" type="button">Clear Selection</button>
+      </ul>
+    </app-assessment-question>
+  </div>
+</app-assessment-question-view>

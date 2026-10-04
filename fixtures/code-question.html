@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IITM Assessment — Code Question Fixture</title>
+</head>
+<body>
+  <app-assessment-question-view>
+    <div class="header">
+      <span class="question-header">Question 3 / 3</span>
+      <span class="question-marks">3 Marks</span>
+      <app-submission-timer>41:00</app-submission-timer>
+    </div>
+
+    <div class="chips assessment-paginator">
+      <button class="chip">1</button>
+      <button class="chip">2</button>
+      <button class="chip active">3</button>
+    </div>
+
+    <div class="question-body">
+      <div class="backend-html">
+        <p>Consider the following Python function:</p>
+        <pre><code class="language-python">def mystery(lst):
+    if len(lst) <= 1:
+        return lst
+    pivot = lst[0]
+    left = [x for x in lst[1:] if x <= pivot]
+    right = [x for x in lst[1:] if x > pivot]
+    return mystery(left) + [pivot] + mystery(right)</code></pre>
+        <p>What is the return value of <code>mystery([4, 2, 7, 1, 3])</code>?</p>
+      </div>
+
+      <app-assessment-question>
+        <fieldset class="mcq">
+          <div class="choices" role="radiogroup">
+            <label class="choice" role="radio">
+              <span class="choice-letter">A</span>
+              <span class="choice-text"><code>[1, 2, 3, 4, 7]</code></span>
+            </label>
+            <label class="choice" role="radio">
+              <span class="choice-letter">B</span>
+              <span class="choice-text"><code>[7, 4, 3, 2, 1]</code></span>
+            </label>
+            <label class="choice" role="radio">
+              <span class="choice-letter">C</span>
+              <span class="choice-text"><code>[4, 2, 1, 3, 7]</code></span>
+            </label>
+          </div>
+        </fieldset>
+      </app-assessment-question>
+    </div>
+  </app-assessment-question-view>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<div class="backend-html">
+  <h2>Machine Learning — Optimization Problem</h2>
+  <p>Consider the objective function <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>θ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">L(\theta) = \frac{1}{2m} \sum_{i=1}^m (h_\theta(x^{(i)}) - y^{(i)})^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span>L(theta)</span></span></span>.</p>
+  
+  <p>The gradient descent update rule implemented in Python is shown below:</p>
+  <pre><code class="language-python">def gradient_step(theta, alpha, grad):
+    # Update parameters along steepest descent
+    return theta - alpha * grad</code></pre>
+
+  <p>Inspect the training log table:</p>
+  <table>
+    <thead>
+      <tr><th>Iteration</th><th>Loss</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>100</td><td>0.452</td></tr>
+      <tr><td>200</td><td>0.128</td></tr>
+    </tbody>
+  </table>
+
+  <p>Observe the convergence curve:</p>
+  <img src="https://study.iitm.ac.in/assets/loss_curve.png" alt="Loss Convergence Curve" width="600" />
+
+  <p>Key properties observed:</p>
+  <ul>
+    <li>Monotonic loss decrease</li>
+    <li>Step size <em>alpha</em> is stable</li>
+  </ul>
+</div>

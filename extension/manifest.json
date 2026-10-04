@@ -2,13 +2,17 @@
   "manifest_version": 3,
   "name": "[unfold]",
   "version": "0.2.0",
-  "description": "Declutter the IITM Online Degree portal.",
+  "description": "Read all questions in one view and export IITM Online Degree assessments to Markdown, PDF, or portable bundles.",
   "homepage_url": "https://github.com/civiks/unfold-iitm",
   "permissions": [
     "scripting",
     "activeTab",
-    "storage"
+    "storage",
+    "debugger"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "host_permissions": [
     "*://*.study.iitm.ac.in/*",
     "https://onlinedegree.iitm.ac.in/*"
@@ -21,13 +25,26 @@
       ],
       "js": [
         "customize.js",
+        "katex.min.js",
         "run.js"
       ],
       "run_at": "document_idle"
     }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "fonts/*",
+        "katex.min.css"
+      ],
+      "matches": [
+        "*://*.study.iitm.ac.in/*",
+        "https://onlinedegree.iitm.ac.in/*"
+      ]
+    }
+  ],
   "action": {
-    "default_title": "Show All Questions",
+    "default_title": "Unfold IITM — All Questions",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

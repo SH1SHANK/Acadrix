@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IITM Assessment — Question With Image Fixture</title>
+</head>
+<body>
+  <app-assessment-question-view>
+    <div class="header">
+      <span class="question-header">Question 1 / 1</span>
+      <span class="question-marks">2 Marks</span>
+    </div>
+
+    <div class="chips assessment-paginator">
+      <button class="chip active">1</button>
+    </div>
+
+    <div class="question-body">
+      <div class="backend-html">
+        <p>Refer to the neural network architecture diagram below:</p>
+        <p><img src="https://study.iitm.ac.in/assets/img/convnet_arch.png" alt="Convolutional Neural Network Architecture" width="500"></p>
+        <p>How many convolutional layers are present before the first dense layer?</p>
+      </div>
+
+      <app-assessment-question>
+        <div class="form-field">
+          <input type="number" placeholder="Enter an integer value" value="3" />
+        </div>
+      </app-assessment-question>
+    </div>
+  </app-assessment-question-view>
+</body>
+</html>

@@ -90,8 +90,16 @@ function onShortcutKey(e) {
   stopRecording();
 }
 
+const applyPopupTheme = (theme) => {
+  if (theme === "light" || theme === "dark") {
+    document.documentElement.setAttribute("data-theme", theme);
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+};
+
 if (store) {
-  const defaults = { openShortcut: DEFAULT_SHORTCUT };
+  const defaults = { openShortcut: DEFAULT_SHORTCUT, theme: "system" };
   toggles.forEach((t) => (defaults[t.dataset.key] = t.defaultChecked));
   texts.forEach((t) => (defaults[t.dataset.key] = t.dataset.default ?? ""));
   selects.forEach((t) => (defaults[t.dataset.key] = t.value));
@@ -99,6 +107,7 @@ if (store) {
     toggles.forEach((t) => (t.checked = v[t.dataset.key]));
     texts.forEach((t) => (t.value = v[t.dataset.key] ?? ""));
     selects.forEach((t) => (t.value = v[t.dataset.key] ?? t.value));
+    applyPopupTheme(v.theme);
     renderShortcut(v.openShortcut);
   });
   toggles.forEach((t) =>
@@ -108,7 +117,10 @@ if (store) {
     t.addEventListener("input", () => store.set({ [t.dataset.key]: t.value.trim() }))
   );
   selects.forEach((t) =>
-    t.addEventListener("change", () => store.set({ [t.dataset.key]: t.value }))
+    t.addEventListener("change", () => {
+      store.set({ [t.dataset.key]: t.value });
+      if (t.dataset.key === "theme") applyPopupTheme(t.value);
+    })
   );
   shortcutBtn.addEventListener("click", () => {
     if (!shortcutEnabled.checked) return;
@@ -129,6 +141,11 @@ if (store) {
       renderShortcut();
     }
     if (c.openShortcut && !recordingShortcut) renderShortcut(c.openShortcut.newValue);
+    if (c.theme) {
+      const themeSelect = document.querySelector('select[data-key="theme"]');
+      if (themeSelect) themeSelect.value = c.theme.newValue || "system";
+      applyPopupTheme(c.theme.newValue);
+    }
   });
 } else {
   toggles.forEach((t) => t.closest(".row")?.remove());
@@ -144,8 +161,9 @@ if (store) {
   try { host = new URL(tab?.url || "").hostname; } catch {}
   if (QUIZ_HOST.test(host)) {
     openBtn.disabled = false;
+    openBtn.textContent = "Open All Questions";
   } else {
-    openBtn.textContent = "Open a quiz page first";
+    openBtn.textContent = "Open an IITM quiz page first";
   }
 })();
 
@@ -153,11 +171,24 @@ openBtn.addEventListener("click", async () => {
   const tab = await activeTab();
   if (!tab?.id) return;
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["run.js"] });
-    await chrome.scripting.executeScript({
+    const checkResult = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: () => window.__saqOpen && window.__saqOpen(),
+      func: () => {
+        if (typeof window.__saqOpen === "function") {
+          window.__saqOpen();
+          return true;
+        }
+        return false;
+      },
     });
+
+    if (!checkResult?.[0]?.result) {
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["run.js"] });
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => window.__saqOpen && window.__saqOpen(),
+      });
+    }
     window.close();
   } catch (e) {
     openBtn.textContent = "Couldn't open — reload & retry";

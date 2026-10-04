@@ -39,23 +39,24 @@ On Firefox: open `about:debugging`, click "Load Temporary Add-on", and pick `man
 
 No install needed? Open `bookmarklet/install.html` and drag the button to your bookmarks bar.
 
-## Build
-
-There's no bundler. The logic lives in `bookmarklet/bookmarklet-source.js`; the build assembles `build/` from `extension/` (the static manifest, icons, popup) plus the generated `run.js`, and regenerates the bookmarklet files. `build/` isn't committed — CI produces it as a downloadable artifact.
+## Build & Test
 
 ```bash
-node build.mjs
+node build.mjs       # Assemble extension and bookmarklet targets
+npm test             # Run architecture verification and fixture tests
+npm run check        # Syntax-check generated bundles
 ```
 
+Manual smoke-testing on live IITM portals is documented in [docs/manual-smoke-test.md](docs/manual-smoke-test.md).
 Full dev and release guide: [CONTRIBUTING](.github/CONTRIBUTING.md).
 
 ## How it works
 
-The portal shows one question at a time and owns the form state, so the sheet is a mirror. It snapshots each question and replays your answers on the live form, flushing autosave by navigating away. Prompts are captured from the rendered HTML, so math stays intact.
+The portal presents questions one at a time. Unfold traverses the assignment, capturing questions into an encapsulated, read-only reader view. It does not alter or mutate your live quiz answers. Prompts, mathematical formulas, and options are preserved for study, review, and export.
 
 ## Disclaimer
 
-Beta and unofficial. It reads and replays answers on the live quiz form, so verify everything saved on the original quiz before submitting. Not affiliated with IIT Madras; "IITM" only describes what it works with.
+Beta and unofficial. Unfold provides read-only inspection and export; it does not answer or modify assignments for you. Always verify your official submission directly on the IITM portal. Not affiliated with IIT Madras; "IITM" only describes portal compatibility.
 
 ## License
 
