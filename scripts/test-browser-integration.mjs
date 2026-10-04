@@ -915,6 +915,125 @@ async function runBrowserIntegrationTests() {
   });
 
   // ── Step 6: Dismiss & Escape Key ──────────────────────────────────────────
+  await check("Hygiene: rapid open requests produce one Reader DOM", async () => {
+    runtime.close();
+    runtime.reader.destroy();
+    runtime.invalidateDocument();
+    runtime.lifecycle.transition(LifecycleState.ACTIVE);
+
+    const originalTraverseAll = runtime.traverser.traverseAll.bind(runtime.traverser);
+    let traversalCalls = 0;
+    runtime.traverser.traverseAll = async (...args) => {
+      traversalCalls++;
+      return originalTraverseAll(...args);
+    };
+    await Promise.all([runtime.open(), runtime.open()]);
+    runtime.traverser.traverseAll = originalTraverseAll;
+
+    const hostEl = document.getElementById("unfold-root");
+    assert(traversalCalls === 1, "Rapid open requests must traverse exactly once");
+    assert(hostEl.shadowRoot.querySelectorAll("#saq-backdrop").length === 1, "Rapid open must leave one backdrop");
+    assert(hostEl.shadowRoot.querySelectorAll("#saq-sheet").length === 1, "Rapid open must leave one sheet");
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  });
+
+  await check("Hygiene: opening an open Reader focuses it without re-traversal", async () => {
+    let showCalls = 0;
+    const originalShow = runtime.reader.show.bind(runtime.reader);
+    const originalTraverseAll = runtime.traverser.traverseAll.bind(runtime.traverser);
+    runtime.reader.show = (...args) => {
+      showCalls++;
+      return originalShow(...args);
+    };
+    let traversalCalls = 0;
+    runtime.traverser.traverseAll = async (...args) => {
+      traversalCalls++;
+      return originalTraverseAll(...args);
+    };
+
+    await runtime.open();
+
+    runtime.reader.show = originalShow;
+    runtime.traverser.traverseAll = originalTraverseAll;
+    assert(showCalls === 1, "Opening an open Reader must refocus the existing drawer");
+    assert(traversalCalls === 0, "Opening an open Reader must not re-traverse");
+  });
+
+  await check("Hygiene: traversal errors reset the guard and allow a later open", async () => {
+    runtime.close();
+    runtime.reader.destroy();
+    runtime.invalidateDocument();
+    runtime.lifecycle.transition(LifecycleState.ACTIVE);
+    const originalTraverseAll = runtime.traverser.traverseAll;
+    let attempts = 0;
+    runtime.traverser.traverseAll = async (...args) => {
+      attempts++;
+      if (attempts === 1) throw Object.assign(new Error("boom"), { name: "TraversalError" });
+      return originalTraverseAll.call(runtime.traverser, ...args);
+    };
+    await runtime.open();
+    assert(runtime.lifecycle.state === LifecycleState.ACTIVE, "Traversal error must return runtime to ACTIVE");
+    await runtime.open();
+    runtime.traverser.traverseAll = originalTraverseAll;
+    assert(attempts === 2, "A later open must extract again after a traversal error");
+  });
+
+  await check("Hygiene: navigation timeout resets the guard and allows a later open", async () => {
+    runtime.close();
+    runtime.reader.destroy();
+    runtime.invalidateDocument();
+    runtime.lifecycle.transition(LifecycleState.ACTIVE);
+    const originalTraverseAll = runtime.traverser.traverseAll;
+    let attempts = 0;
+    runtime.traverser.traverseAll = async (...args) => {
+      attempts++;
+      if (attempts === 1) throw Object.assign(new Error("timeout"), { name: "NavigationTimeoutError" });
+      return originalTraverseAll.call(runtime.traverser, ...args);
+    };
+    await runtime.open();
+    assert(runtime.lifecycle.state === LifecycleState.ACTIVE, "Navigation timeout must return runtime to ACTIVE");
+    await runtime.open();
+    runtime.traverser.traverseAll = originalTraverseAll;
+    assert(attempts === 2, "A later open must extract again after a navigation timeout");
+  });
+
+  await check("Hygiene: cancellation resets the guard and allows a later open", async () => {
+    runtime.close();
+    runtime.reader.destroy();
+    runtime.invalidateDocument();
+    runtime.lifecycle.transition(LifecycleState.ACTIVE);
+    const originalTraverseAll = runtime.traverser.traverseAll;
+    let attempts = 0;
+    runtime.traverser.traverseAll = async (...args) => {
+      attempts++;
+      if (attempts === 1) throw Object.assign(new Error("cancelled"), { name: "TraversalCancellationError" });
+      return originalTraverseAll.call(runtime.traverser, ...args);
+    };
+    await runtime.open();
+    assert(runtime.lifecycle.state === LifecycleState.ACTIVE, "Cancellation must return runtime to ACTIVE");
+    await runtime.open();
+    runtime.traverser.traverseAll = originalTraverseAll;
+    assert(attempts === 2, "A later open must extract again after cancellation");
+  });
+
+  await check("Hygiene: explicit refresh replaces content without duplicating Reader DOM", async () => {
+    const originalTraverseAll = runtime.traverser.traverseAll.bind(runtime.traverser);
+    let traversalCalls = 0;
+    runtime.traverser.traverseAll = async (...args) => {
+      traversalCalls++;
+      return originalTraverseAll(...args);
+    };
+    await runtime.refresh();
+    runtime.traverser.traverseAll = originalTraverseAll;
+    const hostEl = document.getElementById("unfold-root");
+    assert(traversalCalls === 1, "Explicit refresh must re-traverse once");
+    assert(hostEl.shadowRoot.querySelectorAll("#saq-backdrop").length === 1, "Refresh must leave one backdrop");
+    assert(hostEl.shadowRoot.querySelectorAll("#saq-sheet").length === 1, "Refresh must leave one sheet");
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert(runtime.reader.isOpen(), "Reader must remain open after refresh");
+  });
+
+  // ── Step 6: Dismiss & Escape Key ──────────────────────────────────────────
   await check("Step 6: Dismissing Reader closes drawer and restores launcher", () => {
     runtime.close();
 
@@ -935,6 +1054,15 @@ async function runBrowserIntegrationTests() {
     assert(hostEl === null, "Shadow host #unfold-root is completely removed from DOM");
   });
 
+  await check("Hygiene: destroy removes all Reader nodes and is idempotent", async () => {
+    const teardownRuntime = new UnfoldRuntime({ extractor: new SemanticExtractor(portalAdapter) });
+    teardownRuntime.initialize();
+    await teardownRuntime.open();
+    teardownRuntime.destroy();
+    teardownRuntime.destroy();
+    assert(document.querySelectorAll("[id^='saq-']").length === 0, "Destroy must remove every #saq-* node");
+  });
+
   if (!passed) {
     console.error("\nNode DOM Simulation Integration Tests FAILED.");
     process.exit(1);
@@ -946,4 +1074,3 @@ async function runBrowserIntegrationTests() {
 }
 
 runBrowserIntegrationTests();
-

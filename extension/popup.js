@@ -174,19 +174,32 @@ openBtn.addEventListener("click", async () => {
     const checkResult = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
-        if (typeof window.__saqOpen === "function") {
-          window.__saqOpen();
-          return true;
-        }
-        return false;
+        return {
+          version: window.__saqVersion || "",
+          hasRuntime: typeof window.__saqOpen === "function",
+        };
       },
     });
 
-    if (!checkResult?.[0]?.result) {
+    const pageRuntime = checkResult?.[0]?.result || {};
+    if (pageRuntime.version === mf.version && pageRuntime.hasRuntime) {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => window.__saqOpen(),
+      });
+    } else {
+      if (pageRuntime.version && pageRuntime.version !== mf.version) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            try { window.__unfold?.destroy?.(); } catch {}
+          },
+        });
+      }
       await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["run.js"] });
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: () => window.__saqOpen && window.__saqOpen(),
+        func: () => window.__saqOpen(),
       });
     }
     window.close();

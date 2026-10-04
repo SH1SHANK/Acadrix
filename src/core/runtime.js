@@ -55,7 +55,9 @@ export class UnfoldRuntime {
     this.activeDocument = null;
     this.activeContextKey = null;
     this.isDestroyed = false;
-  }
+/* @extension-only-start */
+    if (typeof window !== "undefined") window.__saqVersion = "__SAQ_VERSION__";
+/* @extension-only-end */  }
 
   getContextKey() {
     const loc =
@@ -230,6 +232,7 @@ export class UnfoldRuntime {
     }
 
     if (this.reader.isOpen() && this.activeDocument) {
+      this.reader.show();
       return;
     }
 
@@ -242,7 +245,7 @@ export class UnfoldRuntime {
       this.reader.destroy();
     }
 
-    if (this.reader.isMounted() && this.activeDocument) {
+    if (this.reader.isMounted() && this.activeDocument && !this.reader.isOpen()) {
       this.launcher.setExpanded?.(true);
       this.launcher.hide();
       this.reader.show();

@@ -3416,6 +3416,7 @@
       }
   
       if (this.reader.isOpen() && this.activeDocument) {
+        this.reader.show();
         return;
       }
   
@@ -3428,7 +3429,7 @@
         this.reader.destroy();
       }
   
-      if (this.reader.isMounted() && this.activeDocument) {
+      if (this.reader.isMounted() && this.activeDocument && !this.reader.isOpen()) {
         this.launcher.setExpanded?.(true);
         this.launcher.hide();
         this.reader.show();

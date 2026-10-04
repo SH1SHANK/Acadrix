@@ -4,6 +4,8 @@
 // Zero external dependencies. Run: `node build.mjs`
 import { readFileSync, writeFileSync, cpSync, rmSync } from "node:fs";
 
+const extensionManifest = JSON.parse(readFileSync("extension/manifest.json", "utf8"));
+
 // ── Bookmarklet Compatibility Modules ─────────────────────────────────────────
 // The bookmarklet is a constrained, URL-encoded platform and must remain a
 // lightweight compatibility subset. Only modules strictly required for IITM
@@ -185,7 +187,9 @@ const css = readFileSync("bookmarklet/styles.css", "utf8");
 
 // 1) Build Target: Extension
 const extensionTemplate = bundleTarget(TARGETS.extension, false);
-const extensionRunJs = extensionTemplate.replace("__CSS_PLACEHOLDER__", JSON.stringify(css));
+const extensionRunJs = extensionTemplate
+  .replaceAll("__SAQ_VERSION__", extensionManifest.version)
+  .replace("__CSS_PLACEHOLDER__", JSON.stringify(css));
 writeFileSync(TARGETS.extension.output, extensionRunJs);
 
 // 2) Build Target: Bookmarklet
