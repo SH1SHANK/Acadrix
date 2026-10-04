@@ -56,7 +56,7 @@ export function handleReaderActionClick(e) {
       exportPdf(this.documentModel, {
         onFallback: () => this.setPdfFallbackMode?.(true),
       }).catch((err) => {
-        console.error("[Unfold IITM] PDF export failed, falling back to window.print():", err);
+        console.error("[Acadrix] PDF export failed, falling back to window.print():", err);
         this.setPdfFallbackMode?.(true);
         this.printFallbackWithTitle(this.documentModel);
       });

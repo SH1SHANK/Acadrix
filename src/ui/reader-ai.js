@@ -134,6 +134,7 @@ export function attachReaderAiFeatures(ReaderDrawer) {
   Object.assign(ReaderDrawer.prototype, {
     isDirectPdfAvailable() {
       if (this.pdfDirectFallbackActive) return false;
+      if (this.directPdfEnabled === false) return false;
       return typeof chrome !== "undefined" && typeof chrome?.runtime?.sendMessage === "function";
     },
 
@@ -552,7 +553,7 @@ export function attachReaderAiFeatures(ReaderDrawer) {
           includeInteractionState: false,
           onFallback: () => this.setPdfFallbackMode?.(true),
         }).catch((err) => {
-          console.error("[Unfold IITM] PDF export failed, falling back to window.print():", err);
+          console.error("[Acadrix] PDF export failed, falling back to window.print():", err);
           this.setPdfFallbackMode?.(true);
           this.printFallbackWithTitle(scopedDoc);
         });

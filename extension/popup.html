@@ -36,47 +36,65 @@
     --acx-brand-accent-subtle-light: rgb(47 75 219 / 0.08);
     --acx-brand-accent-subtle-dark:  rgb(142 162 255 / 0.14);
 
-    /* ── 2. Semantic UI Tokens (Light Default) ───────────────────────────── */
+    --acx-brand-success-light:        #1A7F4B;
+    --acx-brand-success-dark:         #5FD08A;
+    --acx-brand-success-bg-light:     rgb(26 127 75 / 0.10);
+    --acx-brand-success-bg-dark:      rgb(95 208 138 / 0.14);
+    --acx-brand-success-border-light: rgb(26 127 75 / 0.30);
+    --acx-brand-success-border-dark:  rgb(95 208 138 / 0.30);
+
+    /* ── 2. Semantic UI Tokens ───────────────────────────────────────────── */
     --acx-bg:             var(--acx-brand-paper-50);
     --acx-surface:        var(--acx-brand-paper-0);
     --acx-surface-raised: var(--acx-brand-paper-0);
     --acx-surface-sunken: var(--acx-brand-paper-100);
+
     --acx-text:           var(--acx-brand-ink-900);
     --acx-text-muted:     var(--acx-brand-ink-600);
     --acx-text-subtle:    var(--acx-brand-ink-500);
     --acx-text-on-accent: var(--acx-brand-paper-0);
     --acx-text-disabled:  var(--acx-brand-paper-300);
+
     --acx-border:         var(--acx-brand-paper-200);
     --acx-border-strong:  var(--acx-brand-paper-300);
+
     --acx-accent:         var(--acx-brand-accent-500);
     --acx-accent-hover:   var(--acx-brand-accent-600);
     --acx-accent-active:  var(--acx-brand-accent-700);
     --acx-accent-subtle:  var(--acx-brand-accent-subtle-light);
     --acx-focus-ring:     var(--acx-brand-accent-500);
 
-    /* ── 3. Typography & Scale Tokens ────────────────────────────────────── */
+    --acx-success:        var(--acx-brand-success-light);
+    --acx-success-bg:     var(--acx-brand-success-bg-light);
+    --acx-success-border: var(--acx-brand-success-border-light);
+
+    --acx-shadow-1:       0 1px 2px rgb(22 24 29 / 0.06);
+    --acx-shadow-2:       0 4px 12px rgb(22 24 29 / 0.10);
+    --acx-shadow-3:       0 12px 32px rgb(22 24 29 / 0.16), 0 2px 6px rgb(22 24 29 / 0.08);
+
+    /* ── 3. Typography Tokens ────────────────────────────────────────────── */
     --acx-font-ui:      "Satoshi Variable", "Satoshi", system-ui, -apple-system, "Segoe UI", sans-serif;
     --acx-font-display: "Outfit", "Satoshi Variable", system-ui, sans-serif;
     --acx-font-mono:    "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
     --acx-text-wordmark:     600 18px/24px var(--acx-font-display);
+    --acx-text-h3:           700 17px/24px var(--acx-font-ui);
     --acx-text-ui:           500 14px/20px var(--acx-font-ui);
-    --acx-text-ui-regular:   400 14px/20px var(--acx-font-ui);
     --acx-text-small:        400 13px/18px var(--acx-font-ui);
     --acx-text-caption:      500 12px/16px var(--acx-font-ui);
-    --acx-text-mono:         400 13px/20px var(--acx-font-mono);
     --acx-text-mono-caption: 500 12px/16px var(--acx-font-mono);
 
     --acx-tracking-tight:    -0.01em;
+    --acx-tracking-normal:   0;
     --acx-tracking-overline: 0.04em;
 
-    --acx-space-0: 0px;
-    --acx-space-1: 4px;
-    --acx-space-2: 8px;
-    --acx-space-3: 12px;
-    --acx-space-4: 16px;
-    --acx-space-5: 20px;
-    --acx-space-6: 24px;
+    /* ── 4. Spacing, Shapes, Sizing & Motion ─────────────────────────────── */
+    --acx-space-0:  0px;
+    --acx-space-1:  4px;
+    --acx-space-2:  8px;
+    --acx-space-3:  12px;
+    --acx-space-4:  16px;
+    --acx-space-5:  20px;
 
     --acx-radius-sm:   4px;
     --acx-radius-md:   8px;
@@ -91,18 +109,16 @@
     --acx-duration-base: 200ms;
     --acx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
-    --acx-shadow-1: 0 1px 2px rgb(22 24 29 / 0.06);
-    --acx-shadow-2: 0 4px 12px rgb(22 24 29 / 0.10);
-    --acx-shadow-3: 0 12px 32px rgb(22 24 29 / 0.16), 0 2px 6px rgb(22 24 29 / 0.08);
-
     --acx-control-h-sm: 28px;
     --acx-control-h-md: 36px;
-    --acx-popup-w:      360px;
-    --acx-switch-w:     44px;
-    --acx-switch-h:     24px;
-    --acx-switch-thumb: 16px;
-    --acx-switch-shift: 20px;
-    --acx-input-max-w:  148px;
+    --acx-input-max-w:  140px;
+
+    --acx-switch-w:     36px;
+    --acx-switch-h:     20px;
+    --acx-switch-thumb: 14px;
+    --acx-switch-shift: 16px;
+
+    --acx-popup-w: 300px;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -112,18 +128,22 @@
       --acx-surface:        var(--acx-brand-night-900);
       --acx-surface-raised: var(--acx-brand-night-800);
       --acx-surface-sunken: var(--acx-brand-night-950);
+
       --acx-text:           var(--acx-brand-fog-100);
       --acx-text-muted:     var(--acx-brand-fog-300);
       --acx-text-subtle:    var(--acx-brand-fog-400);
       --acx-text-on-accent: var(--acx-brand-night-950);
       --acx-text-disabled:  var(--acx-brand-night-600);
+
       --acx-border:         var(--acx-brand-night-700);
       --acx-border-strong:  var(--acx-brand-night-600);
+
       --acx-accent:         var(--acx-brand-accent-300);
       --acx-accent-hover:   var(--acx-brand-accent-200);
       --acx-accent-active:  var(--acx-brand-accent-400);
       --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
       --acx-focus-ring:     var(--acx-brand-accent-300);
+
       --acx-shadow-1:       0 1px 2px rgb(0 0 0 / 0.15);
       --acx-shadow-2:       0 4px 12px rgb(0 0 0 / 0.25);
       --acx-shadow-3:       0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);
@@ -136,18 +156,22 @@
     --acx-surface:        var(--acx-brand-night-900);
     --acx-surface-raised: var(--acx-brand-night-800);
     --acx-surface-sunken: var(--acx-brand-night-950);
+
     --acx-text:           var(--acx-brand-fog-100);
     --acx-text-muted:     var(--acx-brand-fog-300);
     --acx-text-subtle:    var(--acx-brand-fog-400);
     --acx-text-on-accent: var(--acx-brand-night-950);
     --acx-text-disabled:  var(--acx-brand-night-600);
+
     --acx-border:         var(--acx-brand-night-700);
     --acx-border-strong:  var(--acx-brand-night-600);
+
     --acx-accent:         var(--acx-brand-accent-300);
     --acx-accent-hover:   var(--acx-brand-accent-200);
     --acx-accent-active:  var(--acx-brand-accent-400);
     --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
     --acx-focus-ring:     var(--acx-brand-accent-300);
+
     --acx-shadow-1:       0 1px 2px rgb(0 0 0 / 0.15);
     --acx-shadow-2:       0 4px 12px rgb(0 0 0 / 0.25);
     --acx-shadow-3:       0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);
@@ -160,10 +184,12 @@
   body {
     width: var(--acx-popup-w);
     margin: var(--acx-space-0);
-    padding: var(--acx-space-4);
-    font: var(--acx-text-small);
-    color: var(--acx-text);
+    padding: var(--acx-space-3);
     background: var(--acx-bg);
+    color: var(--acx-text);
+    font-family: var(--acx-font-ui);
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .head {
@@ -311,80 +337,34 @@
   .head-menu a:focus-visible {
     outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
     outline-offset: var(--acx-focus-offset);
-    border-radius: var(--acx-radius-sm);
-  }
-  .head-menu a[hidden] {
-    display: none;
   }
 
-  .section {
-    margin: var(--acx-space-4) var(--acx-space-1) var(--acx-space-2);
-    font: var(--acx-text-caption);
-    letter-spacing: var(--acx-tracking-overline);
-    text-transform: uppercase;
-    color: var(--acx-text-muted);
+  /* ── Hero Action: Open Reader ─────────────────────────────────────────── */
+  .hero-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--acx-space-1);
+    margin-bottom: var(--acx-space-3);
   }
-
-  .panel {
-    background: var(--acx-surface);
-    border-radius: var(--acx-radius-lg);
-    padding: var(--acx-space-0) var(--acx-space-4);
-    border: var(--acx-border-width) solid var(--acx-border);
-  }
-  .row {
+  #open {
     display: flex;
     align-items: center;
-    gap: var(--acx-space-3);
-    min-height: var(--acx-control-h-md);
-    padding: var(--acx-space-2) var(--acx-space-0);
-    border-top: var(--acx-border-width) solid var(--acx-border);
-  }
-  .row:first-child {
-    border-top: var(--acx-space-0);
-  }
-  .body {
-    min-width: var(--acx-space-0);
-  }
-  .body .t {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--acx-space-2);
-    font: var(--acx-text-ui);
-    color: var(--acx-text);
-  }
-  .tag {
-    display: inline-block;
-    padding: var(--acx-space-0) var(--acx-space-1);
-    border-radius: var(--acx-radius-sm);
-    font: var(--acx-text-caption);
-    color: var(--acx-text-muted);
-    background: var(--acx-surface-sunken);
-    border: var(--acx-border-width) solid var(--acx-border);
-  }
-  .tail {
-    margin-left: auto;
-    flex: none;
-  }
-
-  #open {
+    justify-content: center;
     width: 100%;
     height: var(--acx-control-h-md);
     border: var(--acx-border-width) solid var(--acx-accent);
     border-radius: var(--acx-radius-md);
-    margin-top: var(--acx-space-3);
-    padding: var(--acx-space-0) var(--acx-space-4);
-    cursor: pointer;
-    font: var(--acx-text-ui);
-    color: var(--acx-text-on-accent);
     background: var(--acx-accent);
+    color: var(--acx-text-on-accent);
+    font: var(--acx-text-ui);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--acx-shadow-1);
     transition:
       background-color var(--acx-duration-fast) var(--acx-ease-standard),
       border-color var(--acx-duration-fast) var(--acx-ease-standard),
-      color var(--acx-duration-fast) var(--acx-ease-standard);
-  }
-  #open:active {
-    background: var(--acx-accent-active);
-    border-color: var(--acx-accent-active);
+      color var(--acx-duration-fast) var(--acx-ease-standard),
+      opacity var(--acx-duration-fast) var(--acx-ease-standard);
   }
   #open:focus-visible {
     outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
@@ -394,9 +374,64 @@
     background: var(--acx-surface-sunken);
     border-color: var(--acx-border);
     color: var(--acx-text-disabled);
+    box-shadow: none;
     cursor: not-allowed;
   }
+  .open-status {
+    font: var(--acx-text-caption);
+    color: var(--acx-text-muted);
+    text-align: center;
+    min-height: 16px;
+    line-height: 16px;
+  }
 
+  /* ── Panels & Rows ────────────────────────────────────────────────────── */
+  .section {
+    margin: var(--acx-space-3) var(--acx-space-0) var(--acx-space-1);
+    font: var(--acx-text-caption);
+    letter-spacing: var(--acx-tracking-overline);
+    text-transform: uppercase;
+    color: var(--acx-text-muted);
+  }
+  .panel {
+    border: var(--acx-border-width) solid var(--acx-border);
+    border-radius: var(--acx-radius-lg);
+    background: var(--acx-surface);
+    overflow: hidden;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--acx-space-2);
+    padding: var(--acx-space-2) var(--acx-space-3);
+    min-height: var(--acx-control-h-md);
+    border-bottom: var(--acx-border-width) solid var(--acx-border);
+  }
+  .row:last-child {
+    border-bottom: none;
+  }
+  .row .body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .row .t {
+    font: var(--acx-text-ui);
+    color: var(--acx-text);
+  }
+  .row .sub {
+    font: var(--acx-text-caption);
+    color: var(--acx-text-muted);
+    line-height: 1.25;
+  }
+  .row .tail {
+    flex: none;
+  }
+
+  /* ── Controls: Switches ───────────────────────────────────────────────── */
   .switch {
     position: relative;
     width: var(--acx-switch-w);
@@ -448,6 +483,7 @@
     outline-offset: var(--acx-focus-offset);
   }
 
+  /* ── Controls: Shortcut & Buttons ─────────────────────────────────────── */
   .shortcut-wrap {
     display: flex;
     align-items: center;
@@ -497,6 +533,7 @@
     color: var(--acx-text-disabled);
   }
 
+  /* ── Controls: Inputs & Selects ───────────────────────────────────────── */
   .text-input {
     height: var(--acx-control-h-sm);
     max-width: var(--acx-input-max-w);
@@ -507,9 +544,6 @@
     color: var(--acx-text);
     background: var(--acx-surface);
     transition: border-color var(--acx-duration-fast) var(--acx-ease-standard);
-  }
-  .text-input::placeholder {
-    color: var(--acx-text-subtle);
   }
   .text-input:focus-visible {
     border-color: var(--acx-accent);
@@ -579,80 +613,93 @@
   </div>
 </header>
 
-<div class="panel">
-  <div class="row">
-    <span class="body"><span class="t">Extension enabled</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="enabled" aria-label="Extension enabled" checked /><span class="slider"></span></label>
-  </div>
-</div>
+<!-- ── Action: Open Reader ──────────────────────────────────────────────── -->
+<section class="hero-section" aria-label="Assessment Reader Action">
+  <button id="open" type="button" disabled>Open Reader</button>
+  <div id="openStatus" class="open-status" role="status" aria-live="polite">Checking page status...</div>
+</section>
 
-<div class="section">Quiz Reader</div>
+<!-- ── Section 1: Reader ────────────────────────────────────────────────── -->
+<div class="section">Reader</div>
 <div class="panel">
   <div class="row">
-    <span class="body"><span class="t">Auto-show launcher</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="autoLauncher" aria-label="Auto-show launcher" checked /><span class="slider"></span></label>
-  </div>
-  <div class="row">
-    <span class="body"><span class="t">Launcher position</span></span>
-    <select data-key="launcherPos" aria-label="Launcher position" class="text-input tail">
-      <option value="bottom-center">Bottom center</option>
-      <option value="bottom-right">Bottom right</option>
-      <option value="bottom-left">Bottom left</option>
-      <option value="top-right">Top right</option>
-      <option value="top-left">Top left</option>
-    </select>
-  </div>
-  <div class="row">
-    <span class="body"><span class="t">Theme</span></span>
-    <select data-key="theme" aria-label="Reader theme" class="text-input tail">
+    <label class="body" for="themeSelect"><span class="t">Theme</span></label>
+    <select id="themeSelect" data-key="theme" aria-label="Reader theme" class="text-input tail">
       <option value="system">System</option>
       <option value="light">Light</option>
       <option value="dark">Dark</option>
     </select>
   </div>
   <div class="row">
-    <span class="body"><span class="t">Compact cards</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="compact" aria-label="Compact cards" /><span class="slider"></span></label>
+    <label class="body" for="compactToggle"><span class="t">Compact cards</span></label>
+    <label class="switch tail">
+      <input id="compactToggle" type="checkbox" role="switch" data-key="compact" aria-label="Compact cards" />
+      <span class="slider"></span>
+    </label>
   </div>
   <div class="row">
-    <span class="body"><span class="t">Keyboard shortcut</span></span>
-    <label class="switch tail"><input id="shortcutEnabled" type="checkbox" data-key="openShortcutEnabled" aria-label="Enable keyboard shortcut" checked /><span class="slider"></span></label>
-  </div>
-  <div class="row">
-    <span class="body"><span class="t">Shortcut keys</span></span>
-    <span class="shortcut-wrap tail">
-      <button id="shortcut" class="shortcut" type="button" aria-label="Shortcut keys">Alt+Q</button>
-      <button id="shortcutClear" class="shortcut-clear" type="button" aria-label="Clear keyboard shortcut" title="Clear shortcut">Clear</button>
-    </span>
-  </div>
-  <div class="row">
-    <span class="body"><span class="t">Saved deadlines</span></span>
-    <button id="clearDeadlines" class="shortcut-clear tail" type="button" aria-label="Clear saved deadlines" title="Clear saved deadlines">Clear</button>
+    <label class="body" for="textSizeSelect"><span class="t">Text size</span></label>
+    <select id="textSizeSelect" data-key="readerTextSize" aria-label="Reader text size" class="text-input tail">
+      <option value="small">Small (14px)</option>
+      <option value="default">Default (16px)</option>
+      <option value="large">Large (18px)</option>
+    </select>
   </div>
 </div>
 
-<button id="open" type="button" disabled>All Questions</button>
-
-<div class="section">Portal Appearance</div>
+<!-- ── Section 2: Features ──────────────────────────────────────────────── -->
+<div class="section">Features</div>
 <div class="panel">
   <div class="row">
-    <span class="body"><span class="t">Portal font<span class="tag">Beta</span></span></span>
-    <input id="fontName" class="text-input tail" type="text" data-key="fontName"
-      aria-label="Portal font name"
-      placeholder="System default" spellcheck="false" autocomplete="off"
-      title="Type any font installed on your system, e.g. Satoshi Variable" />
+    <label class="body" for="highlightDeadlinesToggle">
+      <span class="t">Highlight graded & deadlines</span>
+    </label>
+    <label class="switch tail">
+      <input id="highlightDeadlinesToggle" type="checkbox" role="switch" data-key="highlightDeadlines" aria-label="Highlight graded assignments and deadlines" checked />
+      <span class="slider"></span>
+    </label>
   </div>
   <div class="row">
-    <span class="body"><span class="t">Hide breadcrumbs</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="hideBreadcrumb" aria-label="Hide breadcrumbs" /><span class="slider"></span></label>
+    <label class="body" for="directPdfToggle">
+      <span class="t">Direct PDF download</span>
+      <span class="sub">Chrome shows a debugging notice while saving</span>
+    </label>
+    <label class="switch tail">
+      <input id="directPdfToggle" type="checkbox" role="switch" data-key="directPdfEnabled" aria-label="Direct PDF download" checked />
+      <span class="slider"></span>
+    </label>
   </div>
   <div class="row">
-    <span class="body"><span class="t">Hide info banners</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="hideBanner" aria-label="Hide info banners" /><span class="slider"></span></label>
+    <div class="body">
+      <span class="t">Keyboard shortcut</span>
+    </div>
+    <div class="shortcut-wrap tail">
+      <button id="shortcut" class="shortcut" type="button" aria-label="Keyboard shortcut keys">Alt+Q</button>
+      <button id="shortcutClear" class="shortcut-clear" type="button" aria-label="Clear keyboard shortcut" title="Clear shortcut">Clear</button>
+    </div>
   </div>
+</div>
+
+<!-- ── Section 3: Portal ────────────────────────────────────────────────── -->
+<div class="section">Portal</div>
+<div class="panel">
   <div class="row">
-    <span class="body"><span class="t">Hide sidebar</span></span>
-    <label class="switch tail"><input type="checkbox" data-key="hideSidebar" aria-label="Hide sidebar" /><span class="slider"></span></label>
+    <label class="body" for="portalFontSelect"><span class="t">Portal font</span></label>
+    <select id="portalFontSelect" data-key="portalFont" aria-label="Portal font" class="text-input tail">
+      <option value="default">Portal default</option>
+      <option value="satoshi">Satoshi</option>
+    </select>
+  </div>
+</div>
+
+<!-- ── Section 4: Data ──────────────────────────────────────────────────── -->
+<div class="section">Data</div>
+<div class="panel">
+  <div class="row">
+    <div class="body">
+      <span class="t">Saved deadlines</span>
+    </div>
+    <button id="clearDeadlines" class="shortcut-clear tail" type="button" aria-label="Clear saved deadlines" title="Clear saved deadlines">Clear</button>
   </div>
 </div>
 

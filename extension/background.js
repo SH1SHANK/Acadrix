@@ -1,12 +1,104 @@
 /**
- * Unfold IITM — Extension Background Service Worker.
+ * Acadrix — Extension Background Service Worker.
  *
  * Handles direct PDF generation for the active assessment tab via
  * chrome.debugger + Page.printToPDF, with a strict single-flight lock,
  * sender-tab verification, and guaranteed detach in a finally block.
+ * Also runs idempotent settings migration on install / update.
  */
 (() => {
   "use strict";
+
+  const DEFAULT_SHORTCUT = "Alt+Q";
+
+  function migrateSettings(store, callback) {
+    if (!store?.get || !store?.set) {
+      if (typeof callback === "function") callback({});
+      return;
+    }
+
+    store.get(null, (items = {}) => {
+      const oldKeys = ["hideBreadcrumb", "hideBanner", "hideSidebar", "fontName"];
+      const hasOldKeys = oldKeys.some((k) => k in items);
+
+      const isMissingDefaults =
+        !("theme" in items) ||
+        !("compact" in items) ||
+        !("readerTextSize" in items) ||
+        !("highlightDeadlines" in items) ||
+        !("directPdfEnabled" in items) ||
+        !("openShortcut" in items) ||
+        !("openShortcutEnabled" in items) ||
+        !("portalFont" in items);
+
+      if (!hasOldKeys && !isMissingDefaults) {
+        if (typeof callback === "function") callback(items);
+        return;
+      }
+
+      const updates = {};
+      const keysToRemove = [];
+
+      // 1. fontName -> portalFont
+      if ("fontName" in items) {
+        if (!("portalFont" in items)) {
+          const rawFont = (items.fontName || "").trim();
+          updates.portalFont = /^satoshi(\s*variable)?$/i.test(rawFont) ? "satoshi" : "default";
+        }
+        keysToRemove.push("fontName");
+      } else if (!("portalFont" in items)) {
+        updates.portalFont = "default";
+      }
+
+      // 2. Remove legacy hide toggles
+      for (const key of ["hideBreadcrumb", "hideBanner", "hideSidebar"]) {
+        if (key in items) {
+          keysToRemove.push(key);
+        }
+      }
+
+      // 3. Preserve shortcut & derive openShortcutEnabled
+      let finalShortcut = items.openShortcut;
+      if (finalShortcut === undefined) {
+        finalShortcut = items.shortcut !== undefined ? items.shortcut : DEFAULT_SHORTCUT;
+      }
+      if (items.openShortcutEnabled === false && items.openShortcut === undefined) {
+        finalShortcut = "";
+      }
+      updates.openShortcut = finalShortcut;
+      updates.openShortcutEnabled = Boolean(finalShortcut && finalShortcut.trim());
+
+      // 4. Missing defaults
+      if (!("theme" in items)) updates.theme = "system";
+      if (!("compact" in items)) updates.compact = false;
+      if (!("readerTextSize" in items)) updates.readerTextSize = "default";
+      if (!("highlightDeadlines" in items)) updates.highlightDeadlines = true;
+      if (!("directPdfEnabled" in items)) updates.directPdfEnabled = true;
+
+      const finalize = () => {
+        store.set(updates, () => {
+          if (typeof callback === "function") callback({ ...items, ...updates });
+        });
+      };
+
+      if (keysToRemove.length > 0 && typeof store.remove === "function") {
+        store.remove(keysToRemove, finalize);
+      } else {
+        finalize();
+      }
+    });
+  }
+
+  // Expose migration helper for unit testing
+  globalThis.__acadrixMigrateSettings = migrateSettings;
+
+  if (typeof chrome !== "undefined" && chrome.runtime?.onInstalled?.addListener) {
+    chrome.runtime.onInstalled.addListener(() => {
+      if (chrome.storage?.local) {
+        migrateSettings(chrome.storage.local);
+      }
+    });
+  }
 
   let printInFlight = false;
 

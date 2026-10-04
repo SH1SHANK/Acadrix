@@ -1404,7 +1404,7 @@
             });
             observedTarget = target;
           } catch (err) {
-            console.warn("[Unfold Traverser] MutationObserver setup warning:", err);
+            console.warn("[Acadrix Traverser] MutationObserver setup warning:", err);
           }
         };
   
@@ -1674,7 +1674,7 @@
           actualNumber: this.portal.getActiveLogicalNumber(),
           reason: err.message,
         });
-        console.warn("[Unfold Traverser] Restoration warning:", this.lastRestorationError.message);
+        console.warn("[Acadrix Traverser] Restoration warning:", this.lastRestorationError.message);
       }
     }
   
@@ -1888,7 +1888,7 @@
         fontStyle.textContent = `
           @font-face {
             font-family: "Satoshi Variable";
-            src: local("Satoshi Variable"), local("Satoshi-Variable"), local("Satoshi");
+            src: url("${getFontUrl("Satoshi-Variable.woff2")}") format("woff2"), local("Satoshi Variable"), local("Satoshi-Variable"), local("Satoshi");
             font-weight: 400 700;
             font-style: normal;
             font-display: swap;
@@ -2023,6 +2023,21 @@
     getTheme() {
       if (!this.host) return "system";
       return this.host.getAttribute("data-theme") || "system";
+    }
+  
+    setTextSize(size) {
+      this.ensure();
+      if (!this.host) return;
+      if (size === "small" || size === "large") {
+        this.host.setAttribute("data-text-size", size);
+      } else {
+        this.host.removeAttribute("data-text-size");
+      }
+    }
+  
+    getTextSize() {
+      if (!this.host) return "default";
+      return this.host.getAttribute("data-text-size") || "default";
     }
   
     toggleTheme() {
@@ -2477,7 +2492,7 @@
         exportPdf(this.documentModel, {
           onFallback: () => this.setPdfFallbackMode?.(true),
         }).catch((err) => {
-          console.error("[Unfold IITM] PDF export failed, falling back to window.print():", err);
+          console.error("[Acadrix] PDF export failed, falling back to window.print():", err);
           this.setPdfFallbackMode?.(true);
           this.printFallbackWithTitle(this.documentModel);
         });
@@ -3164,7 +3179,7 @@
         try {
           fn(nextState, prevState);
         } catch (err) {
-          console.warn("[Unfold Lifecycle] Listener error:", err);
+          console.warn("[Acadrix Lifecycle] Listener error:", err);
         }
       });
     }
@@ -3311,6 +3326,7 @@
           : "Shortcut disabled"
       );
       this.reader.setCompact(this.config.compact);
+  
     }
   
     startObserver() {
@@ -3511,7 +3527,7 @@
         this.lifecycle.transition(LifecycleState.OPEN);
       } catch (err) {
         this.invalidateDocument();
-        console.error("[Unfold Runtime] Error capturing assessment:", err);
+        console.error("[Acadrix Runtime] Error capturing assessment:", err);
         await this.overlay.hide();
         this.launcher.setExpanded?.(false);
         if (this.config.autoLauncher) {
@@ -3645,6 +3661,8 @@
   
     // Backwards compatibility alias for popup.js and existing scripts
     window.__saqOpen = window.__unfoldOpen;
+  
+    
   
     runtime.initialize();
   

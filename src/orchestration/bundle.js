@@ -356,7 +356,7 @@ export function downloadFile(filename, content, mimeType = "application/octet-st
 
     return true;
   } catch (err) {
-    console.warn("[Unfold Bundle] Failed to trigger browser download:", err);
+    console.warn("[Acadrix Bundle] Failed to trigger browser download:", err);
     return false;
   }
 }

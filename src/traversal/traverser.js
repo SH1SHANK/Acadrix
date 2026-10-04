@@ -127,7 +127,7 @@ export class QuestionTraverser {
           });
           observedTarget = target;
         } catch (err) {
-          console.warn("[Unfold Traverser] MutationObserver setup warning:", err);
+          console.warn("[Acadrix Traverser] MutationObserver setup warning:", err);
         }
       };
 
@@ -397,7 +397,7 @@ export class QuestionTraverser {
         actualNumber: this.portal.getActiveLogicalNumber(),
         reason: err.message,
       });
-      console.warn("[Unfold Traverser] Restoration warning:", this.lastRestorationError.message);
+      console.warn("[Acadrix Traverser] Restoration warning:", this.lastRestorationError.message);
     }
   }
 

@@ -56,7 +56,15 @@ export class UnfoldRuntime {
     this.activeContextKey = null;
     this.isDestroyed = false;
 /* @extension-only-start */
-    if (typeof window !== "undefined") window.__saqVersion = "__SAQ_VERSION__";
+    this.config.readerTextSize = "default";
+    this.config.directPdfEnabled = true;
+    if (typeof window !== "undefined") {
+      window.__saqVersion = "__SAQ_VERSION__";
+      window.__saqStatus = () => ({
+        assessment: Boolean(this.portal?.detectAssessment?.()),
+        readerOpen: Boolean(this.reader?.isOpen?.()),
+      });
+    }
 /* @extension-only-end */  }
 
   getContextKey() {
@@ -102,7 +110,7 @@ export class UnfoldRuntime {
         this.portalDecor = initPortalDecor();
       }
     } catch (err) {
-      console.error("[Unfold Runtime] Portal decor initialization failed:", err);
+      console.error("[Acadrix Runtime] Portal decor initialization failed:", err);
     }
 /* @extension-only-end */  }
 
@@ -141,6 +149,17 @@ export class UnfoldRuntime {
         : "Shortcut disabled"
     );
     this.reader.setCompact(this.config.compact);
+/* @extension-only-start */
+    if (this.config.readerTextSize && typeof this.shadowHost.setTextSize === "function") {
+      this.shadowHost.setTextSize(this.config.readerTextSize);
+      if (this.reader?.sheetElement) {
+        this.reader.sheetElement.setAttribute("data-text-size", this.config.readerTextSize);
+      }
+    }
+    if (this.reader) {
+      this.reader.directPdfEnabled = this.config.directPdfEnabled ?? true;
+    }
+/* @extension-only-end */
   }
 
   startObserver() {
@@ -341,7 +360,7 @@ export class UnfoldRuntime {
       this.lifecycle.transition(LifecycleState.OPEN);
     } catch (err) {
       this.invalidateDocument();
-      console.error("[Unfold Runtime] Error capturing assessment:", err);
+      console.error("[Acadrix Runtime] Error capturing assessment:", err);
       await this.overlay.hide();
       this.launcher.setExpanded?.(false);
       if (this.config.autoLauncher) {
@@ -485,10 +504,10 @@ export class UnfoldRuntime {
         return;
       }
       if (err.name === "CancellationError") {
-        console.log("[Unfold Runtime] Export cancelled.");
+        console.log("[Acadrix Runtime] Export cancelled.");
         this.reader.clearStatus?.();
       } else {
-        console.error("[Unfold Runtime] Export failed:", err);
+        console.error("[Acadrix Runtime] Export failed:", err);
         const errMsg = this.formatExportErrorMessage(err);
         this.reader.notify?.(errMsg, "error", 5200);
         alert(errMsg);

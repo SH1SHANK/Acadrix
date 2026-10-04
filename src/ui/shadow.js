@@ -36,7 +36,7 @@ export class ShadowHost {
       fontStyle.textContent = `
         @font-face {
           font-family: "Satoshi Variable";
-          src: local("Satoshi Variable"), local("Satoshi-Variable"), local("Satoshi");
+          src: url("${getFontUrl("Satoshi-Variable.woff2")}") format("woff2"), local("Satoshi Variable"), local("Satoshi-Variable"), local("Satoshi");
           font-weight: 400 700;
           font-style: normal;
           font-display: swap;
@@ -171,6 +171,21 @@ export class ShadowHost {
   getTheme() {
     if (!this.host) return "system";
     return this.host.getAttribute("data-theme") || "system";
+  }
+
+  setTextSize(size) {
+    this.ensure();
+    if (!this.host) return;
+    if (size === "small" || size === "large") {
+      this.host.setAttribute("data-text-size", size);
+    } else {
+      this.host.removeAttribute("data-text-size");
+    }
+  }
+
+  getTextSize() {
+    if (!this.host) return "default";
+    return this.host.getAttribute("data-text-size") || "default";
   }
 
   toggleTheme() {

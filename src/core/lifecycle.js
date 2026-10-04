@@ -25,7 +25,7 @@ export class Lifecycle {
       try {
         fn(nextState, prevState);
       } catch (err) {
-        console.warn("[Unfold Lifecycle] Listener error:", err);
+        console.warn("[Acadrix Lifecycle] Listener error:", err);
       }
     });
   }

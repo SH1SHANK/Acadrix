@@ -30,9 +30,36 @@ export function initPortalDecor({
   let isDestroyed = false;
   let observer = null;
   let storageListener = null;
+  let highlightDeadlinesEnabled = true;
+
+  function removeAllDecorations() {
+    try {
+      const decors = doc.querySelectorAll?.(IITM_SELECTORS.decor.decorHost);
+      decors?.forEach?.((el) => {
+        if (el.hasAttribute?.(IITM_SELECTORS.decor.decorAttr)) {
+          el.remove();
+        }
+      });
+    } catch {}
+  }
+
+  function startObserver() {
+    if (!observer && highlightDeadlinesEnabled && !isDestroyed) {
+      observer = createSidebarObserver(doc, () => {
+        if (highlightDeadlinesEnabled) runCycle();
+      });
+    }
+  }
+
+  function stopObserver() {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+  }
 
   async function runCycle() {
-    if (isDestroyed) return;
+    if (isDestroyed || !highlightDeadlinesEnabled) return;
     try {
       await captureStartPage(doc, decorStore, now);
       await captureGrades(doc, decorStore, now);
@@ -42,28 +69,54 @@ export function initPortalDecor({
     }
   }
 
-  // Initial execution cycle
-  runCycle();
+  // Check initial highlightDeadlines preference
+  try {
+    if (typeof chrome !== "undefined" && chrome?.storage?.local) {
+      chrome.storage.local.get({ highlightDeadlines: true }, (items) => {
+        if (isDestroyed) return;
+        highlightDeadlinesEnabled = items.highlightDeadlines ?? true;
+        if (highlightDeadlinesEnabled) {
+          runCycle();
+          startObserver();
+        } else {
+          removeAllDecorations();
+          stopObserver();
+        }
+      });
+    } else {
+      runCycle();
+      startObserver();
+    }
+  } catch {
+    runCycle();
+    startObserver();
+  }
 
-  // Listen for storage changes from other tabs or background
+  // Listen for storage changes from other tabs, popup, or background
   try {
     if (typeof chrome !== "undefined" && chrome?.storage?.onChanged) {
       storageListener = (changes, areaName) => {
         if (isDestroyed) return;
         if (areaName === "local" || !areaName) {
-          if (PORTAL_DECOR_STORAGE_KEY in changes) {
-            decorateSidebar(doc, decorStore, now);
+          if ("highlightDeadlines" in changes) {
+            highlightDeadlinesEnabled = changes.highlightDeadlines.newValue ?? true;
+            if (highlightDeadlinesEnabled) {
+              startObserver();
+              runCycle();
+            } else {
+              stopObserver();
+              removeAllDecorations();
+            }
+          } else if (PORTAL_DECOR_STORAGE_KEY in changes) {
+            if (highlightDeadlinesEnabled) {
+              decorateSidebar(doc, decorStore, now);
+            }
           }
         }
       };
       chrome.storage.onChanged.addListener(storageListener);
     }
   } catch {}
-
-  // Mutation observer for sidebar navigation and page transitions
-  observer = createSidebarObserver(doc, () => {
-    runCycle();
-  });
 
   const onPageHide = () => destroy();
   if (typeof window !== "undefined") {
@@ -74,8 +127,7 @@ export function initPortalDecor({
     if (isDestroyed) return;
     isDestroyed = true;
 
-    observer?.disconnect?.();
-    observer = null;
+    stopObserver();
 
     if (storageListener && typeof chrome !== "undefined" && chrome?.storage?.onChanged) {
       try {
@@ -88,15 +140,7 @@ export function initPortalDecor({
       window.removeEventListener("pagehide", onPageHide);
     }
 
-    // Cleanly remove any rendered decoration hosts
-    try {
-      const decors = doc.querySelectorAll?.(IITM_SELECTORS.decor.decorHost);
-      decors?.forEach?.((el) => {
-        if (el.hasAttribute?.(IITM_SELECTORS.decor.decorAttr)) {
-          el.remove();
-        }
-      });
-    } catch {}
+    removeAllDecorations();
   }
 
   return {

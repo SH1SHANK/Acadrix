@@ -28,6 +28,13 @@ const CSS = typeof __CSS__ !== "undefined" ? __CSS__ : "";
   // Backwards compatibility alias for popup.js and existing scripts
   window.__saqOpen = window.__unfoldOpen;
 
+  /* @extension-only-start */
+  window.__saqStatus = () => ({
+    assessment: Boolean(runtime.portal?.detectAssessment?.()),
+    readerOpen: Boolean(runtime.reader?.isOpen?.()),
+  });
+  /* @extension-only-end */
+
   runtime.initialize();
 
   // If invoked via bookmarklet in the page execution world, auto-open if quiz is present

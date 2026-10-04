@@ -102,13 +102,16 @@
   --acx-font-display: "Outfit", "Satoshi Variable", system-ui, sans-serif;
   --acx-font-mono:    "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
+  --acx-text-body-size:        16px;
+  --acx-text-body-line-height: 26px;
+
   --acx-text-display:      600 32px/40px var(--acx-font-display);
   --acx-text-h1:           600 26px/34px var(--acx-font-display);
   --acx-text-h2:           600 20px/28px var(--acx-font-display);
   --acx-text-wordmark:     600 18px/24px var(--acx-font-display);
   --acx-text-h3:           700 17px/24px var(--acx-font-ui);
-  --acx-text-body:         400 16px/26px var(--acx-font-ui);
-  --acx-text-body-medium:  500 16px/26px var(--acx-font-ui);
+  --acx-text-body:         400 var(--acx-text-body-size)/var(--acx-text-body-line-height) var(--acx-font-ui);
+  --acx-text-body-medium:  500 var(--acx-text-body-size)/var(--acx-text-body-line-height) var(--acx-font-ui);
   --acx-text-ui:           500 14px/20px var(--acx-font-ui);
   --acx-text-ui-regular:   400 14px/20px var(--acx-font-ui);
   --acx-text-small:        400 13px/18px var(--acx-font-ui);
@@ -274,6 +277,19 @@
   --acx-shadow-1:        0 1px 2px rgb(0 0 0 / 0.15);
   --acx-shadow-2:        0 4px 12px rgb(0 0 0 / 0.25);
   --acx-shadow-3:        0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);
+}
+
+/* ── Text Size Strategy: Small (14px), Default (16px), Large (18px) for Reader body ── */
+:host([data-text-size="small"]),
+#saq-sheet[data-text-size="small"] {
+  --acx-text-body-size: 14px;
+  --acx-text-body-line-height: 22px;
+}
+
+:host([data-text-size="large"]),
+#saq-sheet[data-text-size="large"] {
+  --acx-text-body-size: 18px;
+  --acx-text-body-line-height: 28px;
 }
 
 /* ── Coarse Pointer Target Sizing (§9) ──────────────────────────────────── */
