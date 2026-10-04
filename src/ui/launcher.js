@@ -24,8 +24,8 @@ export class LauncherButton {
       btn.dataset.pos = position;
       btn.setAttribute("aria-haspopup", "dialog");
       btn.setAttribute("aria-expanded", "false");
-      btn.setAttribute("aria-label", "View all questions in assessment reader");
-      btn.title = "View all questions (Alt+Q)";
+      btn.setAttribute("aria-label", "Open Acadrix");
+      btn.title = "Open Acadrix (Alt+Q)";
       btn.innerHTML = `${ICONS.launch}<span>All Questions</span>`;
       root.appendChild(btn);
     }

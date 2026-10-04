@@ -1046,6 +1046,8 @@
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  scrollbar-color: var(--acx-border-strong) transparent;
+  scrollbar-width: thin;
   background: var(--acx-bg);
   padding:
     var(--acx-space-8)
@@ -1182,6 +1184,8 @@
   border-radius: var(--acx-radius-lg);
   padding: var(--acx-space-6);
   scroll-margin-top: var(--acx-anchor-offset);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 180px;
 }
 .saq-qheader {
   display: flex;

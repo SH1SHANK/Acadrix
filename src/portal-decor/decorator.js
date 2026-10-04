@@ -18,9 +18,9 @@ const MONTH_NAMES = Object.freeze([
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ]);
 
-const WARNING_ICON_SVG = `<svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M7 0L14 13H0L7 0Z" fill="currentColor"/><path d="M6.25 5H7.75V8.5H6.25V5ZM6.25 9.5H7.75V11H6.25V9.5Z" fill="var(--acx-surface, #FFF)"/></svg>`;
+const WARNING_ICON_SVG = `<svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M7 0L14 13H0L7 0Z" fill="currentColor"/><path d="M6.25 5H7.75V8.5H6.25V5ZM6.25 9.5H7.75V11H6.25V9.5Z" fill="var(--acx-surface)"/></svg>`;
 
-const ERROR_ICON_SVG = `<svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><circle cx="7" cy="7" r="7" fill="currentColor"/><path d="M6.25 3.5H7.75V7.5H6.25V3.5ZM6.25 8.5H7.75V10.5H6.25V8.5Z" fill="var(--acx-surface, #FFF)"/></svg>`;
+const ERROR_ICON_SVG = `<svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><circle cx="7" cy="7" r="7" fill="currentColor"/><path d="M6.25 3.5H7.75V7.5H6.25V3.5ZM6.25 8.5H7.75V10.5H6.25V8.5Z" fill="var(--acx-surface)"/></svg>`;
 
 const DECOR_STYLES = `
 :host {
@@ -31,60 +31,60 @@ const DECOR_STYLES = `
 .acx-decor-container {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 3px;
+  gap: var(--acx-space-1);
+  margin-top: var(--acx-space-1);
   pointer-events: none;
 }
 .acx-badge-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--acx-space-1);
 }
 .acx-accent-bar {
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--acx-accent, #2F4BDB);
+  left: var(--acx-space-0);
+  top: var(--acx-space-0);
+  bottom: var(--acx-space-0);
+  width: var(--acx-border-width-strong);
+  background: var(--acx-accent);
 }
 .acx-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0 4px;
-  border-radius: var(--acx-radius-sm, 4px);
-  font-family: var(--acx-font-ui, "Satoshi Variable", "Satoshi", system-ui, sans-serif);
+  padding: var(--acx-space-0) var(--acx-space-1);
+  border-radius: var(--acx-radius-sm);
+  font-family: var(--acx-font-ui);
   font-size: 10px;
   font-weight: 600;
   line-height: 14px;
-  letter-spacing: var(--acx-tracking-overline, 0.04em);
+  letter-spacing: var(--acx-tracking-overline);
   text-transform: uppercase;
 }
 .acx-badge-graded {
-  color: var(--acx-accent, #2F4BDB);
-  background: var(--acx-accent-subtle, rgb(47 75 219 / 0.08));
-  border: 1px solid var(--acx-accent, #2F4BDB);
+  color: var(--acx-accent);
+  background: var(--acx-accent-subtle);
+  border: var(--acx-border-width) solid var(--acx-accent);
 }
 .acx-badge-practice {
-  color: var(--acx-text-muted, #5B606B);
-  background: var(--acx-surface-sunken, #F3F3F0);
-  border: 1px solid var(--acx-border, #E4E4DF);
+  color: var(--acx-text-muted);
+  background: var(--acx-surface-sunken);
+  border: var(--acx-border-width) solid var(--acx-border);
 }
 .acx-deadline-row {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-family: var(--acx-font-ui, "Satoshi Variable", "Satoshi", system-ui, sans-serif);
+  gap: var(--acx-space-1);
+  font-family: var(--acx-font-ui);
   font-size: 11px;
   line-height: 14px;
-  color: var(--acx-text-muted, #5B606B);
+  color: var(--acx-text-muted);
 }
 .acx-deadline-row.is-warning {
-  color: var(--acx-warning, #9A6700);
+  color: var(--acx-warning);
   font-weight: 500;
 }
 .acx-deadline-row.is-error {
-  color: var(--acx-error, #C62828);
+  color: var(--acx-error);
   font-weight: 500;
 }
 .acx-deadline-icon {
@@ -93,8 +93,8 @@ const DECOR_STYLES = `
   flex: none;
 }
 .acx-deadline-icon svg {
-  width: 12px;
-  height: 12px;
+  width: var(--acx-icon-sm);
+  height: var(--acx-icon-sm);
 }
 @media (forced-colors: active) {
   .acx-accent-bar {

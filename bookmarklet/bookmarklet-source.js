@@ -2086,8 +2086,8 @@
         btn.dataset.pos = position;
         btn.setAttribute("aria-haspopup", "dialog");
         btn.setAttribute("aria-expanded", "false");
-        btn.setAttribute("aria-label", "View all questions in assessment reader");
-        btn.title = "View all questions (Alt+Q)";
+        btn.setAttribute("aria-label", "Open Acadrix");
+        btn.title = "Open Acadrix (Alt+Q)";
         btn.innerHTML = `${ICONS.launch}<span>All Questions</span>`;
         root.appendChild(btn);
       }
@@ -2385,7 +2385,7 @@
             const title = attrs.title ? ` title="${escapeHtml(attrs.title)}"` : "";
             const width = attrs.width ? ` width="${escapeHtml(String(attrs.width))}"` : "";
             const height = attrs.height ? ` height="${escapeHtml(String(attrs.height))}"` : "";
-            return `<img src="${src}" alt="${alt}"${title}${width}${height} />`;
+            return `<img src="${src}" alt="${alt}"${title}${width}${height} loading="lazy" decoding="async" />`;
           }
   
           case ContentType.FIGURE: {

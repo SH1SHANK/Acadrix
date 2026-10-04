@@ -144,7 +144,7 @@ export function renderContentNodes(nodes, options = {}) {
           const title = attrs.title ? ` title="${escapeHtml(attrs.title)}"` : "";
           const width = attrs.width ? ` width="${escapeHtml(String(attrs.width))}"` : "";
           const height = attrs.height ? ` height="${escapeHtml(String(attrs.height))}"` : "";
-          return `<img src="${src}" alt="${alt}"${title}${width}${height} />`;
+          return `<img src="${src}" alt="${alt}"${title}${width}${height} loading="lazy" decoding="async" />`;
         }
 
         case ContentType.FIGURE: {
