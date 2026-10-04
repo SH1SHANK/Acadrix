@@ -614,6 +614,10 @@
       questionHeader: ".question-header, .question-label, .header .question-header",
       assessmentTitle: ".assignment-title, .assessment-title, h1.title, .breadcrumb, h1, h2",
       assessmentSubtitle: ".course-content .subtitle, .subtitle, .unit-subtitle, .header-subtitle, .assignment-subtitle",
+      breadcrumbCurrent: "nav.breadcrumb .breadcrumb-item.current",
+      selectedChildRow: ".child-row.selected",
+      unitContainer: ".unit-container",
+      unitTitle: ".unit-title",
       activeUnitHeader: ".unit-header.active, .unit-header[aria-expanded='true'], .unit-container.active .unit-header, .unit-container:has(.child-row.active) .unit-header, .unit-header",
       courseTitle: ".side-nav-title, .course-title, .header-course-title",
       totalCountRegex: /Question\s+\d+\s*\/\s*(\d+)/i,
@@ -1098,65 +1102,22 @@
         .trim();
     }
   
-    /**
-     * Discovers the assessment week string following the fallback order:
-     * 1. Header subtitle (e.g. "Week 1" in .course-content .subtitle) [PROVISIONAL: pending real course-content-graded.html fixture]
-     * 2. Assessment title (e.g. "Week 1 Graded Assignment - 1")
-     * 3. Sidebar's active .unit-header (or expanded unit-container's .unit-header) [PROVISIONAL: pending real sidebar-week1.html fixture]
-     *
-     * Note: Selectors for subtitle and sidebar unit-headers are provisional guesses
-     * and must be verified against real portal DOM captures once fixtures are provided.
-     * @returns {string}
-     */
+    /** Discovers the assessment unit/week from the real portal's breadcrumb, sidebar, or title. */
     getAssessmentWeek() {
       const weekRe = /\bweek[\s\-_:]*(\d{1,2})\b/i;
   
-      // 1. Header subtitle
-      const subtitleCandidates = $$(
-        IITM_SELECTORS.metadata.assessmentSubtitle ||
-          ".course-content .subtitle, .subtitle, .unit-subtitle, .header-subtitle, .assignment-subtitle",
-        this.doc
-      );
-      for (const el of subtitleCandidates) {
-        if (el.closest?.(".question-body, .backend-html, app-assessment-question")) continue;
-        const txt = (el.textContent || "").replace(/\s+/g, " ").trim();
-        const m = txt.match(weekRe);
-        if (m) return `Week ${m[1]}`;
-      }
+      const breadcrumb = $(IITM_SELECTORS.metadata.breadcrumbCurrent, this.doc);
+      const breadcrumbMatch = (breadcrumb?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
+      if (breadcrumbMatch) return `Week ${breadcrumbMatch[1]}`;
   
-      // 2. Assessment title
-      const titleTxt = this.getAssessmentTitle();
-      const titleMatch = titleTxt.match(weekRe);
-      if (titleMatch) {
-        return `Week ${titleMatch[1]}`;
-      }
+      const selected = $(IITM_SELECTORS.metadata.selectedChildRow, this.doc);
+      const unit = selected?.closest?.(IITM_SELECTORS.metadata.unitContainer);
+      const unitText = unit ? ($(IITM_SELECTORS.metadata.unitTitle, unit)?.textContent || "") : "";
+      const unitMatch = unitText.replace(/\s+/g, " ").trim().match(weekRe);
+      if (unitMatch) return `Week ${unitMatch[1]}`;
   
-      // 3. Sidebar's active .unit-header
-      const unitContainers = $$(".unit-container", this.doc);
-      for (const container of unitContainers) {
-        const hasActiveChild =
-          container.classList?.contains("active") ||
-          Boolean(
-            $(
-              ".child-row.active, .child-row.selected, .child-row[aria-current='true'], .unit-header.active, .unit-header[aria-expanded='true'], .child-container",
-              container
-            )
-          );
-        if (hasActiveChild) {
-          const header = $(".unit-header", container);
-          const txt = (header?.textContent || "").replace(/\s+/g, " ").trim();
-          const m = txt.match(weekRe);
-          if (m) return `Week ${m[1]}`;
-        }
-      }
-  
-      const activeHeaders = $$(".unit-header.active, .unit-header[aria-expanded='true']", this.doc);
-      for (const header of activeHeaders) {
-        const txt = (header.textContent || "").replace(/\s+/g, " ").trim();
-        const m = txt.match(weekRe);
-        if (m) return `Week ${m[1]}`;
-      }
-  
+      const titleMatch = this.getAssessmentTitle().match(weekRe);
+      if (titleMatch) return `Week ${titleMatch[1]}`;
       return "";
     }
   }
