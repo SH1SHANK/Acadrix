@@ -7,11 +7,32 @@ const openBtn = document.getElementById("open");
 const shortcutBtn = document.getElementById("shortcut");
 const shortcutClear = document.getElementById("shortcutClear");
 const shortcutEnabled = document.getElementById("shortcutEnabled");
+const headMenuToggle = document.getElementById("headMenuToggle");
+const headMenu = document.getElementById("headMenu");
 const mf = chrome.runtime.getManifest();
 
 document.getElementById("ver").textContent = "v" + mf.version;
 const repo = document.getElementById("repo");
 if (mf.homepage_url) { repo.href = mf.homepage_url; repo.hidden = false; }
+
+const setHeadMenu = (open) => {
+  if (!headMenuToggle || !headMenu) return;
+  headMenu.hidden = !open;
+  headMenuToggle.setAttribute("aria-expanded", String(open));
+};
+headMenuToggle?.addEventListener("click", () => {
+  setHeadMenu(headMenu?.hidden ?? true);
+});
+window.addEventListener("pointerdown", (event) => {
+  if (!headMenu?.hidden && !headMenu.contains(event.target) && event.target !== headMenuToggle) {
+    setHeadMenu(false);
+  }
+});
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || headMenu?.hidden) return;
+  setHeadMenu(false);
+  headMenuToggle?.focus?.();
+});
 
 const activeTab = async () =>
   (await chrome.tabs.query({ active: true, currentWindow: true }))[0];

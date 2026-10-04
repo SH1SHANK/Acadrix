@@ -158,32 +158,90 @@
 
   .head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: var(--acx-space-2);
     margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-3);
+  }
+  .head .brand {
+    min-width: var(--acx-space-0);
   }
   .head .name {
     font: var(--acx-text-wordmark);
     letter-spacing: var(--acx-tracking-tight);
     color: var(--acx-text);
   }
-  .head .meta {
+  .head .subtitle {
+    margin-left: var(--acx-space-2);
+    color: var(--acx-text-muted);
+    font: var(--acx-text-caption);
+  }
+  .head-actions {
     margin-left: auto;
+    position: relative;
+  }
+  .head-menu-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: var(--acx-control-h-sm);
+    height: var(--acx-control-h-sm);
+    border: var(--acx-border-width) solid transparent;
+    border-radius: var(--acx-radius-md);
+    padding: var(--acx-space-0);
+    cursor: pointer;
+    color: var(--acx-text-muted);
+    background: transparent;
+    font: var(--acx-text-ui);
+    letter-spacing: var(--acx-tracking-overline);
+  }
+  .head-menu-toggle:hover,
+  .head-menu-toggle[aria-expanded="true"] {
+    color: var(--acx-text);
+    background: var(--acx-accent-subtle);
+    border-color: var(--acx-border);
+  }
+  .head-menu-toggle:focus-visible {
+    outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
+    outline-offset: var(--acx-focus-offset);
+  }
+  .head-menu {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + var(--acx-space-1));
+    right: var(--acx-space-0);
+    min-width: 148px;
+    padding: var(--acx-space-2);
+    border: var(--acx-border-width) solid var(--acx-border);
+    border-radius: var(--acx-radius-md);
+    background: var(--acx-surface-raised);
+    box-shadow: 0 var(--acx-space-2) var(--acx-space-5) rgb(0 0 0 / 0.12);
+  }
+  .head-menu[hidden] {
+    display: none;
+  }
+  .head-menu .version {
+    display: block;
     color: var(--acx-text-muted);
     font: var(--acx-text-mono-caption);
     font-variant-numeric: tabular-nums;
+    padding: var(--acx-space-1) var(--acx-space-2) var(--acx-space-2);
   }
-  .head .meta a {
+  .head-menu a {
+    display: block;
+    padding: var(--acx-space-2);
     color: var(--acx-accent);
     text-decoration: underline;
     text-underline-offset: var(--acx-focus-offset);
+    border-radius: var(--acx-radius-sm);
   }
-  .head .meta a:focus-visible {
+  .head-menu a:hover {
+    background: var(--acx-accent-subtle);
+  }
+  .head-menu a:focus-visible {
     outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
     outline-offset: var(--acx-focus-offset);
     border-radius: var(--acx-radius-sm);
   }
-  .head .meta a[hidden] {
+  .head-menu a[hidden] {
     display: none;
   }
 
@@ -411,10 +469,20 @@
 </style>
 </head>
 <body>
-<div class="head">
-  <span class="name">[unfold]</span>
-  <span class="meta"><span id="ver"></span><a id="repo" href="#" target="_blank" rel="noopener" hidden> · GitHub</a></span>
-</div>
+<header class="head">
+  <div class="brand">
+    <span class="name">[unfold]</span>
+    <span class="subtitle">IITM study tools</span>
+  </div>
+  <div class="head-actions">
+    <button id="headMenuToggle" class="head-menu-toggle" type="button"
+      aria-label="More options" aria-controls="headMenu" aria-expanded="false">•••</button>
+    <div id="headMenu" class="head-menu" aria-label="More options" hidden>
+      <span class="version" role="status"><span id="ver"></span></span>
+      <a id="repo" href="#" target="_blank" rel="noopener" hidden>GitHub repository</a>
+    </div>
+  </div>
+</header>
 
 <div class="panel">
   <div class="row">

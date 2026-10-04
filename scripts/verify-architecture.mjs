@@ -187,6 +187,40 @@ check("Bookmarklet target contains only allowed compatibility modules", () => {
       throw new Error(`BOOKMARKLET_MODULES is missing required dependency: ${mod}`);
     }
   }
+
+  const requiredSharedReaderModules = [
+    "src/ui/reader-content.js",
+    "src/ui/reader-interactions.js",
+  ];
+  for (const mod of requiredSharedReaderModules) {
+    if (!bookmarkletModuleList.includes(mod)) {
+      throw new Error(`BOOKMARKLET_MODULES is missing shared Reader module: ${mod}`);
+    }
+    if (!buildMjsContent.match(/(?:const|export const)\s+EXTENSION_MODULES\s*=\s*\[([\s\S]*?)\];/)?.[1]?.includes(mod)) {
+      throw new Error(`EXTENSION_MODULES is missing shared Reader module: ${mod}`);
+    }
+  }
+
+  if (bookmarkletModuleList.includes("src/ui/reader-ai.js")) {
+    throw new Error("BOOKMARKLET_MODULES must not contain extension-only src/ui/reader-ai.js");
+  }
+});
+
+// 9a. Verify Reader shared/extension-only boundary
+check("Reader shared code is marker-free and extension-only code stays isolated", () => {
+  const readerContent = readFileSync("src/ui/reader.js", "utf8");
+  const forbiddenReaderStrings = ["@extension-only", "saq-ai", "copy-ai", "generateAiPrompt", "chrome."];
+  for (const str of forbiddenReaderStrings) {
+    if (readerContent.includes(str)) {
+      throw new Error(`src/ui/reader.js contains extension-only Reader string: "${str}"`);
+    }
+  }
+
+  const buildMjsContent = readFileSync("build.mjs", "utf8");
+  const extensionMatch = buildMjsContent.match(/(?:const|export const)\s+EXTENSION_MODULES\s*=\s*\[([\s\S]*?)\];/);
+  if (!extensionMatch?.[1]?.includes("src/ui/reader-ai.js")) {
+    throw new Error("EXTENSION_MODULES must contain src/ui/reader-ai.js");
+  }
 });
 
 // 9b. Verify Extension-Only Marker Balancing and Nesting Safety

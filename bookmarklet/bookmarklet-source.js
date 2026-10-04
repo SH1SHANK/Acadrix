@@ -2239,14 +2239,8 @@
     }
   }
 
-  // ── [Module: src/ui/reader.js] ──
-  /**
-   * Reader Drawer Component.
-   * Encapsulated bottom sheet for read-only assignment inspection and printing.
-   * Mounts entirely within the isolated ShadowRoot using the Acadrix Design System.
-   */
-  
-  
+  // ── [Module: src/ui/reader-content.js] ──
+  /** Shared Reader content renderer. */
   
   
   
@@ -2423,6 +2417,148 @@
       })
       .join("");
   }
+
+  // ── [Module: src/ui/reader-interactions.js] ──
+  /** Shared Reader interaction behavior. */
+  
+  function handleReaderKeyDown(e) {
+    if (!this.sheetElement || !this.isOpen()) return;
+  
+    if (this.runReaderFeatureHook("handleKeydown", e)) return;
+    if (e.key !== "Tab") return;
+  
+    const focusables = Array.from(
+      this.sheetElement.querySelectorAll(
+        "button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
+      )
+    ).filter((el) => {
+      if (el.hasAttribute("disabled")) return false;
+      if (el.closest?.("[hidden]")) return false;
+      return true;
+    });
+  
+    if (focusables.length === 0) return;
+  
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = this.shadowHost.root?.activeElement;
+  
+    if (e.shiftKey) {
+      if (active === first || active === this.sheetElement || !active) {
+        e.preventDefault();
+        last.focus?.();
+      }
+    } else if (active === last) {
+      e.preventDefault();
+      first.focus?.();
+    }
+  }
+  
+  function handleReaderActionClick(e) {
+    if (this.runReaderFeatureHook("handleActionClick", e)) return;
+  
+    const btn = e.target.closest?.("[data-act]");
+    if (!btn || btn.hasAttribute("disabled") || btn.classList.contains("is-busy")) return;
+  
+    e.preventDefault();
+    const action = btn.dataset.act;
+  
+    if (action === "refresh") {
+      this.closeAiPopover?.({ restoreFocus: false });
+      if (this.onRefreshCallback) this.onRefreshCallback();
+    } else if (action === "export-md") {
+      this.closeAiPopover?.({ restoreFocus: false });
+      if (this.onExportCallback) this.onExportCallback("markdown");
+    } else if (action === "print") {
+      this.closeAiPopover?.({ restoreFocus: false });
+      if (this.onExportCallback) {
+        this.onExportCallback("pdf");
+      } else if (typeof exportPdf === "function" && this.documentModel) {
+        exportPdf(this.documentModel, {
+          onFallback: () => this.setPdfFallbackMode?.(true),
+        }).catch((err) => {
+          console.error("[Unfold IITM] PDF export failed, falling back to window.print():", err);
+          this.setPdfFallbackMode?.(true);
+          this.printFallbackWithTitle(this.documentModel);
+        });
+      } else {
+        this.printFallbackWithTitle(this.documentModel);
+      }
+    } else if (action === "export-bundle") {
+      this.closeAiPopover?.({ restoreFocus: false });
+      if (this.onExportCallback) this.onExportCallback("bundle");
+    } else if (action === "theme") {
+      const next = this.shadowHost.toggleTheme?.() || "light";
+      btn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+      if (this.onThemeCallback) this.onThemeCallback(next);
+    } else if (action === "dismiss") {
+      this.dismiss();
+    }
+  }
+  
+  function wireReaderDrag(grip, sheet) {
+    if (!grip) return;
+  
+    this.boundPointerMove = (e) => {
+      if (!this.dragStart) return;
+      const dy = Math.max(0, e.clientY - this.dragStart.y);
+      sheet.style.transform = `translateY(${dy}px)`;
+      if (this.backdropElement) {
+        this.backdropElement.style.opacity = String(Math.max(0, 1 - dy / (window.innerHeight * 0.6)));
+      }
+    };
+  
+    this.boundPointerUp = (e) => {
+      if (!this.dragStart) return;
+      const dy = Math.max(0, e.clientY - this.dragStart.y);
+      const velocity = dy / Math.max(1, Date.now() - this.dragStart.t);
+  
+      grip.releasePointerCapture?.(e.pointerId);
+      grip.removeEventListener("pointermove", this.boundPointerMove);
+      grip.removeEventListener("pointerup", this.boundPointerUp);
+  
+      sheet.classList.remove("is-dragging");
+      sheet.style.transform = "";
+      if (this.backdropElement) {
+        this.backdropElement.style.opacity = "";
+      }
+  
+      this.dragStart = null;
+      if (dy > 140 || velocity > 0.55) this.dismiss();
+    };
+  
+    grip.addEventListener("pointerdown", (e) => {
+      if (e.button) return;
+      this.dragStart = { y: e.clientY, t: Date.now() };
+      sheet.classList.add("is-dragging");
+      grip.setPointerCapture?.(e.pointerId);
+      grip.addEventListener("pointermove", this.boundPointerMove);
+      grip.addEventListener("pointerup", this.boundPointerUp);
+    });
+  }
+
+  // ── [Module: src/ui/reader.js] ──
+  /**
+   * Reader Drawer Component.
+   * Encapsulated bottom sheet for read-only assignment inspection and printing.
+   * Mounts entirely within the isolated ShadowRoot using the Acadrix Design System.
+   */
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  const readerFeatureFactories = [];
+  if (typeof createReaderAiFeature === "function") {
+    readerFeatureFactories.push(createReaderAiFeature);
+  }
+  
+  
   
   class ReaderDrawer {
     constructor(shadowHost, portal) {
@@ -2432,7 +2568,6 @@
       this.backdropElement = null;
       this.clockInterval = null;
       this.statusTimer = null;
-      this.aiCopyTimer = null;
       this.onRefreshCallback = null;
       this.onDismissCallback = null;
       this.onExportCallback = null;
@@ -2442,13 +2577,39 @@
       this.boundPointerMove = null;
       this.boundPointerUp = null;
       this.boundKeyDown = null;
-      this.aiScopeState = null;
-      this.aiPopoverOpenedOnce = false;
-      this.aiPreviewExpanded = false;
       this.pdfDirectFallbackActive = false;
+      this.features = readerFeatureFactories
+        .map((factory) => factory(this))
+        .filter(Boolean);
     }
   
-    
+    runReaderFeatureHook(name, payload) {
+      let handled = false;
+      for (const feature of this.features) {
+        const hook = feature?.[name];
+        if (typeof hook === "function" && hook.call(feature, payload) === true) {
+          handled = true;
+        }
+      }
+      return handled;
+    }
+  
+    callReaderFeatureMethod(name, ...args) {
+      for (const feature of this.features) {
+        const method = feature?.[name];
+        if (typeof method === "function") return method.call(feature, ...args);
+      }
+      return undefined;
+    }
+  
+    isDirectPdfAvailable() {
+      return this.callReaderFeatureMethod("isDirectPdfAvailable") ?? false;
+    }
+  
+    setPdfFallbackMode(isFallback) {
+      this.pdfDirectFallbackActive = Boolean(isFallback);
+      this.runReaderFeatureHook("documentChange", { reason: "pdf-fallback" });
+    }
   
     isOpen() {
       return Boolean(this.sheetElement?.classList.contains("is-open"));
@@ -2504,10 +2665,6 @@
         ? `<div class="saq-warn" role="status">${ICONS.warn}<span>${warningMessage}</span></div>`
         : "";
   
-      let aiTriggerHtml = "";
-      let aiPopoverHtml = "";
-      
-  
       sheet.innerHTML = `
         <div class="saq-grip" aria-hidden="true" title="Drag down to close"></div>
         <header class="saq-header">
@@ -2517,7 +2674,6 @@
           <div class="saq-actions">
             <span class="saq-clock" title="Time remaining">${ICONS.clock}<span class="saq-clock-val"></span></span>
             <nav class="saq-export-group" aria-label="Export actions">
-              ${aiTriggerHtml}
               <button type="button" class="saq-btn saq-btn-export" data-act="export-md" aria-label="Export Markdown" title="Export Markdown (.md)">${ICONS.markdown}<span>Markdown</span></button>
               <button type="button" class="saq-btn saq-btn-export" data-act="print" aria-label="Print or save as PDF" title="Print or save as PDF">${ICONS.print}<span>PDF</span></button>
               <button type="button" class="saq-btn saq-btn-export" data-act="export-bundle" aria-label="Export portable ZIP bundle" title="Export portable ZIP bundle">${ICONS.bundle}<span>Bundle</span></button>
@@ -2527,7 +2683,6 @@
             <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
           </div>
         </header>
-        ${aiPopoverHtml}
         <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
         ${warnHtml}
         <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
@@ -2547,8 +2702,8 @@
   
       root.appendChild(sheet);
       this.sheetElement = sheet;
-  
-      
+      this.runReaderFeatureHook("renderHeaderActions", { sheet, documentModel });
+      this.runReaderFeatureHook("documentChange", { documentModel, reason: "build" });
     }
   
     formatQuestionType(type) {
@@ -2762,92 +2917,11 @@
     }
   
     handleKeyDown(e) {
-      if (!this.sheetElement || !this.isOpen()) return;
-  
-      
-  
-      if (e.key !== "Tab") return;
-  
-      
-  
-      const focusables = Array.from(
-        this.sheetElement.querySelectorAll(
-          "button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
-        )
-      ).filter((el) => {
-        if (el.hasAttribute("disabled")) return false;
-        
-        return true;
-      });
-  
-      if (focusables.length === 0) return;
-  
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const active = this.shadowHost.root?.activeElement;
-  
-      if (e.shiftKey) {
-        if (active === first || active === this.sheetElement || !active) {
-          e.preventDefault();
-          last.focus?.();
-        }
-      } else {
-        if (active === last) {
-          e.preventDefault();
-          first.focus?.();
-        }
-      }
+      return handleReaderKeyDown.call(this, e);
     }
   
     handleActionClick(e) {
-      const btn = e.target.closest("[data-act]");
-      if (!btn || btn.hasAttribute("disabled") || btn.classList.contains("is-busy")) {
-        
-        return;
-      }
-  
-      e.preventDefault();
-      const action = btn.dataset.act;
-  
-      
-  
-      if (action === "refresh") {
-        this.closeAiPopover?.({ restoreFocus: false });
-        if (this.onRefreshCallback) this.onRefreshCallback();
-      } else if (action === "export-md") {
-        this.closeAiPopover?.({ restoreFocus: false });
-        if (this.onExportCallback) {
-          this.onExportCallback("markdown");
-        }
-      } else if (action === "print") {
-        this.closeAiPopover?.({ restoreFocus: false });
-        if (this.onExportCallback) {
-          this.onExportCallback("pdf");
-        } else if (typeof exportPdf === "function" && this.documentModel) {
-          exportPdf(this.documentModel, {
-            onFallback: () => this.setPdfFallbackMode?.(true),
-          }).catch((err) => {
-            console.error("[Unfold IITM] PDF export failed, falling back to window.print():", err);
-            this.setPdfFallbackMode?.(true);
-            this.printFallbackWithTitle(this.documentModel);
-          });
-        } else {
-          this.printFallbackWithTitle(this.documentModel);
-        }
-      } else if (action === "export-bundle") {
-        this.closeAiPopover?.({ restoreFocus: false });
-        if (this.onExportCallback) {
-          this.onExportCallback("bundle");
-        }
-      } else if (action === "theme") {
-        const next = this.shadowHost.toggleTheme?.() || "light";
-        btn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
-        if (this.onThemeCallback) {
-          this.onThemeCallback(next);
-        }
-      } else if (action === "dismiss") {
-        this.dismiss();
-      }
+      return handleReaderActionClick.call(this, e);
     }
   
     printFallbackWithTitle(docModel = this.documentModel) {
@@ -2881,49 +2955,8 @@
       }
     }
   
-    
-  
     wireDrag(grip, sheet) {
-      if (!grip) return;
-  
-      this.boundPointerMove = (e) => {
-        if (!this.dragStart) return;
-        const dy = Math.max(0, e.clientY - this.dragStart.y);
-        sheet.style.transform = `translateY(${dy}px)`;
-        if (this.backdropElement) {
-          this.backdropElement.style.opacity = String(Math.max(0, 1 - dy / (window.innerHeight * 0.6)));
-        }
-      };
-  
-      this.boundPointerUp = (e) => {
-        if (!this.dragStart) return;
-        const dy = Math.max(0, e.clientY - this.dragStart.y);
-        const velocity = dy / Math.max(1, Date.now() - this.dragStart.t);
-  
-        grip.releasePointerCapture?.(e.pointerId);
-        grip.removeEventListener("pointermove", this.boundPointerMove);
-        grip.removeEventListener("pointerup", this.boundPointerUp);
-  
-        sheet.classList.remove("is-dragging");
-        sheet.style.transform = "";
-        if (this.backdropElement) {
-          this.backdropElement.style.opacity = "";
-        }
-  
-        this.dragStart = null;
-        if (dy > 140 || velocity > 0.55) {
-          this.dismiss();
-        }
-      };
-  
-      grip.addEventListener("pointerdown", (e) => {
-        if (e.button) return;
-        this.dragStart = { y: e.clientY, t: Date.now() };
-        sheet.classList.add("is-dragging");
-        grip.setPointerCapture?.(e.pointerId);
-        grip.addEventListener("pointermove", this.boundPointerMove);
-        grip.addEventListener("pointerup", this.boundPointerUp);
-      });
+      return wireReaderDrag.call(this, grip, sheet);
     }
   
     show() {
@@ -2947,7 +2980,7 @@
   
     dismiss() {
       if (!this.isOpen()) return;
-      this.closeAiPopover({ restoreFocus: false });
+      this.closeAiPopover?.({ restoreFocus: false });
       this.stopClock();
       this.clearStatus();
       this.sheetElement?.classList.remove("is-open");
@@ -3077,12 +3110,9 @@
     }
   
     destroy() {
+      this.runReaderFeatureHook("destroy");
       this.stopClock();
       this.clearStatus();
-      if (this.aiCopyTimer) {
-        clearTimeout(this.aiCopyTimer);
-        this.aiCopyTimer = null;
-      }
       if (this.sheetElement) {
         if (this.boundKeyDown) {
           this.sheetElement.removeEventListener("keydown", this.boundKeyDown);
@@ -3100,6 +3130,10 @@
         root.querySelectorAll("#saq-backdrop, #saq-sheet").forEach((el) => el.remove());
       }
     }
+  }
+  
+  if (typeof attachReaderAiFeatures === "function") {
+    attachReaderAiFeatures(ReaderDrawer);
   }
 
   // ── [Module: src/core/lifecycle.js] ──
