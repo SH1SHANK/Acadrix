@@ -91,6 +91,10 @@
     --acx-duration-base: 200ms;
     --acx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
+    --acx-shadow-1: 0 1px 2px rgb(22 24 29 / 0.06);
+    --acx-shadow-2: 0 4px 12px rgb(22 24 29 / 0.10);
+    --acx-shadow-3: 0 12px 32px rgb(22 24 29 / 0.16), 0 2px 6px rgb(22 24 29 / 0.08);
+
     --acx-control-h-sm: 28px;
     --acx-control-h-md: 36px;
     --acx-popup-w:      360px;
@@ -120,6 +124,9 @@
       --acx-accent-active:  var(--acx-brand-accent-400);
       --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
       --acx-focus-ring:     var(--acx-brand-accent-300);
+      --acx-shadow-1:       0 1px 2px rgb(0 0 0 / 0.15);
+      --acx-shadow-2:       0 4px 12px rgb(0 0 0 / 0.25);
+      --acx-shadow-3:       0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);
     }
   }
 
@@ -141,6 +148,9 @@
     --acx-accent-active:  var(--acx-brand-accent-400);
     --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
     --acx-focus-ring:     var(--acx-brand-accent-300);
+    --acx-shadow-1:       0 1px 2px rgb(0 0 0 / 0.15);
+    --acx-shadow-2:       0 4px 12px rgb(0 0 0 / 0.25);
+    --acx-shadow-3:       0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);
   }
 
   * {
@@ -159,11 +169,31 @@
   .head {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--acx-space-2);
     margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-3);
+    padding-bottom: var(--acx-space-3);
+    border-bottom: var(--acx-border-width) solid var(--acx-border);
   }
   .head .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--acx-space-2);
     min-width: var(--acx-space-0);
+  }
+  .head .brand-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--acx-accent);
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .head .brand-text {
+    display: flex;
+    align-items: baseline;
+    gap: var(--acx-space-2);
   }
   .head .name {
     font: var(--acx-text-wordmark);
@@ -171,17 +201,18 @@
     color: var(--acx-text);
   }
   .head .subtitle {
-    margin-left: var(--acx-space-2);
     color: var(--acx-text-muted);
     font: var(--acx-text-caption);
   }
   .head-actions {
-    margin-left: auto;
     position: relative;
+    display: flex;
+    align-items: center;
   }
   .head-menu-toggle {
-    display: inline-grid;
-    place-items: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: var(--acx-control-h-sm);
     height: var(--acx-control-h-sm);
     border: var(--acx-border-width) solid transparent;
@@ -190,8 +221,16 @@
     cursor: pointer;
     color: var(--acx-text-muted);
     background: transparent;
-    font: var(--acx-text-ui);
-    letter-spacing: var(--acx-tracking-overline);
+    transition:
+      color var(--acx-duration-fast) var(--acx-ease-standard),
+      background-color var(--acx-duration-fast) var(--acx-ease-standard),
+      border-color var(--acx-duration-fast) var(--acx-ease-standard);
+  }
+  .head-menu-toggle svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    flex: none;
   }
   .head-menu-toggle:hover,
   .head-menu-toggle[aria-expanded="true"] {
@@ -199,39 +238,72 @@
     background: var(--acx-accent-subtle);
     border-color: var(--acx-border);
   }
+  .head-menu-toggle:active {
+    background: var(--acx-accent-subtle);
+    border-color: var(--acx-accent);
+  }
   .head-menu-toggle:focus-visible {
     outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
     outline-offset: var(--acx-focus-offset);
   }
   .head-menu {
     position: absolute;
-    z-index: 2;
+    z-index: 10;
     top: calc(100% + var(--acx-space-1));
     right: var(--acx-space-0);
-    min-width: 148px;
+    min-width: 160px;
     padding: var(--acx-space-2);
     border: var(--acx-border-width) solid var(--acx-border);
     border-radius: var(--acx-radius-md);
     background: var(--acx-surface-raised);
-    box-shadow: 0 var(--acx-space-2) var(--acx-space-5) rgb(0 0 0 / 0.12);
+    box-shadow: var(--acx-shadow-2);
+    animation: acx-menu-enter var(--acx-duration-fast) var(--acx-ease-standard);
+  }
+  @keyframes acx-menu-enter {
+    from {
+      opacity: 0;
+      transform: translateY(calc(var(--acx-space-1) * -1));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .head-menu[hidden] {
     display: none;
   }
-  .head-menu .version {
-    display: block;
-    color: var(--acx-text-muted);
-    font: var(--acx-text-mono-caption);
-    font-variant-numeric: tabular-nums;
+  .head-menu .version-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--acx-space-2);
     padding: var(--acx-space-1) var(--acx-space-2) var(--acx-space-2);
+    margin-bottom: var(--acx-space-1);
+    border-bottom: var(--acx-border-width) solid var(--acx-border);
+  }
+  .head-menu .version-label {
+    font: var(--acx-text-caption);
+    color: var(--acx-text-muted);
+  }
+  .head-menu .version {
+    font: var(--acx-text-mono-caption);
+    color: var(--acx-text);
+    background: var(--acx-surface-sunken);
+    border: var(--acx-border-width) solid var(--acx-border);
+    border-radius: var(--acx-radius-sm);
+    padding: var(--acx-space-0) var(--acx-space-1);
+    font-variant-numeric: tabular-nums;
   }
   .head-menu a {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: var(--acx-space-2);
     padding: var(--acx-space-2);
     color: var(--acx-accent);
-    text-decoration: underline;
-    text-underline-offset: var(--acx-focus-offset);
+    text-decoration: none;
+    font: var(--acx-text-ui);
     border-radius: var(--acx-radius-sm);
+    transition: background-color var(--acx-duration-fast) var(--acx-ease-standard);
   }
   .head-menu a:hover {
     background: var(--acx-accent-subtle);
@@ -471,15 +543,38 @@
 <body>
 <header class="head">
   <div class="brand">
-    <span class="name">[unfold]</span>
-    <span class="subtitle">IITM study tools</span>
+    <span class="brand-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+        <path d="M6 6h10"></path>
+        <path d="M6 10h10"></path>
+      </svg>
+    </span>
+    <div class="brand-text">
+      <span class="name">[unfold]</span>
+      <span class="subtitle">IITM study tools</span>
+    </div>
   </div>
   <div class="head-actions">
     <button id="headMenuToggle" class="head-menu-toggle" type="button"
-      aria-label="More options" aria-controls="headMenu" aria-expanded="false">•••</button>
+      aria-label="More options" aria-controls="headMenu" aria-expanded="false" title="More options">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+        <circle cx="2.5" cy="8" r="1.5" />
+        <circle cx="8" cy="8" r="1.5" />
+        <circle cx="13.5" cy="8" r="1.5" />
+      </svg>
+    </button>
     <div id="headMenu" class="head-menu" aria-label="More options" hidden>
-      <span class="version" role="status"><span id="ver"></span></span>
-      <a id="repo" href="#" target="_blank" rel="noopener" hidden>GitHub repository</a>
+      <div class="version-row">
+        <span class="version-label">Version</span>
+        <span class="version" role="status"><span id="ver"></span></span>
+      </div>
+      <a id="repo" href="#" target="_blank" rel="noopener" hidden>
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        <span>GitHub repository</span>
+      </a>
     </div>
   </div>
 </header>
