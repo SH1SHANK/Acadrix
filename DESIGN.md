@@ -358,7 +358,3 @@ Breakpoints (viewport width): **narrow** `< 640px`, **tablet** `640–1023px`, *
 7. Does it work in light, dark, `forced-colors`, and reduced-motion?
 8. Does it survive the Shadow DOM (fonts registered on the host document, no `rem`, no reliance on host styles)?
 9. No gradients, blur, decorative effects, or new dependencies introduced?
-</USER_REQUEST>
-<ADDITIONAL_METADATA>
-The current local time is: 2026-10-04T21:17:32+05:30.
-</ADDITIONAL_METADATA>
