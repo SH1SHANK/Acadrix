@@ -3576,7 +3576,7 @@
         if (format === "pdf") {
           this.printWithIntelligentTitle(exportOptions.document || this.activeDocument);
         } else {
-          const msg = "Markdown and Bundle export are available in the Unfold IITM Chrome Extension.";
+          const msg = "Markdown and Bundle export are available in the Acadrix Chrome Extension.";
           this.reader.notify?.(msg, "warn", 4200);
           alert(msg);
         }

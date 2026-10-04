@@ -38,7 +38,7 @@ export function initPortalDecor({
       await captureGrades(doc, decorStore, now);
       await decorateSidebar(doc, decorStore, now);
     } catch (err) {
-      console.warn("[Unfold] portal-decor cycle error:", err);
+      console.warn("[Acadrix] portal-decor cycle error:", err);
     }
   }
 

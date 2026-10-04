@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "[unfold]",
+  "name": "Acadrix",
   "version": "0.2.0",
   "description": "Read all questions in one view and export IITM Online Degree assessments to Markdown, PDF, or portable bundles.",
   "homepage_url": "https://github.com/civiks/unfold-iitm",
@@ -44,7 +44,7 @@
     }
   ],
   "action": {
-    "default_title": "Unfold IITM — All Questions",
+    "default_title": "Acadrix — All Questions",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

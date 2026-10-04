@@ -1,4 +1,4 @@
-<!-- Thanks for contributing to [unfold]! -->
+<!-- Thanks for contributing to Acadrix! -->
 
 ## What does this PR do?
 

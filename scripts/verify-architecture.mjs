@@ -349,7 +349,7 @@ check("Built bookmarklet target retains all required core features and UI compon
     "saq-sheet",
     "saq-backdrop",
     "saq-launcher",
-    "Markdown and Bundle export are available in the Unfold IITM Chrome Extension.",
+    "Markdown and Bundle export are available in the Acadrix Chrome Extension.",
     "printWithIntelligentTitle",
     "buildExportFilename",
     "window.print",

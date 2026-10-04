@@ -1,6 +1,6 @@
-<img width="72px" alt="[unfold] icon" src="extension/icons/icon-128.png" />
+<img width="72px" alt="Acadrix icon" src="extension/icons/icon-128.png" />
 
-# [unfold]
+# Acadrix
 
 > Declutter the IITM Online Degree portal.
 
@@ -10,21 +10,21 @@
 [![Release](https://img.shields.io/github/v/release/civiks/unfold-iitm?include_prereleases)](../../releases)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-<sub>Unofficial, beta, not affiliated with IIT Madras. <a href="NAMING.md">Why "[unfold]"?</a></sub>
+<sub>Unofficial, beta, not affiliated with IIT Madras. <a href="NAMING.md">Why Acadrix?</a></sub>
 
-<img width="800px" alt="[unfold] in action" src=".github/assets/demo.gif" />
+<img width="800px" alt="Acadrix in action" src=".github/assets/demo.gif" />
 
 ## Features
 
-- Unfold a quiz into a single scrollable sheet
-- Print or save a quiz as PDF
-- Inter font
-- Hide sidebar, breadcrumbs, info banners
+- View all questions in a single scrollable sheet
+- Print or save an assessment as PDF
+- High-fidelity typography and layout
+- Clean reader drawer and sidebar decorations
 - Compact mode
 - Master on/off toggle
 - Configurable keyboard shortcut
 
-<img width="300px" alt="[unfold] popup" src=".github/assets/hero.png" />
+<img width="300px" alt="Acadrix popup" src=".github/assets/hero.png" />
 
 ## Install
 
@@ -52,11 +52,11 @@ Full dev and release guide: [CONTRIBUTING](.github/CONTRIBUTING.md).
 
 ## How it works
 
-The portal presents questions one at a time. Unfold traverses the assignment, capturing questions into an encapsulated, read-only reader view. It does not alter or mutate your live quiz answers. Prompts, mathematical formulas, and options are preserved for study, review, and export.
+The portal presents questions one at a time. Acadrix traverses the assignment, capturing questions into an encapsulated, read-only reader view. It does not alter or mutate your live quiz answers. Prompts, mathematical formulas, and options are preserved for study, review, and export.
 
 ## Disclaimer
 
-Beta and unofficial. Unfold provides read-only inspection and export; it does not answer or modify assignments for you. Always verify your official submission directly on the IITM portal. Not affiliated with IIT Madras; "IITM" only describes portal compatibility.
+Beta and unofficial. Acadrix provides read-only inspection and export; it does not answer or modify assignments for you. Always verify your official submission directly on the IITM portal. Not affiliated with IIT Madras; "IITM" only describes portal compatibility.
 
 ## License
 
