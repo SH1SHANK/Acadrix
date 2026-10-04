@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node --check bookmarklet/bookmarklet-source.js && node --check build/run.js",
-    "test": "node scripts/verify-architecture.mjs && node scripts/test-fixtures.mjs && node scripts/test-traversal.mjs && node scripts/test-semantic-extraction.mjs && node scripts/test-markdown-exporter.mjs && node scripts/test-resource-engine.mjs && node scripts/test-pdf-exporter.mjs && node scripts/test-export-orchestration.mjs && node scripts/test-portal-decor.mjs && node scripts/test-browser-integration.mjs && node scripts/test-popup-runtime.mjs && node scripts/test-real-browser.mjs && node tests/test-prompt.mjs",
+    "test": "node scripts/verify-architecture.mjs && node scripts/test-fixtures.mjs && node scripts/test-traversal.mjs && node scripts/test-semantic-extraction.mjs && node scripts/test-markdown-exporter.mjs && node scripts/test-resource-engine.mjs && node scripts/test-pdf-exporter.mjs && node scripts/test-export-orchestration.mjs && node scripts/test-portal-decor.mjs && node scripts/test-browser-integration.mjs && node scripts/test-popup-runtime.mjs && node scripts/test-real-browser.mjs && node tests/test-prompt.mjs && node tests/test-parser.mjs",
     "verify": "node build.mjs && git diff --exit-code -- bookmarklet/bookmarklet.txt bookmarklet/install.html && npm test"
   },
   "license": "MIT",

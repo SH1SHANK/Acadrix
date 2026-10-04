@@ -21,6 +21,7 @@ import { IitmPortalAdapter } from "../src/portal/adapter.js";
 import { SemanticExtractor } from "../src/extraction/semantic.js";
 import { exportAssignmentToMarkdown, MarkdownExporter } from "../src/exporters/markdown.js";
 import { generateAiPrompt, exportAssignmentToPrompt } from "../src/bridge/prompt.js";
+import { assignmentFingerprint } from "../src/bridge/protocol.js";
 
 let passed = true;
 
@@ -866,11 +867,61 @@ check("Test 8: Escapes </assignment> in question text, escalates outer code fenc
   }
 });
 
+// ── Test 9: Assignment fingerprint protocol ─────────────────────────────────
+
+check("Test 9: Assignment fingerprints are full-document, review-independent, and mutation-sensitive", () => {
+  const normal = extractDocumentFromFixtureHtml(readFileSync("fixtures/mcq-basic.html", "utf8"), "mcq-basic.html");
+  const review = new AssignmentDocument({
+    metadata: { ...normal.metadata, isReview: true },
+    questions: normal.questions.map((question) => new QuestionNode({
+      ...question,
+      options: question.options.map((option) => new OptionNode({ ...option, selected: true, isCorrect: true })),
+      review: { isCorrect: true, statusText: "Evaluated", feedback: "Hidden from fingerprint" },
+    })),
+  });
+
+  const fp = assignmentFingerprint(normal);
+  if (!/^[0-9a-f]{8}$/.test(fp)) throw new Error(`Fingerprint must be eight lowercase hex chars: ${fp}`);
+  if (fp !== assignmentFingerprint(review)) throw new Error("Review state changed the assignment fingerprint");
+
+  const changed = (changes) => new AssignmentDocument({
+    metadata: normal.metadata,
+    questions: normal.questions.map((question, index) => new QuestionNode({
+      ...question,
+      ...(changes[index] || {}),
+    })),
+  });
+  if (fp === assignmentFingerprint(changed({ 0: { stem: [new ContentNode({ type: ContentType.TEXT, value: "Changed stem" })] } }))) {
+    throw new Error("Stem changes must change the fingerprint");
+  }
+  if (fp === assignmentFingerprint(changed({ 0: { options: [new OptionNode({ letter: "Z" })] } }))) {
+    throw new Error("Option-letter changes must change the fingerprint");
+  }
+  if (fp === assignmentFingerprint(changed({ 0: { type: QuestionType.MSQ } }))) {
+    throw new Error("Question-type changes must change the fingerprint");
+  }
+  const ordered = buildFiveQuestionDoc();
+  const reordered = new AssignmentDocument({ metadata: ordered.metadata, questions: [...ordered.questions].reverse() });
+  if (assignmentFingerprint(ordered) === assignmentFingerprint(reordered)) {
+    throw new Error("Question-order changes must change the fingerprint");
+  }
+
+  const all = generateAiPrompt(normal).prompt;
+  const range = generateAiPrompt(normal, { scope: { type: "range", start: 1, end: 1 } }).prompt;
+  const single = generateAiPrompt(normal, { scope: { type: "single", number: 1 } }).prompt;
+  for (const prompt of [all, range, single]) {
+    if (!prompt.includes(`\"fp\":\"${fp}\"`)) throw new Error("Every prompt scope must carry the full-document fingerprint");
+    if (!prompt.includes("Keep the acadrix and fp fields exactly as given.")) {
+      throw new Error("Prompt is missing the protocol-preservation rule");
+    }
+  }
+});
+
 if (!passed) {
   console.error("\n❌ AI Prompt Serializer verification FAILED.\n");
   process.exit(1);
 } else {
   console.log("\n==================================================");
-  console.log("✓ All 8 AI Prompt Serializer & Fixture Tests Passed!");
+  console.log("✓ All 9 AI Prompt Serializer & Fixture Tests Passed!");
   console.log("==================================================\n");
 }

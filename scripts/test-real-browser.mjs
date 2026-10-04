@@ -722,6 +722,65 @@ function buildFixtureHtml() {
           readerClosedAfterSecondEsc
         };
 
+        // Step 5c: Verify Release 2 answer-key import in real Chrome.
+        const importDoc = {
+          metadata: { title: "Import Fixture", totalQuestions: 4 },
+          questions: [
+            { number: 1, type: "single_choice", label: "Question 1", stem: [{ type: "text", value: "One" }], options: [{ letter: "A", content: [{ type: "text", value: "A" }] }, { letter: "B", content: [{ type: "text", value: "B" }] }] },
+            { number: 2, type: "multiple_choice", label: "Question 2", stem: [{ type: "text", value: "Many" }], options: [{ letter: "A", content: [{ type: "text", value: "A" }] }, { letter: "B", content: [{ type: "text", value: "B" }] }, { letter: "C", content: [{ type: "text", value: "C" }] }] },
+            { number: 3, type: "numerical", label: "Question 3", stem: [{ type: "text", value: "Number" }], options: [] },
+            { number: 4, type: "text", label: "Question 4", stem: [{ type: "text", value: "Text" }], options: [] }
+          ]
+        };
+        runtime.reader.build(importDoc, { onDismiss: () => runtime.close() });
+        runtime.reader.show();
+        await sleep(40);
+        const importSheet = shadow.querySelector("#saq-sheet");
+        const importButton = importSheet.querySelector("[data-act='import-answers']");
+        const importCopyButton = importSheet.querySelector("[data-act='copy-ai']");
+        importCopyButton.click();
+        await sleep(20);
+        const importAiPopover = importSheet.querySelector("#saq-ai-popover");
+        const importPreviewToggle = importAiPopover.querySelector("[data-act='ai-preview-toggle']");
+        importPreviewToggle.click();
+        await sleep(10);
+        const importPrompt = importAiPopover.querySelector("[data-ai-preview]").textContent;
+        const importFp = (importPrompt.match(/\"fp\":\"([0-9a-f]{8})\"/) || [])[1];
+        runtime.reader.closeAiPopover();
+        importButton.click();
+        await sleep(10);
+        const importPanel = importSheet.querySelector("#saq-import-panel");
+        const importTextarea = importPanel.querySelector("textarea");
+        const importAnswers = [
+          { question: 1, type: "MCQ", answer: "B" },
+          { question: 2, type: "MSQ", answer: ["C", "A"] },
+          { question: 3, type: "NUMERICAL", answer: "42.50" },
+          { question: 4, type: "TEXT", answer: "<img onerror=alert(1)>" }
+        ];
+        importTextarea.value = JSON.stringify({ acadrix: 1, fp: importFp, answers: importAnswers });
+        importPanel.querySelector("[data-act='import-submit']").click();
+        await sleep(20);
+        const importBadges = Array.from(importSheet.querySelectorAll("[data-acx-ai-answer]"));
+        const hostileBadge = importBadges.find((badge) => badge.textContent.includes("<img"));
+        importPanel.querySelector("[data-act='import-answers']")?.click?.();
+        const importTrigger = importSheet.querySelector("[data-act='import-answers']");
+        importTrigger.click();
+        await sleep(10);
+        const focusInImportPanel = importPanel.contains(shadow.activeElement);
+        importPanel.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+        await sleep(10);
+        t.steps.step5c = {
+          hasImportButton: Boolean(importButton),
+          hasDialogAndName: importPanel.getAttribute("role") === "dialog" && importPanel.getAttribute("aria-labelledby") === "saq-import-title",
+          fingerprintCaptured: Boolean(importFp),
+          badgeCount: importBadges.length,
+          badges: importBadges.map((badge) => badge.textContent),
+          hostileTextInert: Boolean(hostileBadge && !hostileBadge.querySelector("img") && hostileBadge.textContent.includes("<img onerror=alert(1)>")),
+          focusInImportPanel,
+          panelClosedAfterEscape: importPanel.hasAttribute("hidden"),
+          readerOpenAfterEscape: importSheet.classList.contains("is-open")
+        };
+
         // Step 6: Teardown & Destruction
         runtime.destroy();
         t.steps.step6 = {
@@ -992,6 +1051,21 @@ async function runRealBrowserTests() {
     assert(s5b.singlePreservedAcrossRefresh === true, "Single scope must not reset after a document refresh");
     assert(s5b.partialAllLabel === "3 of 10 extracted" && s5b.partialBannerShown === true, `Partial extraction must show '3 of 10 extracted' and warning banner (got '${s5b.partialAllLabel}')`);
     assert(s5b.readerClosedAfterSecondEsc === true, "Second Escape must close the Reader drawer");
+  });
+
+  await check("Real-Browser Check 6c: AI answer import renders accessible, inert inline badges and closes before the Reader", () => {
+    const s5c = report.steps.step5c;
+    assert(s5c && s5c.hasImportButton === true, "Import AI button must be present in Reader header");
+    assert(s5c.hasDialogAndName === true, "Import panel must expose role=dialog and an accessible name");
+    assert(s5c.fingerprintCaptured === true, "Import test must obtain the prompt fingerprint");
+    assert(s5c.badgeCount === 4, `Expected four imported answer badges, got ${s5c.badgeCount}`);
+    assert(s5c.badges.includes("AI: B"), "MCQ badge must render its answer");
+    assert(s5c.badges.includes("AI: A, C"), "MSQ badge must render sorted answers");
+    assert(s5c.badges.includes("AI: 42.5"), "Numerical badge must render canonical decimal");
+    assert(s5c.hostileTextInert === true, "Hostile TEXT answer must remain inert visible text");
+    assert(s5c.focusInImportPanel === true, "Opening import must move focus into the dialog");
+    assert(s5c.panelClosedAfterEscape === true, "Escape must close the import panel");
+    assert(s5c.readerOpenAfterEscape === true, "Escape must leave the Reader open");
   });
 
   // ── Check 7: Zero Console Errors & Clean Teardown ─────────────────────────

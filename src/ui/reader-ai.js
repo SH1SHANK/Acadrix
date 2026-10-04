@@ -3,8 +3,9 @@
 import { ICONS } from "./icons.js";
 import { escapeHtml } from "../utils/dom.js";
 import { generateAiPrompt } from "../bridge/prompt.js";
+import { createReaderImportFeature } from "./reader-import.js";
 
-export function createReaderAiFeature(reader) {
+function createReaderAiBaseFeature(reader) {
   return {
     renderHeaderActions({ sheet, documentModel }) {
       const actions = sheet.querySelector(".saq-export-group");
@@ -83,7 +84,53 @@ export function createReaderAiFeature(reader) {
   };
 }
 
+export function createReaderAiFeature(reader) {
+  const ai = createReaderAiBaseFeature(reader);
+  const importer = typeof createReaderImportFeature === "function" ? createReaderImportFeature(reader) : null;
+  return {
+    renderHeaderActions(payload) {
+      ai.renderHeaderActions(payload);
+      importer?.renderHeaderActions(payload);
+    },
+    handleActionClick(event) {
+      if (ai.handleActionClick(event) === true) return true;
+      return importer?.handleActionClick(event) === true;
+    },
+    handleKeydown(event) {
+      if (ai.handleKeydown(event) === true) return true;
+      return importer?.handleKeydown(event) === true;
+    },
+    documentChange(payload) {
+      ai.documentChange(payload);
+      importer?.documentChange(payload);
+    },
+    destroy(payload) {
+      ai.destroy(payload);
+      importer?.destroy(payload);
+    },
+    isDirectPdfAvailable: ai.isDirectPdfAvailable,
+  };
+}
+
 export function attachReaderAiFeatures(ReaderDrawer) {
+  // ReaderDrawer.prototype.build() explicitly executes this.destroy() at line 99 to tear
+  // down existing DOM before assembling the new sheet. Without this flag, build()'s internal
+  // DOM cleanup would wipe memory-held answer keys before documentChange could inspect
+  // whether the newly built document has the same or different fingerprint. Genuine teardown
+  // (runtime.destroy() or reader.destroy()) leaves _readerRebuilding false, ensuring answers
+  // are wiped upon destruction.
+  if (!ReaderDrawer.prototype.__aiBuildWrapped) {
+    const originalBuild = ReaderDrawer.prototype.build;
+    ReaderDrawer.prototype.build = function (...args) {
+      this._readerRebuilding = true;
+      try {
+        return originalBuild.apply(this, args);
+      } finally {
+        this._readerRebuilding = false;
+      }
+    };
+    ReaderDrawer.prototype.__aiBuildWrapped = true;
+  }
   Object.assign(ReaderDrawer.prototype, {
     isDirectPdfAvailable() {
       if (this.pdfDirectFallbackActive) return false;
@@ -269,7 +316,7 @@ export function attachReaderAiFeatures(ReaderDrawer) {
 
     isAiPopoverOpen() {
       const popover = this.sheetElement?.querySelector("#saq-ai-popover");
-      return Boolean(popover && popover.classList.contains("is-open") && !popover.hasAttribute("hidden"));
+      return Boolean(popover && popover.classList.contains("is-open") && !popover.hasAttribute("hidden")) || Boolean(this._readerImportFeature?.isOpen());
     },
 
     toggleAiPopover() {
@@ -317,6 +364,7 @@ export function attachReaderAiFeatures(ReaderDrawer) {
     },
 
     closeAiPopover({ restoreFocus = true } = {}) {
+      if (this._readerImportFeature?.isOpen()) this._readerImportFeature.close({ restoreFocus });
       if (!this.sheetElement) return;
       const popover = this.sheetElement.querySelector("#saq-ai-popover");
       const trigger = this.sheetElement.querySelector("[data-act='copy-ai']");

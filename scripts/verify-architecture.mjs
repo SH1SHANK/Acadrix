@@ -204,6 +204,9 @@ check("Bookmarklet target contains only allowed compatibility modules", () => {
   if (bookmarkletModuleList.includes("src/ui/reader-ai.js")) {
     throw new Error("BOOKMARKLET_MODULES must not contain extension-only src/ui/reader-ai.js");
   }
+  if (bookmarkletModuleList.includes("src/ui/reader-import.js")) {
+    throw new Error("BOOKMARKLET_MODULES must not contain extension-only src/ui/reader-import.js");
+  }
 });
 
 // 9a. Verify Reader shared/extension-only boundary
@@ -271,6 +274,11 @@ check("Built bookmarklet target is strictly purged of extension-only APIs and fe
     "saq-ai",
     "copy-ai",
     "generateAiPrompt",
+    "reader-import",
+    "parseAnswerKey",
+    "assignmentFingerprint",
+    "saq-import",
+    "acx-import",
     "chrome.debugger",
     "chrome.runtime",
     "sendPrintToPdfRuntimeMessage",
@@ -285,6 +293,48 @@ check("Built bookmarklet target is strictly purged of extension-only APIs and fe
     if (decodedText.includes(str)) {
       throw new Error(`Built bookmarklet text (${textPath}) contains forbidden extension-only string: "${str}"`);
     }
+  }
+});
+
+// 9e. Verify the extension-only answer protocol cannot cross into host or bookmarklet layers
+check("Answer protocol stays DOM-free, storage-free, and extension-only", () => {
+  const bridgeFiles = getAllFiles("src/bridge");
+  const forbiddenBridgePatterns = [
+    /\bfetch\s*\(/,
+    /\bXMLHttpRequest\b/,
+    /\bWebSocket\b/,
+    /\bsendBeacon\s*\(/,
+    /\beval\s*\(/,
+    /\bnew\s+Function\b/,
+    /\bchrome\.storage\b/,
+    /\blocalStorage\b/,
+    /\bsessionStorage\b/,
+    /\bindexedDB\b/,
+    /from\s+["'][^"']*rawHtml/,
+  ];
+  for (const file of bridgeFiles) {
+    const content = readFileSync(file, "utf8");
+    for (const pattern of forbiddenBridgePatterns) {
+      if (pattern.test(content)) throw new Error(`${file} contains forbidden protocol dependency: ${pattern}`);
+    }
+  }
+
+  const buildMjsContent = readFileSync("build.mjs", "utf8");
+  const bookmarkletModules = buildMjsContent.match(/(?:const|export const)\s+BOOKMARKLET_MODULES\s*=\s*\[([\s\S]*?)\];/)?.[1] || "";
+  if (
+    bookmarkletModules.includes("src/bridge/protocol.js") ||
+    bookmarkletModules.includes("src/bridge/parser.js") ||
+    bookmarkletModules.includes("src/ui/reader-import.js")
+  ) {
+    throw new Error("Answer protocol modules must remain absent from BOOKMARKLET_MODULES");
+  }
+  const extensionModules = buildMjsContent.match(/(?:const|export const)\s+EXTENSION_MODULES\s*=\s*\[([\s\S]*?)\];/)?.[1] || "";
+  for (const moduleName of ["src/bridge/protocol.js", "src/bridge/parser.js", "src/ui/reader-import.js"]) {
+    if (!extensionModules.includes(moduleName)) throw new Error(`EXTENSION_MODULES is missing ${moduleName}`);
+  }
+  const builtSource = readFileSync("bookmarklet/bookmarklet-source.js", "utf8");
+  for (const marker of ["reader-import", "parseAnswerKey", "assignmentFingerprint", "saq-import", "acx-import"]) {
+    if (builtSource.includes(marker)) throw new Error(`Bookmarklet contains extension-only answer marker: ${marker}`);
   }
 });
 

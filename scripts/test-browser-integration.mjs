@@ -914,6 +914,117 @@ async function runBrowserIntegrationTests() {
     globalThis.chrome = prevChrome;
   });
 
+  // ── Step 5d: AI Answer-Key Import & Inline Badges ─────────────────────────
+  await check("Step 5d: Imports strict AI answers, renders inert badges, preserves them across same-fingerprint rebuilds, and clears on changes", async () => {
+    const { AssignmentDocument, ContentNode, OptionNode, QuestionNode } = await import("../src/model/document.js");
+    const { ContentType, QuestionType } = await import("../src/model/types.js");
+    const { assignmentFingerprint } = await import("../src/bridge/protocol.js");
+
+    const multiDoc = new AssignmentDocument({
+      metadata: { title: "Import fixture", totalQuestions: 4 },
+      questions: [
+        new QuestionNode({ number: 1, type: QuestionType.MCQ, stem: [new ContentNode({ type: ContentType.TEXT, value: "One" })], options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" })] }),
+        new QuestionNode({ number: 2, type: QuestionType.MSQ, stem: [new ContentNode({ type: ContentType.TEXT, value: "Many" })], options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" }), new OptionNode({ letter: "C" })] }),
+        new QuestionNode({ number: 3, type: QuestionType.NUMERICAL, stem: [new ContentNode({ type: ContentType.TEXT, value: "Number" })] }),
+        new QuestionNode({ number: 4, type: QuestionType.TEXT, stem: [new ContentNode({ type: ContentType.TEXT, value: "Text" })] }),
+      ],
+    });
+    runtime.reader.build(multiDoc);
+    runtime.reader.show();
+    const hostEl = document.getElementById("unfold-root");
+    const sheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+    const importButton = sheet.querySelector("[data-act='import-answers']");
+    assert(importButton !== null, "Import AI button must exist in Reader header");
+    importButton.click();
+    const panel = sheet.querySelector("#saq-import-panel");
+    const textarea = panel.querySelector("textarea");
+    assert(!panel.hasAttribute("hidden"), "Import panel opens from its header action");
+
+    const previousChrome = globalThis.chrome;
+    const previousStorage = globalThis.localStorage;
+    let storageCalls = 0;
+    globalThis.chrome = { storage: { local: { get: () => { storageCalls++; }, set: () => { storageCalls++; } } } };
+    globalThis.localStorage = { getItem: () => { storageCalls++; }, setItem: () => { storageCalls++; } };
+
+    const fp = assignmentFingerprint(multiDoc);
+    const key = (answers) => JSON.stringify({ acadrix: 1, fp, answers });
+    textarea.value = key([
+      { question: 1, type: "MCQ", answer: "b" },
+      { question: 2, type: "MSQ", answer: ["c", "A", "a"] },
+      { question: 3, type: "NUMERICAL", answer: "0042.50" },
+      { question: 4, type: "TEXT", answer: "<img onerror=alert(1)>" },
+    ]);
+    panel.querySelector("[data-act='import-submit']").click();
+    const badges = sheet.querySelectorAll("[data-acx-ai-answer]");
+    assert(badges.length === 4, "Every imported question receives one badge");
+    assert(badges[0].textContent.includes("AI: B"), "MCQ badge canonicalizes its option");
+    assert(badges[1].textContent.includes("AI: A, C"), "MSQ badge sorts and deduplicates options");
+    assert(badges[2].textContent.includes("AI: 42.5"), "Numerical badge uses canonical decimal text");
+    assert(badges[3].textContent.includes("<img onerror=alert(1)>"), "TEXT answer is rendered as inert text");
+    assert(storageCalls === 0, "Import must not access chrome.storage or localStorage");
+
+    const originalBadgeText = badges[0].textContent;
+    textarea.value = JSON.stringify({ acadrix: 1, fp: "00000000", answers: [{ question: 1, type: "MCQ", answer: "A" }] });
+    panel.querySelector("[data-act='import-submit']").click();
+    assert(panel.querySelector("[data-import-results]").textContent.includes("different assignment"), "Wrong fingerprint is fatal");
+    assert(sheet.querySelectorAll("[data-acx-ai-answer]")[0].textContent === originalBadgeText, "Fatal import leaves existing badges untouched");
+
+    textarea.value = key([{ question: 1, type: "MCQ", answer: "A" }]);
+    panel.querySelector("[data-act='import-submit']").click();
+    assert(panel.querySelector("[data-import-replaced]").textContent.includes("Q1"), "Appending reports replaced questions");
+    assert(sheet.querySelectorAll("[data-acx-ai-answer]")[0].textContent.includes("AI: A"), "Appending replaces the prior question entry");
+
+    panel.querySelector("[data-act='import-clear']").click();
+    assert(sheet.querySelectorAll("[data-acx-ai-answer]").length === 0, "Clear removes every badge");
+
+    textarea.value = key([{ question: 1, type: "MCQ", answer: "B" }]);
+    panel.querySelector("[data-act='import-submit']").click();
+    runtime.reader.build(multiDoc);
+    runtime.reader.show();
+    const rebuiltSheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+    assert(rebuiltSheet.querySelectorAll("[data-acx-ai-answer]").length === 4, "Same-fingerprint rebuild preserves the imported set");
+
+    const changedDoc = new AssignmentDocument({
+      metadata: multiDoc.metadata,
+      questions: multiDoc.questions.map((question, index) => index === 0
+        ? new QuestionNode({ ...question, stem: [new ContentNode({ type: ContentType.TEXT, value: "Changed" })] })
+        : question),
+    });
+    runtime.reader.build(changedDoc);
+    runtime.reader.show();
+    const changedSheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+    assert(changedSheet.querySelectorAll("[data-acx-ai-answer]").length === 0, "Different fingerprint clears imported badges");
+    assert(changedSheet.querySelector("[data-import-results]").textContent.includes("assignment changed"), "Fingerprint change is announced in the import panel");
+
+    const changedPanel = changedSheet.querySelector("#saq-import-panel");
+    changedPanel.querySelector("[data-act='import-answers']")?.click?.();
+    const importTrigger = changedSheet.querySelector("[data-act='import-answers']");
+    importTrigger.click();
+    assert(!changedPanel.hasAttribute("hidden"), "Import panel can reopen after a rebuild");
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    runtime.handleKeydown({ key: "Escape", preventDefault: () => {}, stopPropagation: () => {} });
+    assert(changedPanel.hasAttribute("hidden"), "Escape closes the import panel first");
+    assert(runtime.reader.isOpen(), "Escape leaves the Reader open");
+
+    // Re-import answers on multiDoc, then explicitly destroy the Reader and reopen with same doc
+    runtime.reader.build(multiDoc);
+    runtime.reader.show();
+    const importSheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+    const importPanel = importSheet.querySelector("#saq-import-panel");
+    const importTextarea = importPanel.querySelector("textarea");
+    importTextarea.value = key([{ question: 1, type: "MCQ", answer: "A" }]);
+    importPanel.querySelector("[data-act='import-submit']").click();
+    assert(importSheet.querySelectorAll("[data-acx-ai-answer]").length > 0, "Answers imported before destroy");
+    runtime.reader.destroy();
+    runtime.reader.build(multiDoc);
+    runtime.reader.show();
+    const freshSheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+    assert(freshSheet.querySelectorAll("[data-acx-ai-answer]").length === 0, "Imported answers must NOT survive Reader destroy()");
+
+    globalThis.chrome = previousChrome;
+    globalThis.localStorage = previousStorage;
+  });
+
   // ── Step 6: Dismiss & Escape Key ──────────────────────────────────────────
   await check("Hygiene: rapid open requests produce one Reader DOM", async () => {
     runtime.close();
