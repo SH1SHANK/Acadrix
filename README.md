@@ -1,63 +1,116 @@
-<img width="72px" alt="Acadrix icon" src="extension/icons/icon-128.png" />
+<p align="center">
+  <img width="80px" alt="Acadrix icon" src="extension/icons/icon-128.png" />
+</p>
 
-# Acadrix
+<h1 align="center">Acadrix</h1>
 
-> Declutter the IITM Online Degree portal.
+<p align="center">
+  <strong>High-fidelity assignment extractor, reader drawer & workflow suite for the IITM Online Degree portal.</strong>
+</p>
 
-**[Download the latest release](../../releases/latest)**
+<p align="center">
+  <a href="https://github.com/SH1SHANK/unfold-iitm/releases/latest">
+    <img src="https://img.shields.io/github/v/release/SH1SHANK/unfold-iitm?label=Release&color=blue" alt="Latest Release" />
+  </a>
+  <a href="https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml">
+    <img src="https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT" />
+  </a>
+</p>
 
-[![CI](https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml/badge.svg)](https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/SH1SHANK/unfold-iitm?include_prereleases)](../../releases)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+<p align="center">
+  <sub>Unofficial, beta, not affiliated with IIT Madras. <a href="NAMING.md">Why Acadrix?</a></sub>
+</p>
 
-<sub>Unofficial, beta, not affiliated with IIT Madras. <a href="NAMING.md">Why Acadrix?</a></sub>
+<p align="center">
+  <img width="800px" alt="Acadrix in action" src=".github/assets/acadrix-demo.gif" />
+</p>
 
-<img width="800px" alt="Acadrix in action" src=".github/assets/demo.gif" />
+---
 
-## Features
+## ✨ Features
 
-- View all questions in a single scrollable sheet
-- Print or save an assessment as PDF
-- High-fidelity typography and layout
-- Clean reader drawer and sidebar decorations
-- Compact mode
-- Master on/off toggle
-- Configurable keyboard shortcut
+- **📖 Unified Reader Drawer (`Alt+Q`)**: View all assignment questions in a single scrollable sheet. Traverser captures prompts, mathematical equations (KaTeX), tables, diagrams, and options without modifying quiz answers.
+- **⚡ 1-Click AI Prompt Serialization**: Generate clean, LLM-optimized prompts in one click—stripping sensitive grades and review markers while preserving full mathematical formulas and figures.
+- **🎯 Interactive Answer Key Review**: Import structured AI answer keys (`MCQ`, `MSQ`, `Numerical`, `Text`) with real-time status badges (`AI Match`, `Overridden`, `Invalid`), preview choices, and sync answers with the portal safely.
+- **📄 Multi-Format Exporters**:
+  - **Direct PDF**: Instant high-fidelity PDF download with intelligent course filenames.
+  - **Clean Markdown**: GitHub Flavored Markdown with preserved KaTeX math and layout tables.
+  - **Offline ZIP Bundles**: Self-contained ZIP packages bundling the document, figures, SVG plots, and images.
+- **⏰ Smart Deadline & Notification Engine**:
+  - Exact Asia/Kolkata (`IST`) timezone deadline evaluation.
+  - Automatic background alarm scheduling for upcoming unsubmitted deadlines (1 day, 6 hours, 1 hour).
+  - Intelligent suppression when assignments are marked submitted or evaluated.
+- **🎨 Portal Decorator & Aesthetics**:
+  - Optional Satoshi typography enhancement for portal navigation.
+  - Deadline badges and grade status indicators in the portal course sidebar.
+  - Light, dark, and system theme synchronization with isolated Shadow DOM encapsulation.
 
-<img width="300px" alt="Acadrix popup" src=".github/assets/hero.png" />
+<p align="center">
+  <img width="320px" alt="Acadrix Popup Interface" src=".github/assets/hero.png" />
+</p>
 
-## Install
+---
 
-Not on the Chrome/Firefox stores yet. Install it manually:
+## 🚀 Installation
 
-1. Download the zip from [Releases](../../releases/latest).
-2. Unzip it.
-3. Open `chrome://extensions`, turn on "Developer mode" (top right).
-4. Click "Load unpacked" and select the unzipped folder.
+### Option 1: Chrome Extension (Recommended)
 
-On Firefox: open `about:debugging`, click "Load Temporary Add-on", and pick `manifest.json` from the unzipped folder.
+1. Download `acadrix-v0.3.0-chrome-extension.zip` from **[Releases](https://github.com/SH1SHANK/unfold-iitm/releases/latest)**.
+2. Unpack the downloaded `.zip` file into a folder.
+3. Open your Chromium browser (Chrome, Brave, Edge, Arc) and navigate to `chrome://extensions`.
+4. Enable **Developer mode** in the top right.
+5. Click **Load unpacked** and select the extracted folder.
 
-No install needed? Open `bookmarklet/install.html` and drag the button to your bookmarks bar.
+### Option 2: Firefox (Temporary Add-on)
 
-## Build & Test
+1. Download and unpack the release archive.
+2. Navigate to `about:debugging#/runtime/this-firefox`.
+3. Click **Load Temporary Add-on...** and select `manifest.json`.
+
+### Option 3: Browser Bookmarklet (Zero Install)
+
+1. Open `bookmarklet/install.html` in your browser.
+2. Drag the **Acadrix** button to your browser's bookmarks bar.
+3. Click the bookmarklet on any IITM assignment page to open the Reader.
+
+---
+
+## 🛠️ Build & Development
+
+The project uses zero external runtime dependencies for building:
 
 ```bash
-node build.mjs       # Assemble extension and bookmarklet targets
-npm test             # Run architecture verification and fixture tests
-npm run check        # Syntax-check generated bundles
+# Assemble extension and bookmarklet distribution targets
+node build.mjs
+
+# Syntax check generated bundles
+npm run check
+
+# Execute comprehensive 15-suite test runner
+npm test
+
+# Run real-browser smoke tests (headless Chrome)
+npm run test:browser
+
+# Verify build integrity and consistency
+npm run verify
 ```
 
-Manual smoke-testing on live IITM portals is documented in [docs/manual-smoke-test.md](docs/manual-smoke-test.md).
-Full dev and release guide: [CONTRIBUTING](.github/CONTRIBUTING.md).
+---
 
-## How it works
+## 🔒 Safety & Privacy
 
-The portal presents questions one at a time. Acadrix traverses the assignment, capturing questions into an encapsulated, read-only reader view. It does not alter or mutate your live quiz answers. Prompts, mathematical formulas, and options are preserved for study, review, and export.
+- **Read-Only / Non-Destructive**: Acadrix is designed for reading, reviewing, and offline study. It never auto-submits quizzes or alters portal submission timers.
+- **Zero Remote Telemetry**: Your quiz contents and local grades stay entirely in your browser (`chrome.storage.local`).
+- **Encapsulated Styles**: All reader UI components mount in an isolated Shadow DOM root, preventing CSS leakage to or from the host IITM portal.
 
-## Disclaimer
+---
 
-Beta and unofficial. Acadrix provides read-only inspection and export; it does not answer or modify assignments for you. Always verify your official submission directly on the IITM portal. Not affiliated with IIT Madras; "IITM" only describes portal compatibility.
+## ⚖️ Disclaimer & License
 
-## License
+Acadrix is an independent open-source project and is not affiliated with, endorsed by, or sponsored by IIT Madras. "IITM" is used solely to describe compatibility with the IITM Online Degree portal. Always verify your official assignment submissions directly on the portal.
 
-[MIT](LICENSE)
+Distributed under the [MIT License](LICENSE).
