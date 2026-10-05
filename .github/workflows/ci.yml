@@ -1,42 +1,48 @@
-name: CI
+name: CI Verification
 
-# Install deps, build the extension (build/ is gitignored, assembled fresh
-# from extension/ + generated run.js), fail if the committed bookmarklet
-# outputs are stale, and upload the unpacked extension as an artifact.
 on:
   push:
-    branches: [main]
+    branches: [main, modular-architecture]
   pull_request:
+    branches: [main, modular-architecture]
 
 jobs:
-  build:
+  validate:
+    name: Build, Lint & Test Extension
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm install
 
-      - name: Syntax check source
-        run: node --check bookmarklet/bookmarklet-source.js
-
       - name: Validate manifest JSON
         run: node -e "JSON.parse(require('fs').readFileSync('extension/manifest.json','utf8'))"
 
-      - name: Build
+      - name: Build & Assemble Targets
         run: npm run build
 
-      - name: Fail if bookmarklet outputs drifted from source
+      - name: Verify Code Syntax
+        run: npm run check
+
+      - name: Check Bookmarklet Consistency
         run: git diff --exit-code -- bookmarklet/bookmarklet.txt bookmarklet/install.html
 
-      - name: Zip unpacked extension
-        run: cd build && zip -r -FS ../unfold-unpacked.zip . -x '*.DS_Store'
+      - name: Run Test Suite
+        run: npm test
 
-      - uses: actions/upload-artifact@v4
+      - name: Zip Chrome Extension Bundle
+        run: cd build && zip -r -FS ../acadrix-chrome-extension.zip . -x '*.DS_Store'
+
+      - name: Upload Extension Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: unfold-unpacked
-          path: unfold-unpacked.zip
+          name: acadrix-chrome-extension
+          path: acadrix-chrome-extension.zip

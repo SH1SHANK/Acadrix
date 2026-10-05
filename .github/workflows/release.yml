@@ -1,48 +1,101 @@
-name: Release
+name: Release Chrome Extension
 
-# MANUAL FALLBACK. The primary release path is release-please.yml (merge the
-# Release PR). Use this only to hand-cut a tag that release-please won't make on
-# its own — e.g. a pre-release v0.2.0-alpha.2. Tags pushed by release-please use
-# GITHUB_TOKEN and do NOT trigger this workflow, so there's no double-release.
-#
-# Push a tag like v0.2.0 (or a pre-release v0.2.0-alpha) to cut a GitHub Release
-# with the zipped extension. The tag's numeric part must match manifest version;
-# a suffix like -alpha/-beta/-rc marks the release as a pre-release.
 on:
   push:
-    tags: ["v*"]
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag name (e.g. v0.2.0)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as pre-release"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  build-and-release:
+    name: Package & Release Chrome Extension
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
-      - name: Regenerate build outputs
-        run: node build.mjs
+      - name: Install dependencies
+        run: npm install
 
-      - name: Verify manifest version matches the tag
+      - name: Validate manifest JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('extension/manifest.json','utf8'))"
+
+      - name: Build Extension & Bookmarklet Artifacts
+        run: npm run build
+
+      - name: Verify Code Syntax
+        run: npm run check
+
+      - name: Check Bookmarklet Consistency
+        run: git diff --exit-code -- bookmarklet/bookmarklet.txt bookmarklet/install.html
+
+      - name: Run Full Test Suite
+        run: npm test
+
+      - name: Determine Version & Tag
+        id: vars
         run: |
-          MANIFEST_V=$(node -p "require('./build/manifest.json').version")
-          TAG_V="${GITHUB_REF_NAME#v}"
-          BASE_V="${TAG_V%%-*}"   # strip any -alpha/-beta/-rc suffix
-          echo "manifest=$MANIFEST_V  tag=$TAG_V  base=$BASE_V"
-          test "$MANIFEST_V" = "$BASE_V" || {
-            echo "::error::manifest version ($MANIFEST_V) != tag base ($BASE_V)"; exit 1; }
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Target Release Tag: $TAG (Version: $VERSION)"
 
-      - name: Zip extension
-        run: cd build && zip -r -FS "../unfold-${GITHUB_REF_NAME}.zip" . -x '*.DS_Store'
+      - name: Package Release Archives
+        run: |
+          VERSION="${{ steps.vars.outputs.version }}"
+          # 1. Package Chrome Extension Bundle
+          cd build && zip -r -FS "../acadrix-v${VERSION}-chrome-extension.zip" . -x '*.DS_Store' && cd ..
+          # 2. Package Bookmarklet Distribution
+          cd bookmarklet && zip -r -FS "../acadrix-v${VERSION}-bookmarklet.zip" . -x '*.DS_Store' && cd ..
+          ls -la acadrix-*.zip
+
+      - name: Upload Build Artifacts to Workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: acadrix-release-packages
+          path: acadrix-*.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: unfold-*.zip
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Acadrix ${{ steps.vars.outputs.tag }}
+          files: acadrix-*.zip
           generate_release_notes: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prerelease || contains(steps.vars.outputs.tag, '-') }}
+          body: |
+            ### Acadrix Chrome Extension Release
+            
+            **Release Packages:**
+            - `acadrix-v${{ steps.vars.outputs.version }}-chrome-extension.zip` — Unpacked Chrome Extension for manual loading or Web Store deployment.
+            - `acadrix-v${{ steps.vars.outputs.version }}-bookmarklet.zip` — Drag-to-install bookmarklet distribution.
+
+            #### Manual Installation (Chrome / Brave / Edge / Chromium):
+            1. Download `acadrix-v${{ steps.vars.outputs.version }}-chrome-extension.zip` and extract it.
+            2. Open `chrome://extensions` in your browser.
+            3. Enable **Developer mode** in the top right.
+            4. Click **Load unpacked** and select the extracted folder.
