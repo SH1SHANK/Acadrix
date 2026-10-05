@@ -1,5 +1,5 @@
 /**
- * Unfold Runtime Controller.
+ * Acadrix Runtime Controller.
  * Coordinates detection, lifecycle, traversal, extraction, and Shadow DOM UI.
  */
 
@@ -19,7 +19,7 @@ import { ExportOrchestrator } from "../orchestration/orchestrator.js";
 
 const DEFAULT_SHORTCUT = "Alt+Q";
 
-export class UnfoldRuntime {
+export class AcadrixRuntime {
   constructor({ css = "", extractor = null } = {}) {
     this.portal = portalAdapter;
     const ExtractorClass =
@@ -664,3 +664,4 @@ export class UnfoldRuntime {
     }
   }
 /* @extension-only-end */}
+export const UnfoldRuntime = AcadrixRuntime;

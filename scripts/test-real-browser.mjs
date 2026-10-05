@@ -237,27 +237,31 @@ function buildFixtureHtml() {
     };
     window.__unfoldTestTelemetry = telemetry;
 
-    if (navigator.clipboard) {
-      Object.defineProperty(navigator.clipboard, "writeText", {
-        configurable: true,
-        writable: true,
-        value: async (text) => {
-          telemetry.clipboardWrites.push(String(text));
-        }
-      });
-    }
-
     const origConsoleError = console.error.bind(console);
     console.error = (...args) => {
-      telemetry.consoleErrors.push(args.map((a) => String(a)).join(" "));
+      const msg = args.map((a) => String(a)).join(" ");
+      telemetry.consoleErrors.push(msg);
       origConsoleError(...args);
+      fetch("/__log", { method: "POST", headers: { "Content-Type": "text/plain" }, body: "[Console Error] " + msg }).catch(() => {});
     };
     window.addEventListener("error", (ev) => {
-      telemetry.pageErrors.push(ev.message || String(ev.error));
+      const msg = ev.message || String(ev.error);
+      telemetry.pageErrors.push(msg);
+      fetch("/__log", { method: "POST", headers: { "Content-Type": "text/plain" }, body: "[Page Error] " + msg }).catch(() => {});
     });
     window.addEventListener("unhandledrejection", (ev) => {
-      telemetry.unhandledRejections.push(String(ev.reason));
+      const msg = String(ev.reason);
+      telemetry.unhandledRejections.push(msg);
+      fetch("/__log", { method: "POST", headers: { "Content-Type": "text/plain" }, body: "[Unhandled Rejection] " + msg }).catch(() => {});
     });
+
+    try {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText = async (text) => {
+          telemetry.clipboardWrites.push(String(text));
+        };
+      }
+    } catch (_e) {}
 
     const blobStore = new Map();
     const origCreateObjectURL = URL.createObjectURL.bind(URL);
@@ -358,7 +362,10 @@ function buildFixtureHtml() {
       } catch {}
     }
 
+    let smokeSuiteRan = false;
     async function runInBrowserSmokeSuite() {
+      if (smokeSuiteRan) return;
+      smokeSuiteRan = true;
       const t = window.__unfoldTestTelemetry;
       try {
         await remoteLog("Browser suite started");
@@ -677,7 +684,7 @@ function buildFixtureHtml() {
 
         applyAnswersTrigger.click();
         await sleep(10);
-        const applyDialogOpen = applyDialogEl && !applyDialogEl.hasAttribute("hidden");
+        const isApplyDialogOpen = applyDialogEl && !applyDialogEl.hasAttribute("hidden");
         const summaryReady = applyDialogEl.querySelector("[data-summary-ready]")?.textContent;
         const summaryMatched = applyDialogEl.querySelector("[data-summary-matched]")?.textContent;
 
@@ -700,7 +707,7 @@ function buildFixtureHtml() {
           q3BadgeMatched,
           hasApplyButton: Boolean(applyAnswersTrigger),
           readyBadgeText,
-          applyDialogOpen,
+          applyDialogOpen: isApplyDialogOpen,
           summaryReady,
           summaryMatched,
           applyDialogClosed
@@ -816,9 +823,9 @@ function buildFixtureHtml() {
     if (document.readyState === "complete" || document.readyState === "interactive") {
       setTimeout(runInBrowserSmokeSuite, 50);
     } else {
-      window.addEventListener("load", () => {
+      window.addEventListener("DOMContentLoaded", () => {
         setTimeout(runInBrowserSmokeSuite, 50);
-      });
+      }, { once: true });
     }
   </script>
 </body>
@@ -851,6 +858,15 @@ async function runRealBrowserTests() {
       res.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8" });
       res.end(runJsSource);
       return;
+    }
+    if (req.method === "GET" && req.url.includes(".woff2")) {
+      const fontName = path.basename(req.url.split("?")[0]);
+      const fontPath = path.join(ROOT_DIR, "extension", "fonts", fontName);
+      if (fs.existsSync(fontPath)) {
+        res.writeHead(200, { "Content-Type": "font/woff2" });
+        res.end(fs.readFileSync(fontPath));
+        return;
+      }
     }
     if (req.method === "GET" && req.url === "/assets/matrix-plot.png") {
       res.writeHead(200, {
@@ -902,7 +918,7 @@ async function runRealBrowserTests() {
   const chromeProc = spawn(
     chromeBin,
     [
-      "--headless",
+      "--headless=new",
       "--no-sandbox",
       "--disable-gpu",
       "--disable-dev-shm-usage",
@@ -917,6 +933,9 @@ async function runRealBrowserTests() {
       "--mute-audio",
       "--hide-scrollbars",
       "--disable-features=Translate,OptimizationHints,MediaRouter",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
       `--user-data-dir=${tmpUserDataDir}`,
       targetUrl,
     ],

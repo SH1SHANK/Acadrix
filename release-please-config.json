@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "unfold-iitm",
+      "package-name": "acadrix",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
       "draft": false,

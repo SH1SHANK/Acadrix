@@ -3,7 +3,7 @@
   "name": "Acadrix",
   "version": "0.3.0",
   "description": "Read all questions in one view and export IITM Online Degree assessments to Markdown, PDF, or portable bundles.",
-  "homepage_url": "https://github.com/civiks/unfold-iitm",
+  "homepage_url": "https://github.com/SH1SHANK/unfold-iitm",
   "permissions": [
     "scripting",
     "activeTab",

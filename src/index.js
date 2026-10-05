@@ -1,11 +1,11 @@
 /**
- * Unfold IITM — Main Content Entry Point.
+ * Acadrix — Main Content Entry Point.
  * 
- * Assembles and launches the Unfold runtime.
+ * Assembles and launches the Acadrix runtime.
  * Provides backwards-compatible handles for toolbar popup and bookmarklet execution.
  */
 
-import { UnfoldRuntime } from "./core/runtime.js";
+import { AcadrixRuntime, UnfoldRuntime } from "./core/runtime.js";
 
 // __CSS__ placeholder will be inlined by build.mjs
 const CSS = typeof __CSS__ !== "undefined" ? __CSS__ : "";
@@ -14,19 +14,21 @@ const CSS = typeof __CSS__ !== "undefined" ? __CSS__ : "";
   "use strict";
 
   // Prevent duplicate execution
-  if (window.__unfold) {
-    window.__unfold.detect();
+  if (window.__acadrix || window.__unfold) {
+    (window.__acadrix || window.__unfold).detect();
     return;
   }
 
-  const runtime = new UnfoldRuntime({ css: CSS });
+  const runtime = new AcadrixRuntime({ css: CSS });
+  window.__acadrix = runtime;
   window.__unfold = runtime;
 
   // Primary manual open handle
-  window.__unfoldOpen = () => runtime.open();
+  window.__acadrixOpen = () => runtime.open();
+  window.__unfoldOpen = window.__acadrixOpen;
 
   // Backwards compatibility alias for popup.js and existing scripts
-  window.__saqOpen = window.__unfoldOpen;
+  window.__saqOpen = window.__acadrixOpen;
 
   /* @extension-only-start */
   window.__saqStatus = () => ({

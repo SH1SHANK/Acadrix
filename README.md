@@ -6,8 +6,8 @@
 
 **[Download the latest release](../../releases/latest)**
 
-[![CI](https://github.com/civiks/unfold-iitm/actions/workflows/ci.yml/badge.svg)](https://github.com/civiks/unfold-iitm/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/civiks/unfold-iitm?include_prereleases)](../../releases)
+[![CI](https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml/badge.svg)](https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/SH1SHANK/unfold-iitm?include_prereleases)](../../releases)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 <sub>Unofficial, beta, not affiliated with IIT Madras. <a href="NAMING.md">Why Acadrix?</a></sub>
