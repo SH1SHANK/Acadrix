@@ -239,6 +239,8 @@
   
   const KIND_EXTRACT_PATTERNS = [
     { label: "GrPA", regex: /\b(?:grpa|graded\s+programming(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
+    { label: "PPA", regex: /\b(?:ppa|practice\s+programming(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
+    { label: "AQ", regex: /\b(?:aq|activity\s+questions?|weekly\s+activity|activity)(?:[\s\-_#:]*(\d+(?:\.\d+)?))?\b/i },
     { label: "GA", regex: /\b(?:ga|graded\s+assignment)(?:[\s\-_#:]*(\d+))?\b/i },
     { label: "PA", regex: /\b(?:pa|practice(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
     { label: "OPPE", regex: /\b(?:oppe)(?:[\s\-_#:]*(\d+))?\b/i },
@@ -317,7 +319,7 @@
       parseWeekCandidate(rawTitle, false) ||
       parseWeekCandidate(safeMeta.activeUnitHeader || safeMeta.unitHeader, false);
   
-    // 3. Kind (GrPA, GA, PA, OPPE, Quiz; first match wins, optional number suffix kept)
+    // 3. Kind (GrPA, PPA, AQ, GA, PA, OPPE, Quiz; first match wins, optional number suffix kept)
     let kindPart = "";
     const kindSource =
       typeof safeMeta.kind === "string" && safeMeta.kind.trim()
@@ -328,9 +330,26 @@
       for (const { label, regex } of KIND_EXTRACT_PATTERNS) {
         const m = kindSource.match(regex);
         if (m) {
-          const suffixNum = m[1] !== undefined ? ` ${parseInt(m[1], 10)}` : "";
+          const suffixNum = m[1] !== undefined ? ` ${m[1]}` : "";
           kindPart = sanitizeFilenameSegment(`${label}${suffixNum}`);
           break;
+        }
+      }
+    }
+  
+    // If no standard kind acronym matched, check if rawTitle contains a specific non-generic title
+    if (!kindPart && rawTitle && typeof rawTitle === "string") {
+      const trimmedTitle = rawTitle.trim();
+      if (
+        !/^(?:IITM\s+Assessment|Assignment|Assessment|Quiz)$/i.test(trimmedTitle) &&
+        !trimmedTitle.startsWith("IITM Assessment")
+      ) {
+        const cleanedTitle = trimmedTitle
+          .replace(/\bweek[\s\-_:]*\d{1,2}\b/gi, "")
+          .replace(/^[\s\-_:]+|[\s\-_:]+$/g, "")
+          .trim();
+        if (cleanedTitle && !/^(?:Assignment|Assessment|Quiz)$/i.test(cleanedTitle)) {
+          kindPart = sanitizeFilenameSegment(cleanedTitle);
         }
       }
     }
@@ -612,13 +631,13 @@
       timer: "app-submission-timer",
       saveStatus: "app-save-status",
       questionHeader: ".question-header, .question-label, .header .question-header",
-      assessmentTitle: ".assignment-title, .assessment-title, h1.title, .breadcrumb, h1, h2",
+      assessmentTitle: "button.child-row.selected .child-title, button.child-row.active .child-title, app-title-bar h1.title, app-title-bar .title, .title-bar-container .title, .mobile-header .title-group .title, .mobile-header .title, app-pa-start-page h1, app-programming-assignment-view h1, .assignment-title, .assessment-title, h1.title, .breadcrumb, h1, h2",
       assessmentSubtitle: ".course-content .subtitle, .subtitle, .unit-subtitle, .header-subtitle, .assignment-subtitle",
       breadcrumbCurrent: "nav.breadcrumb .breadcrumb-item.current",
-      selectedChildRow: ".child-row.selected",
+      selectedChildRow: "button.child-row.selected, .child-row.selected, button.child-row.active, .child-row.active",
       unitContainer: ".unit-container",
       unitTitle: ".unit-title",
-      activeUnitHeader: ".unit-header.active, .unit-header[aria-expanded='true'], .unit-container.active .unit-header, .unit-container:has(.child-row.active) .unit-header, .unit-header",
+      activeUnitHeader: ".unit-header.active, .unit-header[aria-expanded='true'], .unit-container.active .unit-header, .unit-container:has(.child-row.active) .unit-header, .unit-container:has(.child-row.selected) .unit-header, .unit-header",
       courseTitle: ".side-nav-title, .course-title, .header-course-title",
       totalCountRegex: /Question\s+\d+\s*\/\s*(\d+)/i,
       currentNumberRegex: /Question\s+(\d+)/i,
@@ -1071,18 +1090,47 @@
     }
   
     /**
-     * Discovers the assessment title from page headers or breadcrumbs, excluding question stem headings.
+     * Discovers the assessment title from active side-nav items, page headers, or breadcrumbs,
+     * excluding question stem headings and choices.
      * @returns {string}
      */
     getAssessmentTitle() {
+      // 1. Selected or active child item in sidebar (most specific title)
+      const selectedChild = $(
+        "button.child-row.selected .child-title, .child-row.selected .child-title, button.child-row.active .child-title, .child-row.active .child-title",
+        this.doc
+      );
+      const selectedText = (selectedChild?.textContent || "").replace(/\s+/g, " ").trim();
+      if (selectedText && !/^(assignment|assessment|quiz)$/i.test(selectedText)) {
+        return selectedText;
+      }
+  
+      // 2. Unit view / start page title bar or mobile header
+      const titleBarEl = $(
+        "app-title-bar h1.title, app-title-bar .title, .title-bar-container .title, .mobile-header .title-group .title, .mobile-header .title, app-pa-start-page h1, app-programming-assignment-view h1, .assignment-title, .assessment-title",
+        this.doc
+      );
+      const titleBarText = (titleBarEl?.textContent || "").replace(/\s+/g, " ").trim();
+      if (titleBarText && !/^(assignment|assessment|quiz)$/i.test(titleBarText)) {
+        return titleBarText;
+      }
+  
+      // 3. General candidates, excluding question body, choices, backend HTML
       const candidates = $$(
         IITM_SELECTORS.metadata.assessmentTitle || ".assignment-title, .assessment-title, h1.title, .breadcrumb, h1, h2",
         this.doc
       );
-      const titleEl = candidates.find(
-        (el) => !el.closest?.(".question-body, .backend-html, app-assessment-question")
-      ) || candidates[0];
-      return (titleEl?.textContent || "").replace(/\s+/g, " ").trim() || "Assignment";
+      for (const el of candidates) {
+        if (el.closest?.(".question-body, .backend-html, app-assessment-question, .choices, .feedback, .info-banner")) {
+          continue;
+        }
+        const txt = (el.textContent || "").replace(/\s+/g, " ").trim();
+        if (txt && txt !== "Assignment" && txt !== "IIT Madras" && !txt.startsWith("IITM Assessment")) {
+          return txt;
+        }
+      }
+  
+      return selectedText || titleBarText || "Assignment";
     }
   
     /**
@@ -1102,20 +1150,40 @@
         .trim();
     }
   
-    /** Discovers the assessment unit/week from the real portal's breadcrumb, sidebar, or title. */
+    /** Discovers the assessment unit/week from the real portal's sidebar, breadcrumb, or title. */
     getAssessmentWeek() {
       const weekRe = /\bweek[\s\-_:]*(\d{1,2})\b/i;
   
-      const breadcrumb = $(IITM_SELECTORS.metadata.breadcrumbCurrent, this.doc);
-      const breadcrumbMatch = (breadcrumb?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
-      if (breadcrumbMatch) return `Week ${breadcrumbMatch[1]}`;
-  
-      const selected = $(IITM_SELECTORS.metadata.selectedChildRow, this.doc);
-      const unit = selected?.closest?.(IITM_SELECTORS.metadata.unitContainer);
-      const unitText = unit ? ($(IITM_SELECTORS.metadata.unitTitle, unit)?.textContent || "") : "";
+      // 1. Unit container of the active/selected child row
+      const selected = $(IITM_SELECTORS.metadata.selectedChildRow || "button.child-row.selected, .child-row.selected, .child-row.active", this.doc);
+      const unit = selected?.closest?.(IITM_SELECTORS.metadata.unitContainer || ".unit-container");
+      const unitText = unit ? ($(IITM_SELECTORS.metadata.unitTitle || ".unit-title", unit)?.textContent || "") : "";
       const unitMatch = unitText.replace(/\s+/g, " ").trim().match(weekRe);
       if (unitMatch) return `Week ${unitMatch[1]}`;
   
+      // 2. Mobile header parent title
+      const parentTitle = $(".mobile-header .parent-title, .parent-title", this.doc);
+      const parentMatch = (parentTitle?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
+      if (parentMatch) return `Week ${parentMatch[1]}`;
+  
+      // 3. Breadcrumbs
+      const breadcrumb = $(IITM_SELECTORS.metadata.breadcrumbCurrent || "nav.breadcrumb .breadcrumb-item.current", this.doc);
+      const breadcrumbMatch = (breadcrumb?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
+      if (breadcrumbMatch) return `Week ${breadcrumbMatch[1]}`;
+  
+      const breadcrumbs = $$("nav.breadcrumb .breadcrumb-item, .breadcrumb span", this.doc);
+      for (const b of breadcrumbs) {
+        const bMatch = (b.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
+        if (bMatch) return `Week ${bMatch[1]}`;
+      }
+  
+      // 4. Active unit header
+      const activeHeader = $(IITM_SELECTORS.metadata.activeUnitHeader, this.doc);
+      const activeText = (activeHeader?.textContent || "").replace(/\s+/g, " ").trim();
+      const activeMatch = activeText.match(weekRe);
+      if (activeMatch) return `Week ${activeMatch[1]}`;
+  
+      // 5. Title match
       const titleMatch = this.getAssessmentTitle().match(weekRe);
       if (titleMatch) return `Week ${titleMatch[1]}`;
       return "";
@@ -1851,6 +1919,11 @@
     info: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>',
     theme: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>',
     copy: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    chevronDown: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+    moreVertical: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>',
+    maximize: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>',
+    zoomIn: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+    zoomOut: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
   });
 
   // ── [Module: src/ui/shadow.js] ──
@@ -2436,10 +2509,58 @@
   // ── [Module: src/ui/reader-interactions.js] ──
   /** Shared Reader interaction behavior. */
   
+  const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
+  
   function handleReaderKeyDown(e) {
     if (!this.sheetElement || !this.isOpen()) return;
   
     if (this.runReaderFeatureHook("handleKeydown", e)) return;
+  
+    if (e.key === "Escape") {
+      if (this.isLightboxOpen?.()) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.closeLightbox?.();
+        return;
+      }
+      const exportMenu = this.sheetElement.querySelector("#saq-export-menu");
+      const splitArrow = this.sheetElement.querySelector("[data-act='toggle-export-menu']");
+      if (exportMenu && !exportMenu.hasAttribute("hidden") && !exportMenu.hidden) {
+        e.preventDefault();
+        e.stopPropagation();
+        exportMenu.hidden = true;
+        exportMenu.setAttribute("hidden", "");
+        if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
+        splitArrow?.focus?.();
+        return;
+      }
+    }
+  
+    // Zoom Keyboard Shortcuts: Ctrl/Cmd + Plus/Minus/0
+    if (e.metaKey || e.ctrlKey) {
+      if (e.key === "=" || e.key === "+") {
+        e.preventDefault();
+        const cur = this.getZoom?.() || 1.0;
+        const idx = ZOOM_STEPS.findIndex((s) => s >= cur - 0.01);
+        const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, (idx >= 0 ? idx : 2) + 1)];
+        this.setZoom?.(next);
+        return;
+      }
+      if (e.key === "-" || e.key === "_") {
+        e.preventDefault();
+        const cur = this.getZoom?.() || 1.0;
+        const idx = ZOOM_STEPS.findIndex((s) => s >= cur - 0.01);
+        const prev = ZOOM_STEPS[Math.max(0, (idx >= 0 ? idx : 2) - 1)];
+        this.setZoom?.(prev);
+        return;
+      }
+      if (e.key === "0") {
+        e.preventDefault();
+        this.setZoom?.(1.0);
+        return;
+      }
+    }
+  
     if (e.key !== "Tab") return;
   
     const focusables = Array.from(
@@ -2472,19 +2593,132 @@
   function handleReaderActionClick(e) {
     if (this.runReaderFeatureHook("handleActionClick", e)) return;
   
+    // Image & Diagram Click -> Open Expand View Lightbox
+    const expandImgTrigger = e.target.closest?.("img, .saq-svg-wrap, [data-act='expand-image']");
+    if (expandImgTrigger && !e.target.closest?.("button:not([data-act='expand-image']), a, input, textarea")) {
+      const img = expandImgTrigger.tagName === "IMG" ? expandImgTrigger : expandImgTrigger.querySelector?.("img");
+      const svgWrap = expandImgTrigger.classList?.contains("saq-svg-wrap") ? expandImgTrigger : expandImgTrigger.querySelector?.(".saq-svg-wrap");
+      if (img && img.src && !img.closest?.(".saq-lightbox")) {
+        e.preventDefault();
+        e.stopPropagation();
+        const figure = img.closest?.("figure");
+        const caption = figure?.querySelector?.("figcaption")?.textContent || img.title || "";
+        this.openLightbox?.({ src: img.src, alt: img.alt || caption, caption });
+        return;
+      }
+      if (svgWrap && !svgWrap.closest?.(".saq-lightbox")) {
+        e.preventDefault();
+        e.stopPropagation();
+        const figure = svgWrap.closest?.("figure");
+        const caption = figure?.querySelector?.("figcaption")?.textContent || "";
+        this.openLightbox?.({ svgHtml: svgWrap.innerHTML, alt: caption || "Diagram", caption });
+        return;
+      }
+    }
+  
+    const splitGroup = this.sheetElement?.querySelector("#saq-export-split");
+    const exportMenu = this.sheetElement?.querySelector("#saq-export-menu");
+    const splitArrow = this.sheetElement?.querySelector("[data-act='toggle-export-menu']");
+    if (exportMenu && !exportMenu.hasAttribute("hidden") && !exportMenu.hidden && splitGroup && !splitGroup.contains(e.target)) {
+      exportMenu.hidden = true;
+      exportMenu.setAttribute("hidden", "");
+      if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
+    }
+  
     const btn = e.target.closest?.("[data-act]");
     if (!btn || btn.hasAttribute("disabled") || btn.classList.contains("is-busy")) return;
   
     e.preventDefault();
     const action = btn.dataset.act;
   
-    if (action === "refresh") {
+    // Lightbox Controls
+    if (action === "close-lightbox") {
+      this.closeLightbox?.();
+      return;
+    }
+    if (action === "lightbox-zoom-in") {
+      const vp = this.shadowHost?.root?.querySelector("#saq-lightbox-viewport");
+      if (vp) {
+        const cur = Number(vp.dataset.zoom || 1);
+        const next = Math.min(3, cur + 0.25);
+        vp.dataset.zoom = String(next);
+        vp.style.transform = `scale(${next})`;
+      }
+      return;
+    }
+    if (action === "lightbox-zoom-out") {
+      const vp = this.shadowHost?.root?.querySelector("#saq-lightbox-viewport");
+      if (vp) {
+        const cur = Number(vp.dataset.zoom || 1);
+        const next = Math.max(0.5, cur - 0.25);
+        vp.dataset.zoom = String(next);
+        vp.style.transform = `scale(${next})`;
+      }
+      return;
+    }
+    if (action === "lightbox-zoom-reset") {
+      const vp = this.shadowHost?.root?.querySelector("#saq-lightbox-viewport");
+      if (vp) {
+        vp.dataset.zoom = "1";
+        vp.style.transform = "scale(1)";
+      }
+      return;
+    }
+  
+    // Text Zoom Controls
+    if (action === "zoom-in") {
+      const cur = this.getZoom?.() || 1.0;
+      const idx = ZOOM_STEPS.findIndex((s) => s >= cur - 0.01);
+      const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, (idx >= 0 ? idx : 2) + 1)];
+      this.setZoom?.(next);
+      return;
+    }
+    if (action === "zoom-out") {
+      const cur = this.getZoom?.() || 1.0;
+      const idx = ZOOM_STEPS.findIndex((s) => s >= cur - 0.01);
+      const prev = ZOOM_STEPS[Math.max(0, (idx >= 0 ? idx : 2) - 1)];
+      this.setZoom?.(prev);
+      return;
+    }
+    if (action === "zoom-reset") {
+      this.setZoom?.(1.0);
+      return;
+    }
+  
+    if (action === "toggle-export-menu") {
+      if (exportMenu) {
+        const isExpanded = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", String(!isExpanded));
+        exportMenu.hidden = isExpanded;
+        if (isExpanded) {
+          exportMenu.setAttribute("hidden", "");
+        } else {
+          exportMenu.removeAttribute("hidden");
+          exportMenu.querySelector(".saq-dropdown-item")?.focus?.();
+        }
+      }
+    } else if (action === "refresh") {
+      if (exportMenu) {
+        exportMenu.hidden = true;
+        exportMenu.setAttribute("hidden", "");
+        if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
+      }
       this.closeAiPopover?.({ restoreFocus: false });
       if (this.onRefreshCallback) this.onRefreshCallback();
     } else if (action === "export-md") {
+      if (exportMenu) {
+        exportMenu.hidden = true;
+        exportMenu.setAttribute("hidden", "");
+        if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
+      }
       this.closeAiPopover?.({ restoreFocus: false });
       if (this.onExportCallback) this.onExportCallback("markdown");
     } else if (action === "print") {
+      if (exportMenu) {
+        exportMenu.hidden = true;
+        exportMenu.setAttribute("hidden", "");
+        if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
+      }
       this.closeAiPopover?.({ restoreFocus: false });
       if (this.onExportCallback) {
         this.onExportCallback("pdf");
@@ -2500,6 +2734,11 @@
         this.printFallbackWithTitle(this.documentModel);
       }
     } else if (action === "export-bundle") {
+      if (exportMenu) {
+        exportMenu.hidden = true;
+        exportMenu.setAttribute("hidden", "");
+        if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
+      }
       this.closeAiPopover?.({ restoreFocus: false });
       if (this.onExportCallback) this.onExportCallback("bundle");
     } else if (action === "theme") {
@@ -2688,14 +2927,21 @@
           ${isReview ? '<span class="saq-tag">✓ Results</span>' : ""}
           <div class="saq-actions">
             <span class="saq-clock" title="Time remaining">${ICONS.clock}<span class="saq-clock-val"></span></span>
-            <nav class="saq-export-group" aria-label="Export actions">
-              <button type="button" class="saq-btn saq-btn-export" data-act="export-md" aria-label="Export Markdown" title="Export Markdown (.md)">${ICONS.markdown}<span>Markdown</span></button>
-              <button type="button" class="saq-btn saq-btn-export" data-act="print" aria-label="Print or save as PDF" title="Print or save as PDF">${ICONS.print}<span>PDF</span></button>
-              <button type="button" class="saq-btn saq-btn-export" data-act="export-bundle" aria-label="Export portable ZIP bundle" title="Export portable ZIP bundle">${ICONS.bundle}<span>Bundle</span></button>
-            </nav>
+            <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
+            <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
+            <div class="saq-split-btn-group" id="saq-export-split">
+              <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
+              <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
+                <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
+                <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download Markdown</span></button>
+                <button type="button" class="saq-dropdown-item" data-act="export-bundle" role="menuitem" title="Download ZIP Bundle">${ICONS.bundle}<span>Download Bundle</span></button>
+              </div>
+            </div>
             <button type="button" class="saq-btn saq-btn-secondary" data-act="refresh" aria-label="Refresh questions from assessment" title="Re-read questions from assessment">${ICONS.refresh}<span>Refresh</span></button>
             <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
             <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
+            <button type="button" class="saq-btn-apply" data-act="apply-answers" hidden aria-hidden="true"><span class="saq-btn-badge" data-ready-badge hidden>0</span></button>
           </div>
         </header>
         <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
@@ -2705,7 +2951,7 @@
       this.renderBlocks(sheet.querySelector(".saq-scroll"), documentModel);
   
       // Event delegation on header actions
-      sheet.addEventListener("click", (e) => this.handleActionClick(e), true);
+      sheet.addEventListener("click", (e) => this.handleActionClick(e));
   
       // Focus trap inside modal dialog
       this.boundKeyDown = (e) => this.handleKeyDown(e);
@@ -2723,14 +2969,25 @@
   
     formatQuestionType(type) {
       if (!type || type === "unknown") return "";
+      const lower = String(type).toLowerCase().trim();
       const map = {
-        mcq: "MCQ",
-        msq: "MSQ",
+        mcq: "Multiple Choice",
+        single_choice: "Multiple Choice",
+        single_correct: "Multiple Choice",
+        single: "Multiple Choice",
+        msq: "Multi Choice (MSQ)",
+        multiple_choice: "Multi Choice (MSQ)",
+        multiple_correct: "Multi Choice (MSQ)",
+        multi_choice: "Multi Choice (MSQ)",
+        multi: "Multi Choice (MSQ)",
         numerical: "Numerical",
+        number: "Numerical",
         text: "Short Answer",
+        short_answer: "Short Answer",
         descriptive: "Descriptive",
+        essay: "Descriptive",
       };
-      return map[String(type).toLowerCase()] || "";
+      return map[lower] || (lower.charAt(0).toUpperCase() + lower.slice(1));
     }
   
     renderBlocks(scrollContainer, documentModel) {
@@ -3014,7 +3271,7 @@
     setExporting(isBusy, format = "") {
       if (!this.sheetElement) return;
       const btns = this.sheetElement.querySelectorAll(
-        ".saq-btn-export, [data-act='export-md'], [data-act='print'], [data-act='export-bundle']"
+        ".saq-btn-export, [data-act='export-md'], [data-act='print'], [data-act='export-bundle'], [data-act='copy-questions']"
       );
       const activeAct =
         format === "markdown"
@@ -3051,6 +3308,120 @@
       }
     }
   
+    setZoom(scale) {
+      const valid = Math.min(1.6, Math.max(0.75, scale));
+      this.currentZoom = valid;
+      if (this.sheetElement && this.sheetElement.style) {
+        if (typeof this.sheetElement.style.setProperty === "function") {
+          this.sheetElement.style.setProperty("--acx-zoom", String(valid));
+        } else {
+          this.sheetElement.style["--acx-zoom"] = String(valid);
+        }
+        const valBtn = this.sheetElement.querySelector("[data-act='zoom-reset']");
+        if (valBtn) valBtn.textContent = `${Math.round(valid * 100)}%`;
+      }
+    }
+  
+    getZoom() {
+      return this.currentZoom || 1.0;
+    }
+  
+    openLightbox({ src = "", alt = "", caption = "", svgHtml = "" } = {}) {
+      const root = this.shadowHost?.root;
+      if (!root) return;
+      let lb = root.querySelector("#saq-image-lightbox");
+      if (!lb) {
+        lb = document.createElement("div");
+        lb.id = "saq-image-lightbox";
+        lb.className = "saq-lightbox";
+        lb.setAttribute("role", "dialog");
+        lb.setAttribute("aria-modal", "true");
+        lb.setAttribute("aria-label", "Expanded Image Preview");
+        lb.addEventListener("click", (e) => {
+          const btn = e.target.closest?.("[data-act]");
+          if (!btn) return;
+          const act = btn.dataset.act;
+          if (act === "close-lightbox") {
+            e.preventDefault();
+            e.stopPropagation();
+            this.closeLightbox();
+          } else if (act === "lightbox-zoom-in") {
+            e.preventDefault();
+            const vp = lb.querySelector("#saq-lightbox-viewport");
+            if (vp) {
+              const cur = Number(vp.dataset.zoom || 1);
+              const next = Math.min(3, cur + 0.25);
+              vp.dataset.zoom = String(next);
+              vp.style.transform = `scale(${next})`;
+            }
+          } else if (act === "lightbox-zoom-out") {
+            e.preventDefault();
+            const vp = lb.querySelector("#saq-lightbox-viewport");
+            if (vp) {
+              const cur = Number(vp.dataset.zoom || 1);
+              const next = Math.max(0.5, cur - 0.25);
+              vp.dataset.zoom = String(next);
+              vp.style.transform = `scale(${next})`;
+            }
+          } else if (act === "lightbox-zoom-reset") {
+            e.preventDefault();
+            const vp = lb.querySelector("#saq-lightbox-viewport");
+            if (vp) {
+              vp.dataset.zoom = "1";
+              vp.style.transform = "scale(1)";
+            }
+          }
+        });
+        root.appendChild(lb);
+      }
+      const contentHtml = svgHtml
+        ? `<div class="saq-lightbox-svg-wrap">${svgHtml}</div>`
+        : `<img class="saq-lightbox-img" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" />`;
+      const captionHtml = caption ? `<div class="saq-lightbox-caption">${escapeHtml(caption)}</div>` : "";
+  
+      lb.innerHTML = `
+        <div class="saq-lightbox-backdrop" data-act="close-lightbox"></div>
+        <div class="saq-lightbox-card">
+          <div class="saq-lightbox-topbar">
+            <span class="saq-lightbox-title">${escapeHtml(alt || caption || "Image View")}</span>
+            <div class="saq-lightbox-actions">
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-xs" data-act="lightbox-zoom-in" title="Zoom In">${ICONS.zoomIn || "+"}<span>Zoom In</span></button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-xs" data-act="lightbox-zoom-out" title="Zoom Out">${ICONS.zoomOut || "−"}<span>Zoom Out</span></button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-xs" data-act="lightbox-zoom-reset" title="Fit to View">Fit</button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-icon saq-lightbox-close-btn" data-act="close-lightbox" aria-label="Close image preview" title="Close preview (Esc)">${ICONS.close}</button>
+            </div>
+          </div>
+          <div class="saq-lightbox-stage">
+            <div class="saq-lightbox-viewport" id="saq-lightbox-viewport">
+              ${contentHtml}
+            </div>
+            ${captionHtml}
+          </div>
+        </div>
+      `;
+      lb.hidden = false;
+      lb.removeAttribute("hidden");
+      lb.classList.add("is-open");
+      const closeBtn = lb.querySelector(".saq-lightbox-close-btn");
+      closeBtn?.focus?.();
+    }
+  
+    closeLightbox() {
+      const root = this.shadowHost?.root;
+      if (!root) return;
+      const lb = root.querySelector("#saq-image-lightbox");
+      if (lb) {
+        lb.classList.remove("is-open");
+        lb.hidden = true;
+        lb.setAttribute("hidden", "");
+      }
+    }
+  
+    isLightboxOpen() {
+      const root = this.shadowHost?.root;
+      const lb = root?.querySelector("#saq-image-lightbox");
+      return Boolean(lb && !lb.hidden && !lb.hasAttribute("hidden"));
+    }
     notify(message, tone = "info", durationMs = 3000) {
       if (!this.sheetElement) return;
       const bar = this.sheetElement.querySelector("#saq-status-bar");
@@ -3142,7 +3513,7 @@
       }
       const root = this.shadowHost?.root;
       if (root) {
-        root.querySelectorAll("#saq-backdrop, #saq-sheet").forEach((el) => el.remove());
+        root.querySelectorAll("#saq-backdrop, #saq-sheet, #saq-image-lightbox").forEach((el) => el.remove());
       }
     }
   }

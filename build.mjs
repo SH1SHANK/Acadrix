@@ -56,6 +56,8 @@ export const EXTENSION_MODULES = [
   "src/exporters/markdown.js",
   "src/bridge/prompt.js",
   "src/bridge/parser.js",
+  "src/bridge/answer-state.js",
+  "src/bridge/applicator.js",
   "src/exporters/pdf.js",
   "src/resources/types.js",
   "src/resources/naming.js",
@@ -80,8 +82,13 @@ export const EXTENSION_MODULES = [
   "src/portal-decor/core.js",
   "src/portal-decor/storage.js",
   "src/portal-decor/capture.js",
+  "src/portal-decor/sync.js",
   "src/portal-decor/decorator.js",
   "src/portal-decor/index.js",
+  "src/notifications/types.js",
+  "src/notifications/evaluator.js",
+  "src/notifications/storage.js",
+  "src/notifications/scheduler.js",
   "src/core/lifecycle.js",
   "src/core/runtime.js",
 ];
@@ -193,10 +200,11 @@ ${parts.join("\n\n")}
 }
 
 // 0) Assemble static extension files into build/
+cpSync("src/notifications", "extension/notifications", { recursive: true });
 rmSync("build", { recursive: true, force: true });
 cpSync("extension", "build", { recursive: true });
-
-const css = readFileSync("bookmarklet/styles.css", "utf8");
+const css = readFileSync("src/ui/styles.css", "utf8");
+writeFileSync("bookmarklet/styles.css", css);
 
 // 1) Build Target: Extension
 const extensionTemplate = bundleTarget(TARGETS.extension, false);
@@ -204,6 +212,7 @@ const extensionRunJs = extensionTemplate
   .replaceAll("__SAQ_VERSION__", extensionManifest.version)
   .replace("__CSS_PLACEHOLDER__", JSON.stringify(css));
 writeFileSync(TARGETS.extension.output, extensionRunJs);
+writeFileSync("extension/run.js", extensionRunJs);
 
 // 2) Build Target: Bookmarklet
 const bookmarkletTemplate = bundleTarget(TARGETS.bookmarklet, true);
