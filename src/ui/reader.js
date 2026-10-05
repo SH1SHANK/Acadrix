@@ -139,14 +139,21 @@ export class ReaderDrawer {
         ${isReview ? '<span class="saq-tag">✓ Results</span>' : ""}
         <div class="saq-actions">
           <span class="saq-clock" title="Time remaining">${ICONS.clock}<span class="saq-clock-val"></span></span>
-          <nav class="saq-export-group" aria-label="Export actions">
-            <button type="button" class="saq-btn saq-btn-export" data-act="export-md" aria-label="Export Markdown" title="Export Markdown (.md)">${ICONS.markdown}<span>Markdown</span></button>
-            <button type="button" class="saq-btn saq-btn-export" data-act="print" aria-label="Print or save as PDF" title="Print or save as PDF">${ICONS.print}<span>PDF</span></button>
-            <button type="button" class="saq-btn saq-btn-export" data-act="export-bundle" aria-label="Export portable ZIP bundle" title="Export portable ZIP bundle">${ICONS.bundle}<span>Bundle</span></button>
-          </nav>
+          <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
+          <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
+          <div class="saq-split-btn-group" id="saq-export-split">
+            <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
+            <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
+            <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
+              <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
+              <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download Markdown</span></button>
+              <button type="button" class="saq-dropdown-item" data-act="export-bundle" role="menuitem" title="Download ZIP Bundle">${ICONS.bundle}<span>Download Bundle</span></button>
+            </div>
+          </div>
           <button type="button" class="saq-btn saq-btn-secondary" data-act="refresh" aria-label="Refresh questions from assessment" title="Re-read questions from assessment">${ICONS.refresh}<span>Refresh</span></button>
           <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
           <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
+          <button type="button" class="saq-btn-apply" data-act="apply-answers" hidden aria-hidden="true"><span class="saq-btn-badge" data-ready-badge hidden>0</span></button>
         </div>
       </header>
       <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
@@ -156,7 +163,7 @@ export class ReaderDrawer {
     this.renderBlocks(sheet.querySelector(".saq-scroll"), documentModel);
 
     // Event delegation on header actions
-    sheet.addEventListener("click", (e) => this.handleActionClick(e), true);
+    sheet.addEventListener("click", (e) => this.handleActionClick(e));
 
     // Focus trap inside modal dialog
     this.boundKeyDown = (e) => this.handleKeyDown(e);
@@ -174,14 +181,25 @@ export class ReaderDrawer {
 
   formatQuestionType(type) {
     if (!type || type === "unknown") return "";
+    const lower = String(type).toLowerCase().trim();
     const map = {
-      mcq: "MCQ",
-      msq: "MSQ",
+      mcq: "Multiple Choice",
+      single_choice: "Multiple Choice",
+      single_correct: "Multiple Choice",
+      single: "Multiple Choice",
+      msq: "Multi Choice (MSQ)",
+      multiple_choice: "Multi Choice (MSQ)",
+      multiple_correct: "Multi Choice (MSQ)",
+      multi_choice: "Multi Choice (MSQ)",
+      multi: "Multi Choice (MSQ)",
       numerical: "Numerical",
+      number: "Numerical",
       text: "Short Answer",
+      short_answer: "Short Answer",
       descriptive: "Descriptive",
+      essay: "Descriptive",
     };
-    return map[String(type).toLowerCase()] || "";
+    return map[lower] || (lower.charAt(0).toUpperCase() + lower.slice(1));
   }
 
   renderBlocks(scrollContainer, documentModel) {
@@ -465,7 +483,7 @@ export class ReaderDrawer {
   setExporting(isBusy, format = "") {
     if (!this.sheetElement) return;
     const btns = this.sheetElement.querySelectorAll(
-      ".saq-btn-export, [data-act='export-md'], [data-act='print'], [data-act='export-bundle']"
+      ".saq-btn-export, [data-act='export-md'], [data-act='print'], [data-act='export-bundle'], [data-act='copy-questions']"
     );
     const activeAct =
       format === "markdown"
@@ -502,6 +520,120 @@ export class ReaderDrawer {
     }
   }
 
+  setZoom(scale) {
+    const valid = Math.min(1.6, Math.max(0.75, scale));
+    this.currentZoom = valid;
+    if (this.sheetElement && this.sheetElement.style) {
+      if (typeof this.sheetElement.style.setProperty === "function") {
+        this.sheetElement.style.setProperty("--acx-zoom", String(valid));
+      } else {
+        this.sheetElement.style["--acx-zoom"] = String(valid);
+      }
+      const valBtn = this.sheetElement.querySelector("[data-act='zoom-reset']");
+      if (valBtn) valBtn.textContent = `${Math.round(valid * 100)}%`;
+    }
+  }
+
+  getZoom() {
+    return this.currentZoom || 1.0;
+  }
+
+  openLightbox({ src = "", alt = "", caption = "", svgHtml = "" } = {}) {
+    const root = this.shadowHost?.root;
+    if (!root) return;
+    let lb = root.querySelector("#saq-image-lightbox");
+    if (!lb) {
+      lb = document.createElement("div");
+      lb.id = "saq-image-lightbox";
+      lb.className = "saq-lightbox";
+      lb.setAttribute("role", "dialog");
+      lb.setAttribute("aria-modal", "true");
+      lb.setAttribute("aria-label", "Expanded Image Preview");
+      lb.addEventListener("click", (e) => {
+        const btn = e.target.closest?.("[data-act]");
+        if (!btn) return;
+        const act = btn.dataset.act;
+        if (act === "close-lightbox") {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closeLightbox();
+        } else if (act === "lightbox-zoom-in") {
+          e.preventDefault();
+          const vp = lb.querySelector("#saq-lightbox-viewport");
+          if (vp) {
+            const cur = Number(vp.dataset.zoom || 1);
+            const next = Math.min(3, cur + 0.25);
+            vp.dataset.zoom = String(next);
+            vp.style.transform = `scale(${next})`;
+          }
+        } else if (act === "lightbox-zoom-out") {
+          e.preventDefault();
+          const vp = lb.querySelector("#saq-lightbox-viewport");
+          if (vp) {
+            const cur = Number(vp.dataset.zoom || 1);
+            const next = Math.max(0.5, cur - 0.25);
+            vp.dataset.zoom = String(next);
+            vp.style.transform = `scale(${next})`;
+          }
+        } else if (act === "lightbox-zoom-reset") {
+          e.preventDefault();
+          const vp = lb.querySelector("#saq-lightbox-viewport");
+          if (vp) {
+            vp.dataset.zoom = "1";
+            vp.style.transform = "scale(1)";
+          }
+        }
+      });
+      root.appendChild(lb);
+    }
+    const contentHtml = svgHtml
+      ? `<div class="saq-lightbox-svg-wrap">${svgHtml}</div>`
+      : `<img class="saq-lightbox-img" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" />`;
+    const captionHtml = caption ? `<div class="saq-lightbox-caption">${escapeHtml(caption)}</div>` : "";
+
+    lb.innerHTML = `
+      <div class="saq-lightbox-backdrop" data-act="close-lightbox"></div>
+      <div class="saq-lightbox-card">
+        <div class="saq-lightbox-topbar">
+          <span class="saq-lightbox-title">${escapeHtml(alt || caption || "Image View")}</span>
+          <div class="saq-lightbox-actions">
+            <button type="button" class="saq-btn saq-btn-secondary saq-btn-xs" data-act="lightbox-zoom-in" title="Zoom In">${ICONS.zoomIn || "+"}<span>Zoom In</span></button>
+            <button type="button" class="saq-btn saq-btn-secondary saq-btn-xs" data-act="lightbox-zoom-out" title="Zoom Out">${ICONS.zoomOut || "−"}<span>Zoom Out</span></button>
+            <button type="button" class="saq-btn saq-btn-secondary saq-btn-xs" data-act="lightbox-zoom-reset" title="Fit to View">Fit</button>
+            <button type="button" class="saq-btn saq-btn-secondary saq-icon saq-lightbox-close-btn" data-act="close-lightbox" aria-label="Close image preview" title="Close preview (Esc)">${ICONS.close}</button>
+          </div>
+        </div>
+        <div class="saq-lightbox-stage">
+          <div class="saq-lightbox-viewport" id="saq-lightbox-viewport">
+            ${contentHtml}
+          </div>
+          ${captionHtml}
+        </div>
+      </div>
+    `;
+    lb.hidden = false;
+    lb.removeAttribute("hidden");
+    lb.classList.add("is-open");
+    const closeBtn = lb.querySelector(".saq-lightbox-close-btn");
+    closeBtn?.focus?.();
+  }
+
+  closeLightbox() {
+    const root = this.shadowHost?.root;
+    if (!root) return;
+    const lb = root.querySelector("#saq-image-lightbox");
+    if (lb) {
+      lb.classList.remove("is-open");
+      lb.hidden = true;
+      lb.setAttribute("hidden", "");
+    }
+  }
+
+  isLightboxOpen() {
+    const root = this.shadowHost?.root;
+    const lb = root?.querySelector("#saq-image-lightbox");
+    return Boolean(lb && !lb.hidden && !lb.hasAttribute("hidden"));
+  }
   notify(message, tone = "info", durationMs = 3000) {
     if (!this.sheetElement) return;
     const bar = this.sheetElement.querySelector("#saq-status-bar");
@@ -593,7 +725,7 @@ export class ReaderDrawer {
     }
     const root = this.shadowHost?.root;
     if (root) {
-      root.querySelectorAll("#saq-backdrop, #saq-sheet").forEach((el) => el.remove());
+      root.querySelectorAll("#saq-backdrop, #saq-sheet, #saq-image-lightbox").forEach((el) => el.remove());
     }
   }
 }

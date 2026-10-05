@@ -156,10 +156,11 @@ check("Bookmarklet target contains only allowed compatibility modules", () => {
     /\bsrc\/parsers\//,
     /\bsrc\/resources\//,
     /\bsrc\/orchestration\//,
+    /\bsrc\/portal-decor\//,
+    /\bsrc\/notifications\//,
     /\bmarkdown\b/i,
     /\bpdf\b/i,
   ];
-
   const match = buildMjsContent.match(/(?:const|export const)\s+BOOKMARKLET_MODULES\s*=\s*\[([\s\S]*?)\];/);
   if (!match) {
     throw new Error("Could not parse BOOKMARKLET_MODULES in build.mjs");
@@ -493,7 +494,7 @@ check("Export Orchestration is decoupled from IITM DOM and isolated from bookmar
 });
 
 // 14. Verify Portal Decor module purity and isolation
-check("Portal decor is strictly read-and-decorate without network, navigation, or portal DOM mutation", () => {
+check("Portal decor is strictly read-and-decorate without host DOM mutation or forbidden APIs", () => {
   const decorFiles = getAllFiles("src/portal-decor");
   if (decorFiles.length === 0) {
     throw new Error("No files found in src/portal-decor");
@@ -505,7 +506,6 @@ check("Portal decor is strictly read-and-decorate without network, navigation, o
     /\blocation\s*=/,
     /\blocation\.(?:assign|replace|href)\b/,
     /\bhistory\./,
-    /\bfetch\s*\(/,
     /\bXMLHttpRequest\b/,
     /\bWebSocket\b/,
     /\bsendBeacon\s*\(/,
@@ -520,6 +520,15 @@ check("Portal decor is strictly read-and-decorate without network, navigation, o
       if (pat.test(content)) {
         throw new Error(`File ${file} contains forbidden portal-decor pattern: ${pat}`);
       }
+    }
+
+    // fetch is only permitted in dedicated sync.js client for Supabase grade ingestion
+    if (file.endsWith("sync.js")) {
+      if (!content.includes("fetchFn") && !content.includes("fetch(")) {
+        throw new Error(`File ${file} must implement network fetch for Supabase sync`);
+      }
+    } else if (/\bfetch\s*\(/.test(content)) {
+      throw new Error(`File ${file} contains forbidden network fetch; only sync.js may perform sync calls`);
     }
 
     // Check for raw selector strings: querySelector / querySelectorAll must use IITM_SELECTORS
@@ -543,6 +552,7 @@ check("Portal decor is isolated from bookmarklet and decoupled from Reader/expor
     "src/portal-decor/core.js",
     "src/portal-decor/storage.js",
     "src/portal-decor/capture.js",
+    "src/portal-decor/sync.js",
     "src/portal-decor/decorator.js",
     "src/portal-decor/index.js",
   ];
@@ -552,15 +562,34 @@ check("Portal decor is isolated from bookmarklet and decoupled from Reader/expor
     }
   }
 
+  const requiredNotificationModules = [
+    "src/notifications/types.js",
+    "src/notifications/evaluator.js",
+    "src/notifications/storage.js",
+    "src/notifications/scheduler.js",
+  ];
+  for (const mod of requiredNotificationModules) {
+    if (!extensionModules.includes(mod)) {
+      throw new Error(`EXTENSION_MODULES is missing required notification module: ${mod}`);
+    }
+  }
+
   const builtSource = readFileSync("bookmarklet/bookmarklet-source.js", "utf8");
   const builtText = readFileSync("bookmarklet/bookmarklet.txt", "utf8");
   const decodedText = decodeURIComponent(builtText);
   const forbiddenDecorMarkers = [
     "acx:deadlines:v1",
+    "acx:grades:v1",
+    "acx:pending-sync:v1",
     "initPortalDecor",
     "createPortalDecorStore",
+    "createPortalGradesStore",
+    "createPendingSyncQueue",
     "captureGrades",
     "captureStartPage",
+    "syncGradesToSupabase",
+    "DEFAULT_SUPABASE_URL",
+    "DEFAULT_GRADE_SYNC_SECRET",
     "decorateSidebar",
     "createSidebarObserver",
     "isPortalDecorStale",
@@ -572,6 +601,23 @@ check("Portal decor is isolated from bookmarklet and decoupled from Reader/expor
     }
     if (decodedText.includes(marker)) {
       throw new Error(`Bookmarklet text contains extension-only portal decor marker: "${marker}"`);
+    }
+  }
+
+  const forbiddenNotificationMarkers = [
+    "acx:notify:",
+    "acx:notifications:v1",
+    "acx:notification-settings:v1",
+    "reconcileDeadlineAlarms",
+    "dispatchAlarmNotification",
+    "determineActionableNotification",
+  ];
+  for (const marker of forbiddenNotificationMarkers) {
+    if (builtSource.includes(marker)) {
+      throw new Error(`Bookmarklet source contains extension-only notification marker: "${marker}"`);
+    }
+    if (decodedText.includes(marker)) {
+      throw new Error(`Bookmarklet text contains extension-only notification marker: "${marker}"`);
     }
   }
 

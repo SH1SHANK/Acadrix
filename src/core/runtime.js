@@ -478,21 +478,21 @@ export class UnfoldRuntime {
         } else if (format === "pdf") {
           const pdfMethod = result?.outputs?.pdf?.method;
           if (pdfMethod === "direct") {
-            this.reader.notify?.("PDF downloaded", "success", 3200);
-            this.reader.announceAiStatus?.("PDF downloaded", "success");
+            this.reader.notify?.("PDF downloaded · Questions copied", "success", 3500);
+            this.reader.announceAiStatus?.("PDF downloaded · Questions copied", "success");
           } else if (pdfMethod === "fallback-print") {
             this.reader.setPdfFallbackMode?.(true);
             this.reader.notify?.(
-              "Direct PDF unavailable — choose Save as PDF in the print dialog.",
+              "Direct PDF unavailable — choose Save as PDF · Questions copied",
               "info",
               4500
             );
             this.reader.announceAiStatus?.(
-              "Direct PDF unavailable — choose Save as PDF in the print dialog.",
+              "Direct PDF unavailable — choose Save as PDF · Questions copied",
               "info"
             );
           } else {
-            this.reader.notify?.("PDF print view ready", "success", 3200);
+            this.reader.notify?.("PDF ready · Questions copied", "success", 3500);
           }
         } else {
           const doneLabel = format === "markdown" ? "Markdown exported" : "Bundle downloaded";
@@ -553,4 +553,114 @@ export class UnfoldRuntime {
     this.invalidateDocument();
     this.lifecycle.transition(LifecycleState.DESTROYED);
   }
-}
+/* @extension-only-start */
+  startObserver() {
+    this.stopObserver();
+    const debouncedDetect = debounce(() => {
+      if (this.isDestroyed) return;
+      if (this.lifecycle.state === LifecycleState.TRAVERSING) {
+        this.pendingDetectAfterTraversal = true;
+        return;
+      }
+      this.detect();
+    }, 120);
+
+    const isSelfMutation = (m) => {
+      const target = m.target;
+      if (!target) return false;
+      if (target.id === "unfold-root" || target.nodeName?.toLowerCase() === "acx-portal-decor" || target.hasAttribute?.("data-acx-decor")) {
+        return true;
+      }
+      return Boolean(target.closest?.("#unfold-root, acx-portal-decor, [data-acx-decor]"));
+    };
+
+    this.observer = new MutationObserver((mutations) => {
+      if (this.isDestroyed) return;
+      const hasExternalMutations = mutations.some((m) => !isSelfMutation(m));
+      if (!hasExternalMutations) return;
+      debouncedDetect();
+    });
+
+    const target = (typeof document !== "undefined" && (document.body || document.documentElement)) || null;
+    if (target) {
+      this.observer.observe(target, { childList: true, subtree: true });
+    }
+
+    this.boundNavHandler = () => {
+      if (!this.isDestroyed) debouncedDetect();
+    };
+    this.boundPageHide = () => this.destroy();
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", this.boundNavHandler);
+      window.addEventListener("hashchange", this.boundNavHandler);
+      window.addEventListener("pagehide", this.boundPageHide, { once: true });
+    }
+  }
+
+  stopObserver() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    if (typeof window !== "undefined") {
+      if (this.boundNavHandler) {
+        window.removeEventListener("popstate", this.boundNavHandler);
+        window.removeEventListener("hashchange", this.boundNavHandler);
+        this.boundNavHandler = null;
+      }
+      if (this.boundPageHide) {
+        window.removeEventListener("pagehide", this.boundPageHide);
+        this.boundPageHide = null;
+      }
+    }
+  }
+
+  detect() {
+    if (!this.config.enabled) {
+      this.orchestrator?.cancel();
+      this.invalidateDocument();
+      this.destroyUi();
+      return;
+    }
+
+    if (this.lifecycle.state === LifecycleState.TRAVERSING) {
+      this.pendingDetectAfterTraversal = true;
+      return;
+    }
+
+    const isAssessment = this.portal.detectAssessment();
+
+    if (isAssessment) {
+      if (
+        this.activeDocument &&
+        this.activeContextKey &&
+        this.getContextKey() !== this.activeContextKey
+      ) {
+        this.orchestrator?.cancel();
+        this.invalidateDocument();
+        this.reader.destroy();
+      }
+
+      const isBusyOrOpen =
+        this.lifecycle.state === LifecycleState.TRAVERSING ||
+        this.lifecycle.state === LifecycleState.OPEN;
+
+      if (!isBusyOrOpen) {
+        this.lifecycle.transition(LifecycleState.ACTIVE);
+      }
+      this.shadowHost.ensure();
+      this.launcher.ensure(this.config.launcherPos, () => this.open());
+
+      if (this.config.autoLauncher && !this.reader.isOpen() && !isBusyOrOpen) {
+        this.launcher.show();
+      }
+    } else {
+      this.orchestrator?.cancel();
+      this.invalidateDocument();
+      if (this.launcher.element || this.reader.isMounted()) {
+        this.destroyUi();
+        this.lifecycle.transition(LifecycleState.IDLE);
+      }
+    }
+  }
+/* @extension-only-end */}

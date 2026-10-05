@@ -92,11 +92,91 @@
   // Expose migration helper for unit testing
   globalThis.__acadrixMigrateSettings = migrateSettings;
 
+  async function getScheduler() {
+    if (typeof globalThis.__acadrixScheduler !== "undefined" && globalThis.__acadrixScheduler) {
+      return globalThis.__acadrixScheduler;
+    }
+    try {
+      return await import("./notifications/scheduler.js");
+    } catch {
+      try {
+        return await import("../src/notifications/scheduler.js");
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  async function reconcileDeadlineAlarms(options) {
+    const scheduler = await getScheduler();
+    if (scheduler?.reconcileDeadlineAlarms) {
+      return await scheduler.reconcileDeadlineAlarms(options);
+    }
+    return { created: 0, cleared: 0, totalActive: 0 };
+  }
+
+  async function dispatchAlarmNotification(alarmName, options) {
+    const scheduler = await getScheduler();
+    if (scheduler?.dispatchAlarmNotification) {
+      return await scheduler.dispatchAlarmNotification(alarmName, options);
+    }
+    return { dispatched: false, reason: "SCHEDULER_UNAVAILABLE" };
+  }
+
+  function handleNotificationClick(notificationId) {
+    if (typeof chrome !== "undefined" && chrome.tabs) {
+      chrome.tabs.query({ url: "*://*.study.iitm.ac.in/*" }, (tabs) => {
+        if (tabs && tabs.length > 0 && tabs[0].id) {
+          chrome.tabs.update(tabs[0].id, { active: true });
+          if (tabs[0].windowId && typeof chrome.windows?.update === "function") {
+            chrome.windows.update(tabs[0].windowId, { focused: true });
+          }
+        } else if (typeof chrome.tabs.create === "function") {
+          chrome.tabs.create({ url: "https://study.iitm.ac.in" });
+        }
+      });
+    }
+    if (typeof chrome !== "undefined" && typeof chrome.notifications?.clear === "function") {
+      chrome.notifications.clear(notificationId);
+    }
+  }
+
+  globalThis.__acadrixReconcileDeadlineAlarms = reconcileDeadlineAlarms;
+  globalThis.__acadrixDispatchAlarmNotification = dispatchAlarmNotification;
+  globalThis.__acadrixHandleNotificationClick = handleNotificationClick;
+
   if (typeof chrome !== "undefined" && chrome.runtime?.onInstalled?.addListener) {
     chrome.runtime.onInstalled.addListener(() => {
       if (chrome.storage?.local) {
         migrateSettings(chrome.storage.local);
       }
+      reconcileDeadlineAlarms().catch((err) => {
+        console.error("[Acadrix Service Worker] Error reconciling alarms on install:", err);
+      });
+    });
+  }
+
+  if (typeof chrome !== "undefined" && chrome.runtime?.onStartup?.addListener) {
+    chrome.runtime.onStartup.addListener(() => {
+      reconcileDeadlineAlarms().catch((err) => {
+        console.error("[Acadrix Service Worker] Error reconciling alarms on startup:", err);
+      });
+    });
+  }
+
+  if (typeof chrome !== "undefined" && chrome.alarms?.onAlarm?.addListener) {
+    chrome.alarms.onAlarm.addListener((alarm) => {
+      if (alarm?.name?.startsWith("acx:notify:")) {
+        dispatchAlarmNotification(alarm.name).catch((err) => {
+          console.error("[Acadrix Service Worker] Error dispatching notification:", err);
+        });
+      }
+    });
+  }
+
+  if (typeof chrome !== "undefined" && chrome.notifications?.onClicked?.addListener) {
+    chrome.notifications.onClicked.addListener((notificationId) => {
+      handleNotificationClick(notificationId);
     });
   }
 
@@ -199,6 +279,14 @@
 
   if (typeof chrome !== "undefined" && chrome.runtime?.onMessage?.addListener) {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message?.type === "RECONCILE_NOTIFICATIONS") {
+        reconcileDeadlineAlarms().then(
+          (result) => sendResponse({ ok: true, result }),
+          (err) => sendResponse({ ok: false, error: err?.message || String(err) })
+        );
+        return true;
+      }
+
       if (!message || message.type !== "UNFOLD_PRINT_TO_PDF") {
         return false;
       }

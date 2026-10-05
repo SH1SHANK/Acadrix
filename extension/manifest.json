@@ -8,20 +8,26 @@
     "scripting",
     "activeTab",
     "storage",
-    "debugger"
+    "debugger",
+    "alarms",
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "host_permissions": [
     "*://*.study.iitm.ac.in/*",
-    "https://onlinedegree.iitm.ac.in/*"
+    "*://*.onlinedegree.iitm.ac.in/*",
+    "*://onlinedegree.iitm.ac.in/*",
+    "*://*.iitm.ac.in/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "*://*.study.iitm.ac.in/*",
-        "https://onlinedegree.iitm.ac.in/*"
+        "*://*.onlinedegree.iitm.ac.in/*",
+        "*://onlinedegree.iitm.ac.in/*",
+        "*://*.iitm.ac.in/*"
       ],
       "js": [
         "customize.js",
@@ -39,7 +45,9 @@
       ],
       "matches": [
         "*://*.study.iitm.ac.in/*",
-        "https://onlinedegree.iitm.ac.in/*"
+        "*://*.onlinedegree.iitm.ac.in/*",
+        "*://onlinedegree.iitm.ac.in/*",
+        "*://*.iitm.ac.in/*"
       ]
     }
   ],

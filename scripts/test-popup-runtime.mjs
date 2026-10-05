@@ -203,10 +203,23 @@ function makeElement(tag = "div", attrs = {}) {
   };
 }
 
-async function setupPopupEnvironment({ tabUrl = "https://study.iitm.ac.in/quiz/1", probeResult = null, tabVersion = "0.2.0" }) {
+async function setupPopupEnvironment({
+  tabUrl = "https://study.iitm.ac.in/quiz/1",
+  probeResult = null,
+  tabVersion = "0.2.0",
+  initialStorage = {},
+} = {}) {
   const elements = new Map([
     ["open", makeElement("button", { textContent: "Open Reader", disabled: true })],
     ["openStatus", makeElement("div", { textContent: "Checking page status..." })],
+    ["portalBadge", makeElement("span", { textContent: "Checking..." })],
+    ["extractedCount", makeElement("span", { textContent: "0" })],
+    ["coursesCount", makeElement("span", { textContent: "0 courses tracked" })],
+    ["pendingBadge", makeElement("span", { textContent: "0 pending" })],
+    ["syncBadge", makeElement("span", { textContent: "Not synced" })],
+    ["lastSyncTime", makeElement("span", { textContent: "Never" })],
+    ["syncFeedback", makeElement("div", { hidden: true })],
+    ["manualSyncBtn", makeElement("button", { textContent: "Sync now" })],
     ["shortcut", makeElement("button", { textContent: "Alt+Q" })],
     ["shortcutClear", makeElement("button", { textContent: "Clear" })],
     ["headMenuToggle", makeElement("button")],
@@ -214,6 +227,7 @@ async function setupPopupEnvironment({ tabUrl = "https://study.iitm.ac.in/quiz/1
     ["ver", makeElement("span")],
     ["repo", makeElement("a", { hidden: true })],
     ["clearDeadlines", makeElement("button", { textContent: "Clear" })],
+    ["clearGrades", makeElement("button", { textContent: "Clear" })],
   ]);
 
   const checkboxes = [
@@ -237,6 +251,10 @@ async function setupPopupEnvironment({ tabUrl = "https://study.iitm.ac.in/quiz/1
     openShortcut: "Alt+Q",
     openShortcutEnabled: true,
     portalFont: "default",
+    "acx:grades:v1": {},
+    "acx:pending-sync:v1": {},
+    "acx:sync-status:v1": {},
+    ...initialStorage,
   });
 
   const storageListeners = [];
@@ -364,6 +382,40 @@ await check("Status Probe: quiz host with assessment detected enables Open butto
   assert(openStatus.textContent === "Assessment ready", "Status must indicate 'Assessment ready'");
 });
 
+await check("Status Probe: app.onlinedegree.iitm.ac.in detects assessment via live DOM fallback when runtime not pre-injected", async () => {
+  const env = await setupPopupEnvironment({
+    tabUrl: "https://app.onlinedegree.iitm.ac.in/courses/sep-2026/assessment",
+    probeResult: null, // No __saqStatus
+  });
+
+  // Mock DOM in tab context
+  const mockPaginator = makeElement("app-assessment-question-paginator");
+  const mockQuestion = makeElement("app-assessment-question");
+  env.context.document.querySelector = (sel) => {
+    if (sel.includes("app-assessment-question-paginator") || sel.includes(".assessment-paginator")) return mockPaginator;
+    if (sel.includes("app-assessment-question") || sel.includes(".short-answer")) return mockQuestion;
+    return null;
+  };
+
+  // Re-run probe logic with live DOM
+  const scriptRes = await env.context.chrome.scripting.executeScript({
+    target: { tabId: 42 },
+    func: () => {
+      const hasRuntime = typeof env.pageWindow.__saqOpen === "function";
+      const hasPaginator = Boolean(env.context.document.querySelector("app-assessment-question-paginator"));
+      const hasQuestion = Boolean(env.context.document.querySelector("app-assessment-question"));
+      return {
+        version: "",
+        hasRuntime,
+        assessment: hasPaginator && hasQuestion,
+        readerOpen: false,
+      };
+    },
+  });
+
+  assert(scriptRes[0].result.assessment === true, "Live DOM fallback must detect assessment on app.onlinedegree.iitm.ac.in");
+});
+
 await check("Status Probe: quiz host with Reader already open shows 'Focus Reader' and 'Reader is open'", async () => {
   const env = await setupPopupEnvironment({
     tabUrl: "https://study.iitm.ac.in/quiz/assignment-4",
@@ -440,9 +492,127 @@ await check("UI Interactions: storage.onChanged event dynamically updates popup 
   assert(env.elements.get("shortcut").textContent === "Ctrl+Shift+K", "shortcut button must reflect new keys");
 });
 
+// ── 3. Operational Status & Cloud Sync Tests ─────────────────────────────────
+await check("Operational Status: calculates local grades count, course count and pending queue badge", async () => {
+  const env = await setupPopupEnvironment({
+    initialStorage: {
+      "acx:grades:v1": {
+        "2026-09": {
+          "CS2006": {
+            "ga1": { externalAssignmentId: "ga1", yourScore: 90 },
+            "ga2": { externalAssignmentId: "ga2", yourScore: 85 },
+          },
+          "CS2005": {
+            "ga1": { externalAssignmentId: "ga1", yourScore: 95 },
+          },
+        },
+      },
+      "acx:pending-sync:v1": {
+        "2026-09:CS2006:ga2": { key: "2026-09:CS2006:ga2" },
+      },
+      "acx:sync-status:v1": {
+        lastSuccessfulSync: "2026-10-05T12:00:00.000Z",
+        lastSyncStatus: "SYNCED",
+        lastSyncError: null,
+      },
+    },
+  });
+
+  const extractedCount = env.elements.get("extractedCount");
+  const coursesCount = env.elements.get("coursesCount");
+  const pendingBadge = env.elements.get("pendingBadge");
+  const syncBadge = env.elements.get("syncBadge");
+  const lastSyncTime = env.elements.get("lastSyncTime");
+
+  assert(extractedCount.textContent === "3", "Must report 3 extracted grade records");
+  assert(coursesCount.textContent === "2 courses tracked", "Must report 2 courses tracked");
+  assert(pendingBadge.textContent === "1 pending", "Must report 1 pending record");
+  assert(pendingBadge.classList.contains("acx-badge-warning"), "Pending badge must have warning variant when >0");
+  assert(syncBadge.textContent === "Synced", "Sync badge must show Synced");
+  assert(syncBadge.classList.contains("acx-badge-success"), "Sync badge must have success variant");
+  assert(lastSyncTime.textContent !== "Never", "Last sync time must not be Never when sync timestamp exists");
+});
+
+await check("Operational Status: renders failed and auth_error sync states with error feedback", async () => {
+  const env = await setupPopupEnvironment({
+    initialStorage: {
+      "acx:sync-status:v1": {
+        lastSuccessfulSync: "2026-10-05T10:00:00.000Z",
+        lastSyncStatus: "AUTH_ERROR",
+        lastSyncError: "GRADE_SYNC_SECRET is not configured",
+      },
+    },
+  });
+
+  const syncBadge = env.elements.get("syncBadge");
+  const syncFeedback = env.elements.get("syncFeedback");
+  const manualSyncBtn = env.elements.get("manualSyncBtn");
+
+  assert(syncBadge.textContent === "Auth error", "Sync badge must show Auth error");
+  assert(syncBadge.classList.contains("acx-badge-error"), "Sync badge must have error variant");
+  assert(syncFeedback.hidden === false, "Error feedback must be visible");
+  assert(syncFeedback.textContent.includes("GRADE_SYNC_SECRET"), "Error message must be shown");
+  assert(manualSyncBtn.textContent === "Retry", "Manual sync button must say Retry on failure");
+});
+
+await check("Operational Status: clear grades button removes all grade stores and updates count to 0", async () => {
+  const env = await setupPopupEnvironment({
+    initialStorage: {
+      "acx:grades:v1": {
+        "2026-09": { "CS2006": { "ga1": { yourScore: 90 } } },
+      },
+      "acx:pending-sync:v1": { "key1": {} },
+      "acx:sync-status:v1": { lastSyncStatus: "SYNCED" },
+    },
+  });
+
+  const clearGradesBtn = env.elements.get("clearGrades");
+  clearGradesBtn.click();
+  await new Promise((resolve) => setImmediate(resolve));
+
+  const stats = env.store.getStats();
+  assert(stats.removeCalls >= 1, "Must call store.remove on Clear Grades click");
+  const removedKeys = stats.removeLog.flat();
+  assert(removedKeys.includes("acx:grades:v1"), "Must remove acx:grades:v1");
+  assert(removedKeys.includes("acx:pending-sync:v1"), "Must remove acx:pending-sync:v1");
+  assert(removedKeys.includes("acx:sync-status:v1"), "Must remove acx:sync-status:v1");
+});
+
+await check("Operational Status: storage.onChanged updates grade stats dynamically", async () => {
+  const env = await setupPopupEnvironment({});
+  const listener = env.storageListeners[0];
+  assert(typeof listener === "function");
+
+  // Simulate grades update in storage
+  env.store.data["acx:grades:v1"] = {
+    "2026-09": {
+      "CS2006": {
+        "ga1": { externalAssignmentId: "ga1" },
+        "ga2": { externalAssignmentId: "ga2" },
+      },
+    },
+  };
+  env.store.data["acx:pending-sync:v1"] = {};
+  env.store.data["acx:sync-status:v1"] = {
+    lastSuccessfulSync: "2026-10-05T14:30:00.000Z",
+    lastSyncStatus: "SYNCED",
+  };
+
+  listener({
+    "acx:grades:v1": { newValue: env.store.data["acx:grades:v1"] },
+  }, "local");
+
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert(env.elements.get("extractedCount").textContent === "2", "Extracted count must update to 2");
+  assert(env.elements.get("pendingBadge").textContent === "0 pending", "Pending badge must show 0 pending");
+  assert(env.elements.get("syncBadge").textContent === "Synced", "Sync badge must update to Synced");
+});
+
 if (!passed) {
   console.error("\nPopup runtime regression tests FAILED.");
   process.exit(1);
 } else {
   console.log("\nAll Popup Runtime, Migration & Probe tests passed successfully!\n");
 }
+

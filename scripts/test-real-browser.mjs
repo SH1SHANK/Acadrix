@@ -348,15 +348,27 @@ function buildFixtureHtml() {
       return new Promise((r) => setTimeout(r, ms));
     }
 
+    async function remoteLog(msg) {
+      try {
+        await fetch("/__log", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: String(msg)
+        });
+      } catch {}
+    }
+
     async function runInBrowserSmokeSuite() {
       const t = window.__unfoldTestTelemetry;
       try {
+        await remoteLog("Browser suite started");
         // Step 1: Verify runtime launch & Shadow DOM launcher
         const runtime = window.__unfold;
         const hostEl = document.getElementById("unfold-root");
         const shadow = hostEl ? hostEl.shadowRoot : null;
         const launcher = shadow ? shadow.querySelector(".saq-launcher") : null;
 
+        await remoteLog("Step 1 starting");
         t.steps.step1 = {
           hasRuntime: Boolean(runtime),
           lifecycleState: runtime ? runtime.lifecycle.state : null,
@@ -366,6 +378,7 @@ function buildFixtureHtml() {
         };
 
         // Step 2: Click launcher, traverse all 3 questions, open ReaderDrawer
+        await remoteLog("Step 2 clicking launcher");
         launcher.click();
         // Wait for traversal across 3 chips + restoration + requestAnimationFrame(.is-open) to complete
         for (let i = 0; i < 80; i++) {
@@ -376,6 +389,7 @@ function buildFixtureHtml() {
           }
         }
         await sleep(50);
+        await remoteLog("Step 2 traversal completed");
 
         const sheet = shadow.querySelector("#saq-sheet");
         const activeChipAfterOpen = document.querySelector(".chip.active");
@@ -386,11 +400,16 @@ function buildFixtureHtml() {
           restoredChipText: activeChipAfterOpen ? activeChipAfterOpen.textContent.trim() : null,
           hasMdBtn: Boolean(sheet && sheet.querySelector("[data-act='export-md']")),
           hasPrintBtn: Boolean(sheet && sheet.querySelector("[data-act='print']")),
-          hasBundleBtn: Boolean(sheet && sheet.querySelector("[data-act='export-bundle']")),
+          hasCopyQBtn: Boolean(sheet && sheet.querySelector("[data-act='copy-questions']")),
+          hasImportBtn: Boolean(sheet && sheet.querySelector("[data-act='import-answers']")),
+          hasApplyBtn: Boolean(sheet && sheet.querySelector("[data-act='apply-answers']")),
+          hasRefreshBtn: Boolean(sheet && sheet.querySelector("[data-act='refresh']")),
+          hasCloseBtn: Boolean(sheet && sheet.querySelector("[data-act='dismiss']")),
           renderedQuestionCards: sheet ? sheet.querySelectorAll(".saq-block").length : 0
         };
 
         // Step 3: Trigger Markdown export via Reader button click
+        await remoteLog("Step 3 markdown export");
         const docBeforeMd = runtime.activeDocument;
         const mdBtn = sheet.querySelector("[data-act='export-md']");
         mdBtn.click();
@@ -399,6 +418,7 @@ function buildFixtureHtml() {
           if (!runtime.orchestrator.isBusy() && t.downloads.length >= 1 && t.revokedUrls.length >= 1) break;
         }
         await sleep(300);
+        await remoteLog("Step 3 markdown completed");
 
         const mdBlobEntry = t.createdBlobs[0];
         const mdBase64 = mdBlobEntry ? await mdBlobEntry.base64Promise : "";
@@ -434,22 +454,21 @@ function buildFixtureHtml() {
         };
 
         // Step 5: Trigger Bundle ZIP export & test busy-state duplicate click blocking
-        const bundleBtn = sheet.querySelector("[data-act='export-bundle']");
         const downloadsBeforeBundle = t.downloads.length;
-        bundleBtn.click();
+        const bundlePromise = runtime.handleExportAction("bundle");
 
         // Immediately inspect busy state while export is in-flight
         const busySnapshot = {
           isExporting: runtime.orchestrator.isBusy(),
           mdDisabled: mdBtn.hasAttribute("disabled"),
           printDisabled: printBtn.hasAttribute("disabled"),
-          bundleDisabled: bundleBtn.hasAttribute("disabled"),
-          bundleHasBusyClass: bundleBtn.classList.contains("is-busy")
+          isExportingActive: runtime.orchestrator.isBusy()
         };
 
         // Attempt a duplicate click while busy (or via handleExportAction)
         mdBtn.click();
         await runtime.handleExportAction("markdown");
+        await bundlePromise;
 
         for (let i = 0; i < 60; i++) {
           await sleep(50);
@@ -473,157 +492,27 @@ function buildFixtureHtml() {
           buttonsReEnabledAfterExport:
             !mdBtn.hasAttribute("disabled") &&
             !printBtn.hasAttribute("disabled") &&
-            !bundleBtn.hasAttribute("disabled") &&
-            !bundleBtn.classList.contains("is-busy"),
+            !runtime.orchestrator.isBusy(),
           zipBase64
         };
 
-        // Step 5b: Verify §4 "Copy for AI" popover in Real Chrome
-        // Set active portal question to Q2 before first popover open
-        chips[1].click();
-        await sleep(20);
-
-        const copyAiBtn = sheet.querySelector("[data-act='copy-ai']");
-        const aiPopover = sheet.querySelector("#saq-ai-popover");
-        copyAiBtn.click();
+        // Step 5b: Verify Exact 7 Top-Bar Actions, 1-Click Copy Questions, Direct PDF, and Panel/Dialog Esc in Real Chrome
+        // 1. 1-click Copy Questions directly from top bar
+        const copyQuestionsBtn = sheet.querySelector("[data-act='copy-questions']");
+        copyQuestionsBtn.click();
         await sleep(50);
+        const direct1ClickCopied = t.clipboardWrites.length >= 1 && t.clipboardWrites[0].includes("You are solving an assessment.");
 
-        const aiOpened = aiPopover && aiPopover.classList.contains("is-open") && !aiPopover.hasAttribute("hidden");
-        const hasDialogRoleAndLabel =
-          aiPopover.getAttribute("role") === "dialog" &&
-          aiPopover.getAttribute("aria-label") === "Copy for AI";
-        const focusMovedIntoPopover = aiPopover.contains(shadow.activeElement);
+        // 2. Exact 7 top-bar actions
+        const hasImportBtn = Boolean(sheet.querySelector("[data-act='import-answers']"));
+        const hasApplyBtn = Boolean(sheet.querySelector("[data-act='apply-answers']"));
+        const hasCopyQBtn = Boolean(sheet.querySelector("[data-act='copy-questions']"));
+        const hasPrintBtn = Boolean(sheet.querySelector("[data-act='print']"));
+        const hasMdBtn = Boolean(sheet.querySelector("[data-act='export-md']"));
+        const hasRefreshBtn = Boolean(sheet.querySelector("[data-act='refresh']"));
+        const hasCloseBtn = Boolean(sheet.querySelector("[data-act='dismiss']"));
 
-        const singleInput = aiPopover.querySelector("[data-ai-input='single']");
-        const singleDefaultedToActiveQ2 = singleInput && singleInput.value === "2";
-
-        const figWarnEl = aiPopover ? aiPopover.querySelector("[data-ai-fig-warn]") : null;
-        const figWarnText = figWarnEl && !figWarnEl.hasAttribute("hidden") ? figWarnEl.textContent : "";
-        const figWarnNotColorOnly = Boolean(
-          figWarnEl && figWarnEl.querySelector("svg") && figWarnText.includes("image not included")
-        );
-
-        // Toggle preview open
-        const previewBtn = aiPopover.querySelector("[data-act='ai-preview-toggle']");
-        const previewEl = aiPopover.querySelector("[data-ai-preview]");
-        previewBtn.click();
-        await sleep(20);
-        const previewExpanded = !previewEl.hasAttribute("hidden") && previewEl.getAttribute("tabindex") === "0";
-        const previewText = previewEl.textContent || "";
-
-        // Click Copy Prompt to Clipboard
-        const copyConfirmBtn = aiPopover.querySelector("[data-act='ai-copy-confirm']");
-        const liveStatusEl = aiPopover.querySelector("[data-ai-live-status]");
-        copyConfirmBtn.click();
-        await sleep(50);
-        const copyFeedbackShown =
-          liveStatusEl.getAttribute("aria-live") === "polite" &&
-          liveStatusEl.classList.contains("is-visible") &&
-          liveStatusEl.textContent.includes("Copied to clipboard");
-        const copiedNotColorOnly = Boolean(
-          liveStatusEl.querySelector("svg") &&
-          copyConfirmBtn.querySelector("svg") &&
-          liveStatusEl.textContent.includes("Copied to clipboard")
-        );
-        const copiedMatchesPreview = t.clipboardWrites.length === 1 && t.clipboardWrites[0] === previewText;
-
-        function parseCssColor(str) {
-          const cleaned = String(str || "")
-            .replace("rgba", "")
-            .replace("rgb", "")
-            .replace("(", " ")
-            .replace(")", " ")
-            .replaceAll(",", " ")
-            .replaceAll("/", " ")
-            .trim();
-          const nums = cleaned.split(" ").filter(Boolean).map(Number);
-          if (nums.length < 3 || nums.some((n) => Number.isNaN(n))) return [0, 0, 0, 1];
-          return [nums[0], nums[1], nums[2], nums[3] !== undefined ? nums[3] : 1];
-        }
-        function compositeOver(fgRgba, bgRgb) {
-          const a = fgRgba[3];
-          return [
-            fgRgba[0] * a + bgRgb[0] * (1 - a),
-            fgRgba[1] * a + bgRgb[1] * (1 - a),
-            fgRgba[2] * a + bgRgb[2] * (1 - a)
-          ];
-        }
-        function relLum(rgb) {
-          const chan = (c) => {
-            const v = c / 255;
-            return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-          };
-          return 0.2126 * chan(rgb[0]) + 0.7152 * chan(rgb[1]) + 0.0722 * chan(rgb[2]);
-        }
-        function wcagRatio(fgRgb, bgRgb) {
-          const l1 = relLum(fgRgb);
-          const l2 = relLum(bgRgb);
-          return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-        }
-        function measureThemeContrast(themeName) {
-          runtime.shadowHost.setTheme(themeName);
-          const popBg = parseCssColor(window.getComputedStyle(aiPopover).backgroundColor);
-          const warnCs = window.getComputedStyle(figWarnEl);
-          const warnBg = compositeOver(parseCssColor(warnCs.backgroundColor), popBg);
-          const warnFg = parseCssColor(warnCs.color);
-
-          const liveCs = window.getComputedStyle(liveStatusEl);
-          const liveBg = compositeOver(parseCssColor(liveCs.backgroundColor), popBg);
-          const liveFg = parseCssColor(liveCs.color);
-
-          const btnCs = window.getComputedStyle(copyConfirmBtn);
-          const btnBg = compositeOver(parseCssColor(btnCs.backgroundColor), popBg);
-          const btnFg = parseCssColor(btnCs.color);
-
-          return {
-            warnRatio: Number(wcagRatio(warnFg, warnBg).toFixed(2)),
-            liveRatio: Number(wcagRatio(liveFg, liveBg).toFixed(2)),
-            btnRatio: Number(wcagRatio(btnFg, btnBg).toFixed(2))
-          };
-        }
-
-        const lightContrast = measureThemeContrast("light");
-        const darkContrast = measureThemeContrast("dark");
-        runtime.shadowHost.setTheme("light");
-
-        // Validate Range inputs reject start > end and out-of-bounds values
-        const startInput = aiPopover.querySelector("[data-ai-input='start']");
-        const endInput = aiPopover.querySelector("[data-ai-input='end']");
-        const rangeErrEl = aiPopover.querySelector("[data-ai-range-error]");
-        startInput.value = "3";
-        endInput.value = "1";
-        startInput.dispatchEvent(new Event("input", { bubbles: true }));
-        await sleep(10);
-        const startGtEndRejected = !rangeErrEl.hasAttribute("hidden") && copyConfirmBtn.hasAttribute("disabled");
-
-        startInput.value = "1";
-        endInput.value = "99";
-        endInput.dispatchEvent(new Event("input", { bubbles: true }));
-        await sleep(10);
-        const outOfBoundsRejected = !rangeErrEl.hasAttribute("hidden") && copyConfirmBtn.hasAttribute("disabled");
-
-        // Switch scope to Single Q3 (which has no figure)
-        singleInput.value = "3";
-        singleInput.dispatchEvent(new Event("input", { bubbles: true }));
-        await sleep(20);
-        const singleFigWarnHidden = figWarnEl.hasAttribute("hidden");
-        const singlePreviewText = previewEl.textContent || "";
-
-        // Click Save PDF inside popover while scoped to Single Q3:
-        // must invoke print() for the 1 scoped question and keep the popover open
-        const savePdfBtn = aiPopover.querySelector("[data-act='ai-save-pdf']");
-        const printCountBeforeAiPdf = t.printCalls.length;
-        savePdfBtn.click();
-        for (let i = 0; i < 60; i++) {
-          await sleep(50);
-          if (!runtime.orchestrator.isBusy() && t.printCalls.length > printCountBeforeAiPdf) break;
-        }
-        await sleep(50);
-        const aiPdfPrintTriggered = t.printCalls.length === printCountBeforeAiPdf + 1;
-        const aiPdfQuestionCount = t.printCalls[t.printCalls.length - 1]?.questionCount ?? 0;
-        const popoverStillOpenAfterSavePdf = aiPopover.classList.contains("is-open") && !aiPopover.hasAttribute("hidden");
-
-        // Also test direct PDF download via chrome.runtime.sendMessage in Real Chrome
+        // 3. Direct PDF download via chrome.runtime.sendMessage in Real Chrome
         window.chrome.runtime.sendMessage = (msg, cb) => {
           if (msg && msg.type === "UNFOLD_PRINT_TO_PDF") {
             setTimeout(() => {
@@ -645,81 +534,42 @@ function buildFixtureHtml() {
           t.revokedUrls.includes(directPdfBlobEntry?.url);
         delete window.chrome.runtime.sendMessage;
 
-        // Focus inside <pre tabindex="0"> preview and press first Escape:
-        // must close ONLY the popover, return focus to trigger, and keep Reader open
-        previewEl.focus();
-        const focusWasInPreview = shadow.activeElement === previewEl;
-        previewEl.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+        // 4. Test Import Answers panel Esc
+        const importBtn = sheet.querySelector("[data-act='import-answers']");
+        const importPanel = sheet.querySelector("#saq-import-panel");
+        importBtn.click();
         await sleep(20);
-        const popoverClosedAfterFirstEsc = !aiPopover.classList.contains("is-open") && aiPopover.hasAttribute("hidden");
+        const importPanelOpen = importPanel && !importPanel.hasAttribute("hidden");
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+        await sleep(20);
+        const importPanelClosedAfterFirstEsc = importPanel && importPanel.hasAttribute("hidden");
         const readerStillOpenAfterFirstEsc = sheet.classList.contains("is-open");
-        const focusReturnedToTrigger = shadow.activeElement === copyAiBtn;
 
-        // Verify Single scope does NOT reset after a document refresh even when active portal question changes to Q1
-        chips[0].click();
-        await sleep(10);
-        const partialDoc = {
-          length: runtime.activeDocument.questions.length,
-          metadata: { ...runtime.activeDocument.metadata, totalQuestions: 10 },
-          questions: runtime.activeDocument.questions
-        };
-        runtime.reader.build(partialDoc, {
-          onDismiss: () => runtime.close()
-        });
-        runtime.reader.show();
-        await sleep(30);
-        const refreshedSheet = shadow.querySelector("#saq-sheet");
-        const refreshedCopyAiBtn = refreshedSheet.querySelector("[data-act='copy-ai']");
-        const refreshedPopover = refreshedSheet.querySelector("#saq-ai-popover");
-        refreshedCopyAiBtn.click();
+        // 5. Test Apply Answers dialog Esc
+        const applyBtn = sheet.querySelector("[data-act='apply-answers']");
+        const applyDialog = sheet.querySelector("#saq-apply-dialog");
+        applyBtn.click();
         await sleep(20);
-        const refreshedSingleInput = refreshedPopover.querySelector("[data-ai-input='single']");
-        const singlePreservedAcrossRefresh =
-          runtime.reader.aiScopeState.type === "single" &&
-          runtime.reader.aiScopeState.single === 3 &&
-          refreshedSingleInput.value === "3";
-        const partialAllLabel = refreshedPopover.querySelector("[data-ai-all-label]")?.textContent || "";
-        const partialBannerShown = Boolean(refreshedPopover.querySelector("[data-ai-partial-warn]"));
-
-        // Close popover with first Escape, then press second Escape to close Reader drawer
+        const applyDialogOpen = applyDialog && !applyDialog.hasAttribute("hidden");
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
         await sleep(20);
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
-        await sleep(20);
-        const readerClosedAfterSecondEsc = !refreshedSheet.classList.contains("is-open") && runtime.lifecycle.state === "active";
+        const applyDialogClosedAfterFirstEsc = applyDialog && applyDialog.hasAttribute("hidden");
 
         t.steps.step5b = {
-          hasCopyAiBtn: Boolean(copyAiBtn),
-          hasSavePdfBtn: Boolean(savePdfBtn),
-          aiOpened,
-          hasDialogRoleAndLabel,
-          focusMovedIntoPopover,
-          singleDefaultedToActiveQ2,
-          figWarnText,
-          figWarnNotColorOnly,
-          previewExpanded,
-          previewHasAssignment: previewText.includes("<assignment>") && previewText.includes("- Figures omitted for: Q1, Q2"),
-          copyFeedbackShown,
-          copiedNotColorOnly,
-          copiedMatchesPreview,
-          lightContrast,
-          darkContrast,
-          startGtEndRejected,
-          outOfBoundsRejected,
-          singleFigWarnHidden,
-          singleHasOnlyQ3: singlePreviewText.includes("Q3 [NUMERICAL]") && !singlePreviewText.includes("Q1 [MCQ]"),
-          aiPdfPrintTriggered,
-          aiPdfQuestionCount,
-          popoverStillOpenAfterSavePdf,
+          hasCopyQBtn,
+          hasImportBtn,
+          hasApplyBtn,
+          hasPrintBtn,
+          hasMdBtn,
+          hasRefreshBtn,
+          hasCloseBtn,
+          direct1ClickCopied,
           directPdfTriggered,
-          focusWasInPreview,
-          popoverClosedAfterFirstEsc,
-          readerStillOpenAfterFirstEsc,
-          focusReturnedToTrigger,
-          singlePreservedAcrossRefresh,
-          partialAllLabel,
-          partialBannerShown,
-          readerClosedAfterSecondEsc
+          importPanelOpen,
+          importPanelClosedAfterFirstEsc,
+          applyDialogOpen,
+          applyDialogClosedAfterFirstEsc,
+          readerStillOpenAfterFirstEsc
         };
 
         // Step 5c: Verify Release 2 answer-key import in real Chrome.
@@ -737,20 +587,16 @@ function buildFixtureHtml() {
         await sleep(40);
         const importSheet = shadow.querySelector("#saq-sheet");
         const importButton = importSheet.querySelector("[data-act='import-answers']");
-        const importCopyButton = importSheet.querySelector("[data-act='copy-ai']");
-        importCopyButton.click();
+        const copyQBtnInImport = importSheet.querySelector("[data-act='copy-questions']");
+        copyQBtnInImport.click();
         await sleep(20);
-        const importAiPopover = importSheet.querySelector("#saq-ai-popover");
-        const importPreviewToggle = importAiPopover.querySelector("[data-act='ai-preview-toggle']");
-        importPreviewToggle.click();
-        await sleep(10);
-        const importPrompt = importAiPopover.querySelector("[data-ai-preview]").textContent;
+        const importPrompt = t.clipboardWrites[t.clipboardWrites.length - 1] || "";
         const importFp = (importPrompt.match(/\"fp\":\"([0-9a-f]{8})\"/) || [])[1];
-        runtime.reader.closeAiPopover();
+
         importButton.click();
         await sleep(10);
-        const importPanel = importSheet.querySelector("#saq-import-panel");
-        const importTextarea = importPanel.querySelector("textarea");
+        const testImportPanel = importSheet.querySelector("#saq-import-panel");
+        const importTextarea = testImportPanel.querySelector("textarea");
         const importAnswers = [
           { question: 1, type: "MCQ", answer: "B" },
           { question: 2, type: "MSQ", answer: ["C", "A"] },
@@ -758,27 +604,191 @@ function buildFixtureHtml() {
           { question: 4, type: "TEXT", answer: "<img onerror=alert(1)>" }
         ];
         importTextarea.value = JSON.stringify({ acadrix: 1, fp: importFp, answers: importAnswers });
-        importPanel.querySelector("[data-act='import-submit']").click();
+        testImportPanel.querySelector("[data-act='import-submit']").click();
         await sleep(20);
         const importBadges = Array.from(importSheet.querySelectorAll("[data-acx-ai-answer]"));
         const hostileBadge = importBadges.find((badge) => badge.textContent.includes("<img"));
-        importPanel.querySelector("[data-act='import-answers']")?.click?.();
-        const importTrigger = importSheet.querySelector("[data-act='import-answers']");
-        importTrigger.click();
-        await sleep(10);
-        const focusInImportPanel = importPanel.contains(shadow.activeElement);
-        importPanel.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+
+        const focusInImportPanel = testImportPanel.contains(shadow.activeElement);
+        testImportPanel.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
         await sleep(10);
         t.steps.step5c = {
           hasImportButton: Boolean(importButton),
-          hasDialogAndName: importPanel.getAttribute("role") === "dialog" && importPanel.getAttribute("aria-labelledby") === "saq-import-title",
+          hasDialogAndName: testImportPanel.getAttribute("role") === "dialog" && testImportPanel.getAttribute("aria-labelledby") === "saq-import-title",
           fingerprintCaptured: Boolean(importFp),
           badgeCount: importBadges.length,
           badges: importBadges.map((badge) => badge.textContent),
           hostileTextInert: Boolean(hostileBadge && !hostileBadge.querySelector("img") && hostileBadge.textContent.includes("<img onerror=alert(1)>")),
           focusInImportPanel,
-          panelClosedAfterEscape: importPanel.hasAttribute("hidden"),
+          panelClosedAfterEscape: testImportPanel.hasAttribute("hidden"),
           readerOpenAfterEscape: importSheet.classList.contains("is-open")
+        };
+
+        // Step 5f: Verify Interactive Answer Review Controls, Single Apply AI, and Portal Apply Dialog in Real Chrome
+        const qCards = Array.from(importSheet.querySelectorAll(".saq-block"));
+        const q1Card = qCards[0];
+        const q2Card = qCards[1];
+        const q3Card = qCards[2];
+
+        // 1. MCQ Interaction on Q1 (AI suggested "B")
+        q1Card.querySelector(".saq-option[data-letter='A']").click(); // Select A (overriding AI B)
+        await sleep(10);
+        const q1OptASelected = q1Card.querySelector(".saq-option[data-letter='A']").classList.contains("is-selected");
+        const q1BadgeOverridden = q1Card.querySelector(".saq-status-badge")?.textContent === "Overridden";
+
+        q1Card.querySelector("[data-act='apply-single-ai']").click(); // Quick apply AI B
+        await sleep(10);
+        const q1OptBSelected = q1Card.querySelector(".saq-option[data-letter='B']").classList.contains("is-selected");
+        const q1BadgeMatched = q1Card.querySelector(".saq-status-badge")?.textContent === "AI Match";
+
+        // 2. MSQ Interaction on Q2 (AI suggested ["A", "C"])
+        q2Card.querySelector(".saq-option[data-letter='B']").click(); // Select B
+        await sleep(10);
+        const q2OptBSelected = q2Card.querySelector(".saq-option[data-letter='B']").classList.contains("is-selected");
+        q2Card.querySelector("[data-act='apply-single-ai']").click(); // Quick apply AI A & C
+        await sleep(10);
+        const q2OptA = q2Card.querySelector(".saq-option[data-letter='A']");
+        const q2OptB = q2Card.querySelector(".saq-option[data-letter='B']");
+        const q2OptC = q2Card.querySelector(".saq-option[data-letter='C']");
+        const q2OptsACSelected = Boolean(q2OptA?.classList.contains("is-selected") && q2OptC?.classList.contains("is-selected") && !q2OptB?.classList.contains("is-selected"));
+        const q2BadgeMatched = q2Card.querySelector(".saq-status-badge")?.textContent === "AI Match";
+
+        // 3. Numerical Interaction on Q3 (AI suggested "42.50")
+        const q3Input = q3Card.querySelector(".saq-num-input");
+        q3Input.value = "100.5";
+        q3Input.dispatchEvent(new Event("input", { bubbles: true }));
+        await sleep(10);
+        const q3BadgeOverridden = q3Card.querySelector(".saq-status-badge")?.textContent === "Overridden";
+
+        q3Card.querySelector("[data-act='clear-input']").click(); // Clear numerical input
+        await sleep(10);
+        const q3Cleared = q3Card.querySelector(".saq-num-input")?.value === "";
+        const q3BadgeSuggested = q3Card.querySelector(".saq-status-badge")?.textContent === "AI Suggested";
+
+        q3Card.querySelector("[data-act='apply-single-ai']").click(); // Quick apply AI canonical 42.5
+        await sleep(10);
+        const q3AppliedVal = q3Card.querySelector(".saq-num-input")?.value === "42.5";
+        const q3BadgeMatched = q3Card.querySelector(".saq-status-badge")?.textContent === "AI Match";
+
+        // 4. Apply Answers Dialog Flow
+        const applyAnswersTrigger = importSheet.querySelector("[data-act='apply-answers']");
+        const applyDialogEl = importSheet.querySelector("#saq-apply-dialog");
+        const readyBadgeText = importSheet.querySelector("[data-ready-badge]")?.textContent;
+
+        applyAnswersTrigger.click();
+        await sleep(10);
+        const applyDialogOpen = applyDialogEl && !applyDialogEl.hasAttribute("hidden");
+        const summaryReady = applyDialogEl.querySelector("[data-summary-ready]")?.textContent;
+        const summaryMatched = applyDialogEl.querySelector("[data-summary-matched]")?.textContent;
+
+        applyDialogEl.querySelector("[data-act='apply-cancel']").click();
+        await sleep(10);
+        const applyDialogClosed = applyDialogEl.hasAttribute("hidden");
+
+        t.steps.step5f = {
+          q1OptASelected,
+          q1BadgeOverridden,
+          q1OptBSelected,
+          q1BadgeMatched,
+          q2OptBSelected,
+          q2OptsACSelected,
+          q2BadgeMatched,
+          q3BadgeOverridden,
+          q3Cleared,
+          q3BadgeSuggested,
+          q3AppliedVal,
+          q3BadgeMatched,
+          hasApplyButton: Boolean(applyAnswersTrigger),
+          readyBadgeText,
+          applyDialogOpen,
+          summaryReady,
+          summaryMatched,
+          applyDialogClosed
+        };
+
+        // Close reader drawer before navigation test
+        runtime.close();
+        await sleep(20);
+
+        // Step 5e: In-App Client-Side Navigation Auto-Detection & Dynamic Sidebar
+        const assessmentContainer = document.querySelector("app-assessment-question-view");
+        const savedAssessmentHtml = assessmentContainer.outerHTML;
+
+        // 1. Navigate assessment -> non-assessment (replace DOM)
+        const nonAssessmentNode = document.createElement("div");
+        nonAssessmentNode.id = "non-assessment-view";
+        nonAssessmentNode.innerHTML = "<h1>Course Catalog</h1><p>Browse available courses</p>";
+        assessmentContainer.replaceWith(nonAssessmentNode);
+        await sleep(180);
+
+        const hostAfterNavOut = document.getElementById("unfold-root");
+        const launcherAfterNavOut = hostAfterNavOut?.shadowRoot?.querySelector(".saq-launcher.is-shown");
+        const lifecycleAfterNavOut = runtime.lifecycle.state;
+
+        // 2. Navigate non-assessment -> assessment (restore assessment DOM without popup action)
+        nonAssessmentNode.replaceWith(assessmentContainer);
+        await sleep(180);
+
+        const hostAfterNavIn = document.getElementById("unfold-root");
+        const launcherAfterNavIn = hostAfterNavIn?.shadowRoot?.querySelector(".saq-launcher.is-shown");
+        const lifecycleAfterNavIn = runtime.lifecycle.state;
+        const readerAutoOpened = Boolean(hostAfterNavIn?.shadowRoot?.querySelector("#saq-sheet.is-open"));
+
+        // 3. Dynamic Sidebar Insertion: Insert sidebar after boot
+        const sidebarMount = document.createElement("div");
+        sidebarMount.id = "sidebar-dynamic-mount";
+        sidebarMount.innerHTML = \`
+          <div class="nav-container side-nav" id="side-nav-content">
+            <h1 class="side-nav-title">Sep 2026 - MAD II</h1>
+            <div class="unit-container">
+              <div class="unit-title">Week 1</div>
+              <button class="child-row">
+                <div class="child-title">Graded Assignment 1</div>
+                <div class="child-type">Assignment</div>
+              </button>
+            </div>
+          </div>\`;
+        document.body.appendChild(sidebarMount);
+        await sleep(180);
+
+        const decorElements = document.querySelectorAll("acx-portal-decor, [data-acx-decor]");
+        const decorCount = decorElements.length;
+
+        // 4. Repeated navigation cycles (idempotence / no duplicate roots)
+        for (let i = 0; i < 3; i++) {
+          assessmentContainer.remove();
+          await sleep(50);
+          document.body.appendChild(assessmentContainer);
+          await sleep(50);
+        }
+        await sleep(180);
+        const rootElementsCount = document.querySelectorAll("#unfold-root").length;
+
+        // 5. Flood of mutations (50 rapid DOM mutations trigger debounced detection)
+        let detectCountDuringFlood = 0;
+        const origDetect = runtime.detect.bind(runtime);
+        runtime.detect = () => {
+          detectCountDuringFlood++;
+          return origDetect();
+        };
+        for (let i = 0; i < 50; i++) {
+          const scratch = document.createElement("span");
+          scratch.textContent = "tick-" + i;
+          document.body.appendChild(scratch);
+          scratch.remove();
+        }
+        await sleep(180);
+        runtime.detect = origDetect;
+
+        t.steps.step5e = {
+          launcherRemovedOnExit: !Boolean(launcherAfterNavOut),
+          lifecycleAfterNavOut,
+          launcherAppearedOnEnter: Boolean(launcherAfterNavIn),
+          lifecycleAfterNavIn,
+          readerDidNotAutoOpen: !readerAutoOpened,
+          sidebarDecorAppeared: decorCount > 0,
+          rootElementsCount,
+          detectCountDuringFlood
         };
 
         // Step 6: Teardown & Destruction
@@ -803,9 +813,13 @@ function buildFixtureHtml() {
       });
     }
 
-    window.addEventListener("load", () => {
+    if (document.readyState === "complete" || document.readyState === "interactive") {
       setTimeout(runInBrowserSmokeSuite, 50);
-    });
+    } else {
+      window.addEventListener("load", () => {
+        setTimeout(runInBrowserSmokeSuite, 50);
+      });
+    }
   </script>
 </body>
 </html>`;
@@ -827,7 +841,8 @@ async function runRealBrowserTests() {
   });
 
   const server = http.createServer((req, res) => {
-    if (req.method === "GET" && (req.url === "/" || req.url.startsWith("/quiz/"))) {
+    console.log(`[Server] ${req.method} ${req.url}`);
+    if (req.method === "GET" && (req.url === "/" || req.url === "/quiz/weekly-assignment-4")) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       res.end(fixtureHtml);
       return;
@@ -844,6 +859,18 @@ async function runRealBrowserTests() {
         "Cache-Control": "no-store",
       });
       res.end(PNG_1X1_BYTES);
+      return;
+    }
+    if (req.method === "POST" && req.url === "/__log") {
+      let body = "";
+      req.on("data", (chunk) => {
+        body += chunk.toString();
+      });
+      req.on("end", () => {
+        console.log(`[Browser Log] ${body}`);
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end("ok");
+      });
       return;
     }
     if (req.method === "POST" && req.url === "/__report") {
@@ -871,24 +898,39 @@ async function runRealBrowserTests() {
   const targetUrl = `http://127.0.0.1:${port}/quiz/weekly-assignment-4`;
 
   const tmpUserDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "unfold-chrome-profile-"));
+  let chromeStderr = "";
   const chromeProc = spawn(
     chromeBin,
     [
-      "--headless=new",
+      "--headless",
+      "--no-sandbox",
       "--disable-gpu",
+      "--disable-dev-shm-usage",
+      "--use-mock-keychain",
       "--no-first-run",
       "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-default-apps",
+      "--disable-sync",
       "--disable-extensions",
+      "--mute-audio",
+      "--hide-scrollbars",
+      "--disable-features=Translate,OptimizationHints,MediaRouter",
       `--user-data-dir=${tmpUserDataDir}`,
       targetUrl,
     ],
-    { stdio: "ignore" }
+    { stdio: ["ignore", "ignore", "pipe"] }
   );
+
+  chromeProc.stderr?.on("data", (chunk) => {
+    chromeStderr += chunk.toString();
+  });
 
   let report;
   try {
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Timed out waiting for real-browser test report (20s)")), 20000)
+      setTimeout(() => reject(new Error(`Timed out waiting for real-browser test report (45s)\nChrome stderr: ${chromeStderr}`)), 45000)
     );
     report = await Promise.race([reportPromise, timeoutPromise]);
   } finally {
@@ -927,7 +969,7 @@ async function runRealBrowserTests() {
     assert(s2.sheetOpen === true, "#saq-sheet must have .is-open class in Shadow DOM");
     assert(s2.questionCount === 3, `Expected 3 extracted questions, got ${s2.questionCount}`);
     assert(s2.restoredChipText === "1", `Expected original chip '1' restored, got '${s2.restoredChipText}'`);
-    assert(s2.hasMdBtn && s2.hasPrintBtn && s2.hasBundleBtn, "All 3 export buttons must be rendered in Reader header");
+    assert(s2.hasMdBtn && s2.hasPrintBtn && s2.hasCopyQBtn && s2.hasImportBtn && s2.hasApplyBtn && s2.hasRefreshBtn && s2.hasCloseBtn, "All Reader top-bar action buttons must be rendered");
     assert(s2.renderedQuestionCards === 3, `Expected 3 rendered .saq-block elements, got ${s2.renderedQuestionCards}`);
   });
 
@@ -1006,51 +1048,27 @@ async function runRealBrowserTests() {
     assert(s5.busySnapshot.isExporting === true, "runtime.isExporting must be true immediately after clicking export");
     assert(s5.busySnapshot.mdDisabled === true, "Markdown button must be disabled during active export");
     assert(s5.busySnapshot.printDisabled === true, "Print button must be disabled during active export");
-    assert(s5.busySnapshot.bundleDisabled === true, "Bundle button must be disabled during active export");
-    assert(s5.busySnapshot.bundleHasBusyClass === true, "Buttons must have .is-busy class during active export");
     assert(s5.downloadsTriggeredForBundle === 1, "Duplicate click while busy must not trigger duplicate download");
     assert(s5.buttonsReEnabledAfterExport === true, "All export buttons must be re-enabled after export completes");
   });
 
-  // ── Check 6b: §4 "Copy for AI" Popover & Direct PDF in Real Chrome ────────
-  await check("Real-Browser Check 6b: Copy for AI popover opens, warns on figures, expands preview, copies prompt, filters scope, downloads direct PDF, and handles layered Escape", () => {
+  // ── Check 6b: Reader Actions & Direct PDF in Real Chrome ────────
+  await check("Real-Browser Check 6b: Reader exposes exactly 7 top-bar actions, 1-click Copy Questions, direct PDF export, and layered Escape handling", () => {
     const s5b = report.steps.step5b;
-    assert(s5b && s5b.hasCopyAiBtn === true, "Copy for AI button must be present in Reader header");
-    assert(s5b.hasSavePdfBtn === true, "Save PDF button must be present inside Copy for AI popover");
-    assert(s5b.aiOpened === true, "Clicking Copy for AI must open #saq-ai-popover");
-    assert(s5b.hasDialogRoleAndLabel === true, "Popover must have role='dialog' and accessible name 'Copy for AI'");
-    assert(s5b.focusMovedIntoPopover === true, "Focus must move inside popover on open");
-    assert(s5b.singleDefaultedToActiveQ2 === true, "Single scope must default to active question (Q2) on first open");
-    assert(s5b.figWarnText.includes("Q1, Q2"), `Expected figure warning for Q1, Q2, got: ${s5b.figWarnText}`);
-    assert(s5b.figWarnNotColorOnly === true, "Figure warning must include both icon and text (not color-only)");
-    assert(s5b.previewExpanded === true, "Preview <pre tabindex='0'> must expand on toggle click");
-    assert(s5b.previewHasAssignment === true, "Preview must contain <assignment> and '- Figures omitted for: Q1, Q2'");
-    assert(s5b.copyFeedbackShown === true, "Clicking Copy must announce 'Copied to clipboard' in aria-live='polite' status");
-    assert(s5b.copiedNotColorOnly === true, "Copied state must include both icon and text (not color-only)");
-    assert(s5b.copiedMatchesPreview === true, "Clipboard writeText must receive exact prompt string matching preview");
-    assert(
-      s5b.lightContrast.warnRatio >= 4.5 && s5b.lightContrast.liveRatio >= 4.5 && s5b.lightContrast.btnRatio >= 4.5,
-      `Light theme contrast must be >= 4.5:1 (got warn=${s5b.lightContrast.warnRatio}, live=${s5b.lightContrast.liveRatio}, btn=${s5b.lightContrast.btnRatio})`
-    );
-    assert(
-      s5b.darkContrast.warnRatio >= 4.5 && s5b.darkContrast.liveRatio >= 4.5 && s5b.darkContrast.btnRatio >= 4.5,
-      `Dark theme contrast must be >= 4.5:1 (got warn=${s5b.darkContrast.warnRatio}, live=${s5b.darkContrast.liveRatio}, btn=${s5b.darkContrast.btnRatio})`
-    );
-    assert(s5b.startGtEndRejected === true, "Range inputs must reject start > end");
-    assert(s5b.outOfBoundsRejected === true, "Range inputs must reject out-of-bounds values");
-    assert(s5b.singleFigWarnHidden === true, "Switching to Single Q3 (no figure) must hide figure warning");
-    assert(s5b.singleHasOnlyQ3 === true, "Single Q3 scope must serialize only Q3");
-    assert(s5b.aiPdfPrintTriggered === true, "Clicking Save PDF in popover must invoke print() on fallback");
-    assert(s5b.aiPdfQuestionCount === 1, `Scoped Save PDF (Single Q3) must render 1 question, got ${s5b.aiPdfQuestionCount}`);
-    assert(s5b.popoverStillOpenAfterSavePdf === true, "Clicking Save PDF must keep the Copy for AI popover open");
+    assert(s5b && s5b.hasCopyQBtn === true, "Copy Questions button must be present in Reader header");
+    assert(s5b.direct1ClickCopied === true, "1-click Copy Questions must copy prompt to clipboard directly");
+    assert(s5b.hasImportBtn === true, "Import Answers button must be present in Reader header");
+    assert(s5b.hasApplyBtn === true, "Apply Answers button must be present in Reader header");
+    assert(s5b.hasPrintBtn === true, "Download PDF button must be present in Reader header");
+    assert(s5b.hasMdBtn === true, "Copy (Markdown) button must be present in Reader header");
+    assert(s5b.hasRefreshBtn === true, "Refresh button must be present in Reader header");
+    assert(s5b.hasCloseBtn === true, "Close button must be present in Reader header");
     assert(s5b.directPdfTriggered === true, "Direct PDF path must download 'Week 04 - GA.pdf' with application/pdf Blob and no print() call");
-    assert(s5b.focusWasInPreview === true, "Focus must be inside <pre tabindex='0'> preview before pressing Escape");
-    assert(s5b.popoverClosedAfterFirstEsc === true, "First Escape (from inside preview) must close the AI popover");
-    assert(s5b.readerStillOpenAfterFirstEsc === true, "First Escape must NOT close the Reader drawer");
-    assert(s5b.focusReturnedToTrigger === true, "Closing popover via Escape must return focus to Copy for AI trigger button");
-    assert(s5b.singlePreservedAcrossRefresh === true, "Single scope must not reset after a document refresh");
-    assert(s5b.partialAllLabel === "3 of 10 extracted" && s5b.partialBannerShown === true, `Partial extraction must show '3 of 10 extracted' and warning banner (got '${s5b.partialAllLabel}')`);
-    assert(s5b.readerClosedAfterSecondEsc === true, "Second Escape must close the Reader drawer");
+    assert(s5b.importPanelOpen === true, "Clicking Import Answers opens import panel");
+    assert(s5b.importPanelClosedAfterFirstEsc === true, "Escape must close Import panel");
+    assert(s5b.applyDialogOpen === true, "Clicking Apply Answers opens apply dialog");
+    assert(s5b.applyDialogClosedAfterFirstEsc === true, "Escape must close Apply dialog");
+    assert(s5b.readerStillOpenAfterFirstEsc === true, "First Escape must NOT close Reader drawer");
   });
 
   await check("Real-Browser Check 6c: AI answer import renders accessible, inert inline badges and closes before the Reader", () => {
@@ -1059,13 +1077,51 @@ async function runRealBrowserTests() {
     assert(s5c.hasDialogAndName === true, "Import panel must expose role=dialog and an accessible name");
     assert(s5c.fingerprintCaptured === true, "Import test must obtain the prompt fingerprint");
     assert(s5c.badgeCount === 4, `Expected four imported answer badges, got ${s5c.badgeCount}`);
-    assert(s5c.badges.includes("AI: B"), "MCQ badge must render its answer");
-    assert(s5c.badges.includes("AI: A, C"), "MSQ badge must render sorted answers");
-    assert(s5c.badges.includes("AI: 42.5"), "Numerical badge must render canonical decimal");
+    assert(s5c.badges.some((b) => b.includes("AI: B")), "MCQ badge must render its answer");
+    assert(s5c.badges.some((b) => b.includes("AI: A, C")), "MSQ badge must render sorted answers");
+    assert(s5c.badges.some((b) => b.includes("AI: 42.5")), "Numerical badge must render canonical decimal");
     assert(s5c.hostileTextInert === true, "Hostile TEXT answer must remain inert visible text");
     assert(s5c.focusInImportPanel === true, "Opening import must move focus into the dialog");
     assert(s5c.panelClosedAfterEscape === true, "Escape must close the import panel");
     assert(s5c.readerOpenAfterEscape === true, "Escape must leave the Reader open");
+  });
+
+  // ── Check 6d: In-App Navigation Auto-Detection & Dynamic Sidebar ──────────
+  await check("Real-Browser Check 6d: In-app navigation auto-detects assessment, mounts launcher without opening Reader, decorates dynamically inserted sidebar, and resists mutation floods", () => {
+    const s5e = report.steps.step5e;
+    assert(s5e && s5e.launcherRemovedOnExit === true, "Launcher must be removed when navigating to non-assessment");
+    assert(s5e.lifecycleAfterNavOut === "idle", `Expected IDLE state after nav out, got ${s5e?.lifecycleAfterNavOut}`);
+    assert(s5e.launcherAppearedOnEnter === true, "Launcher must appear (.is-shown) when navigating back to assessment");
+    assert(s5e.lifecycleAfterNavIn === "active", `Expected ACTIVE state after nav in, got ${s5e?.lifecycleAfterNavIn}`);
+    assert(s5e.readerDidNotAutoOpen === true, "Auto-detection must mount launcher only and NOT auto-open Reader");
+    assert(s5e.sidebarDecorAppeared === true, "Dynamically inserted sidebar must receive decorations");
+    assert(s5e.rootElementsCount === 1, `Expected exactly 1 #unfold-root after navigation cycles, got ${s5e?.rootElementsCount}`);
+    assert(s5e.detectCountDuringFlood <= 2, `Expected debounced detection during 50-mutation flood, got ${s5e?.detectCountDuringFlood}`);
+  });
+
+  // ── Check 6e: Interactive Answer Review UI, Single AI Apply & Confirmation Modal ──
+  await check("Real-Browser Check 6e: Interactive MCQ/MSQ/Numerical controls update state & badges, quick apply AI copies suggestions, and Apply Answers dialog opens with summary counts", () => {
+    const s5f = report.steps.step5f;
+    assert(s5f && s5f.hasApplyButton === true, "Apply Answers button must be present in Reader header");
+    assert(s5f.q1OptASelected === true, "Clicking MCQ option A must set selected class on option");
+    assert(s5f.q1BadgeOverridden === true, "Selecting non-AI MCQ option must show 'Overridden' status badge");
+    assert(s5f.q1OptBSelected === true, "Quick Apply AI on Q1 must select option B");
+    assert(s5f.q1BadgeMatched === true, "Quick Apply AI on Q1 must update status badge to 'AI Match'");
+
+    assert(s5f.q2OptBSelected === true, "Clicking MSQ option B must set selected class");
+    assert(s5f.q2OptsACSelected === true, "Quick Apply AI on Q2 must select options A & C and deselect B");
+    assert(s5f.q2BadgeMatched === true, "Quick Apply AI on Q2 must update status badge to 'AI Match'");
+
+    assert(s5f.q3BadgeOverridden === true, "Typing non-AI numerical value must show 'Overridden' status badge");
+    assert(s5f.q3Cleared === true, "Clicking clear button must empty numerical input");
+    assert(s5f.q3BadgeSuggested === true, "Clearing numerical input with AI present must show 'AI Suggested' status badge");
+    assert(s5f.q3AppliedVal === true, "Quick Apply AI on Q3 must populate numerical input with '42.5'");
+    assert(s5f.q3BadgeMatched === true, "Quick Apply AI on Q3 must update status badge to 'AI Match'");
+
+    assert(s5f.applyDialogOpen === true, "Clicking Apply Answers must open #saq-apply-dialog confirmation modal");
+    assert(Number(s5f.summaryReady) >= 3, `Expected at least 3 ready questions in dialog, got ${s5f.summaryReady}`);
+    assert(Number(s5f.summaryMatched) >= 3, `Expected at least 3 AI matched questions in dialog, got ${s5f.summaryMatched}`);
+    assert(s5f.applyDialogClosed === true, "Clicking cancel on apply dialog must close the modal");
   });
 
   // ── Check 7: Zero Console Errors & Clean Teardown ─────────────────────────

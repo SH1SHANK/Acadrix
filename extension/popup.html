@@ -43,6 +43,21 @@
     --acx-brand-success-border-light: rgb(26 127 75 / 0.30);
     --acx-brand-success-border-dark:  rgb(95 208 138 / 0.30);
 
+    --acx-brand-warning-light:        #9A6700;
+    --acx-brand-warning-dark:         #E3B341;
+    --acx-brand-warning-bg-light:     rgb(154 103 0 / 0.10);
+    --acx-brand-warning-bg-dark:      rgb(227 179 65 / 0.14);
+
+    --acx-brand-error-light:          #C62828;
+    --acx-brand-error-dark:           #FF7B72;
+    --acx-brand-error-bg-light:       rgb(198 40 40 / 0.08);
+    --acx-brand-error-bg-dark:        rgb(255 123 114 / 0.14);
+
+    --acx-brand-info-light:           #0B6FB8;
+    --acx-brand-info-dark:            #62B0F0;
+    --acx-brand-info-bg-light:        rgb(11 111 184 / 0.08);
+    --acx-brand-info-bg-dark:         rgb(98 176 240 / 0.14);
+
     /* ── 2. Semantic UI Tokens ───────────────────────────────────────────── */
     --acx-bg:             var(--acx-brand-paper-50);
     --acx-surface:        var(--acx-brand-paper-0);
@@ -68,6 +83,15 @@
     --acx-success-bg:     var(--acx-brand-success-bg-light);
     --acx-success-border: var(--acx-brand-success-border-light);
 
+    --acx-warning:        var(--acx-brand-warning-light);
+    --acx-warning-bg:     var(--acx-brand-warning-bg-light);
+
+    --acx-error:          var(--acx-brand-error-light);
+    --acx-error-bg:       var(--acx-brand-error-bg-light);
+
+    --acx-info:           var(--acx-brand-info-light);
+    --acx-info-bg:        var(--acx-brand-info-bg-light);
+
     --acx-shadow-1:       0 1px 2px rgb(22 24 29 / 0.06);
     --acx-shadow-2:       0 4px 12px rgb(22 24 29 / 0.10);
     --acx-shadow-3:       0 12px 32px rgb(22 24 29 / 0.16), 0 2px 6px rgb(22 24 29 / 0.08);
@@ -78,11 +102,12 @@
     --acx-font-mono:    "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
     --acx-text-wordmark:     600 18px/24px var(--acx-font-display);
-    --acx-text-h3:           700 17px/24px var(--acx-font-ui);
+    --acx-text-h3:           700 16px/22px var(--acx-font-ui);
     --acx-text-ui:           500 14px/20px var(--acx-font-ui);
     --acx-text-small:        400 13px/18px var(--acx-font-ui);
     --acx-text-caption:      500 12px/16px var(--acx-font-ui);
     --acx-text-mono-caption: 500 12px/16px var(--acx-font-mono);
+    --acx-text-mono-num:     600 18px/22px var(--acx-font-mono);
 
     --acx-tracking-tight:    -0.01em;
     --acx-tracking-normal:   0;
@@ -118,7 +143,7 @@
     --acx-switch-thumb: 14px;
     --acx-switch-shift: 16px;
 
-    --acx-popup-w: 300px;
+    --acx-popup-w: 320px;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -143,6 +168,19 @@
       --acx-accent-active:  var(--acx-brand-accent-400);
       --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
       --acx-focus-ring:     var(--acx-brand-accent-300);
+
+      --acx-success:        var(--acx-brand-success-dark);
+      --acx-success-bg:     var(--acx-brand-success-bg-dark);
+      --acx-success-border: var(--acx-brand-success-border-dark);
+
+      --acx-warning:        var(--acx-brand-warning-dark);
+      --acx-warning-bg:     var(--acx-brand-warning-bg-dark);
+
+      --acx-error:          var(--acx-brand-error-dark);
+      --acx-error-bg:       var(--acx-brand-error-bg-dark);
+
+      --acx-info:           var(--acx-brand-info-dark);
+      --acx-info-bg:        var(--acx-brand-info-bg-dark);
 
       --acx-shadow-1:       0 1px 2px rgb(0 0 0 / 0.15);
       --acx-shadow-2:       0 4px 12px rgb(0 0 0 / 0.25);
@@ -172,6 +210,19 @@
     --acx-accent-subtle:  var(--acx-brand-accent-subtle-dark);
     --acx-focus-ring:     var(--acx-brand-accent-300);
 
+    --acx-success:        var(--acx-brand-success-dark);
+    --acx-success-bg:     var(--acx-brand-success-bg-dark);
+    --acx-success-border: var(--acx-brand-success-border-dark);
+
+    --acx-warning:        var(--acx-brand-warning-dark);
+    --acx-warning-bg:     var(--acx-brand-warning-bg-dark);
+
+    --acx-error:          var(--acx-brand-error-dark);
+    --acx-error-bg:       var(--acx-brand-error-bg-dark);
+
+    --acx-info:           var(--acx-brand-info-dark);
+    --acx-info-bg:        var(--acx-brand-info-bg-dark);
+
     --acx-shadow-1:       0 1px 2px rgb(0 0 0 / 0.15);
     --acx-shadow-2:       0 4px 12px rgb(0 0 0 / 0.25);
     --acx-shadow-3:       0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);
@@ -192,13 +243,14 @@
     -webkit-user-select: none;
   }
 
+  /* ── Header ──────────────────────────────────────────────────────────── */
   .head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--acx-space-2);
     margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-3);
-    padding-bottom: var(--acx-space-3);
+    padding-bottom: var(--acx-space-2);
     border-bottom: var(--acx-border-width) solid var(--acx-border);
   }
   .head .brand {
@@ -226,9 +278,10 @@
     letter-spacing: var(--acx-tracking-tight);
     color: var(--acx-text);
   }
-  .head .subtitle {
-    color: var(--acx-text-muted);
-    font: var(--acx-text-caption);
+  .head-context {
+    display: flex;
+    align-items: center;
+    gap: var(--acx-space-2);
   }
   .head-actions {
     position: relative;
@@ -277,7 +330,7 @@
     z-index: 10;
     top: calc(100% + var(--acx-space-1));
     right: var(--acx-space-0);
-    min-width: 160px;
+    min-width: 170px;
     padding: var(--acx-space-2);
     border: var(--acx-border-width) solid var(--acx-border);
     border-radius: var(--acx-radius-md);
@@ -339,7 +392,98 @@
     outline-offset: var(--acx-focus-offset);
   }
 
-  /* ── Hero Action: Open Reader ─────────────────────────────────────────── */
+  /* ── Badges ───────────────────────────────────────────────────────────── */
+  .acx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--acx-space-1);
+    padding: 2px var(--acx-space-2);
+    border-radius: var(--acx-radius-sm);
+    font: var(--acx-text-caption);
+    font-weight: 500;
+    border: var(--acx-border-width) solid transparent;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .acx-badge-neutral {
+    background: var(--acx-surface-sunken);
+    color: var(--acx-text-muted);
+    border-color: var(--acx-border);
+  }
+  .acx-badge-success {
+    background: var(--acx-success-bg);
+    color: var(--acx-success);
+    border-color: var(--acx-success-border);
+  }
+  .acx-badge-warning {
+    background: var(--acx-warning-bg);
+    color: var(--acx-warning);
+    border-color: var(--acx-border-strong);
+  }
+  .acx-badge-error {
+    background: var(--acx-error-bg);
+    color: var(--acx-error);
+    border-color: var(--acx-error);
+  }
+  .acx-badge-info {
+    background: var(--acx-info-bg);
+    color: var(--acx-info);
+    border-color: var(--acx-border-strong);
+  }
+  .acx-badge-accent {
+    background: var(--acx-accent-subtle);
+    color: var(--acx-accent);
+    border-color: var(--acx-border-strong);
+  }
+  .upcoming-panel {
+    border: var(--acx-border-width) solid var(--acx-border);
+    border-radius: var(--acx-radius-lg);
+    background: var(--acx-surface);
+    overflow: hidden;
+    margin-bottom: var(--acx-space-3);
+  }
+  .upcoming-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .upcoming-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--acx-space-2);
+    padding: var(--acx-space-2) var(--acx-space-3);
+    border-bottom: var(--acx-border-width) solid var(--acx-border);
+  }
+  .upcoming-item:last-child {
+    border-bottom: none;
+  }
+  .upcoming-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .upcoming-item-title {
+    font: var(--acx-text-small);
+    font-weight: 500;
+    color: var(--acx-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .upcoming-item-meta {
+    font: var(--acx-text-caption);
+    color: var(--acx-text-muted);
+  }
+  .upcoming-empty {
+    padding: var(--acx-space-3);
+    font: var(--acx-text-small);
+    color: var(--acx-text-muted);
+    text-align: center;
+  }
+
+  /* ── Hero Action: Context-Aware Button ────────────────────────────────── */
   .hero-section {
     display: flex;
     flex-direction: column;
@@ -350,6 +494,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: var(--acx-space-2);
     width: 100%;
     height: var(--acx-control-h-md);
     border: var(--acx-border-width) solid var(--acx-accent);
@@ -385,9 +530,99 @@
     line-height: 16px;
   }
 
+  /* ── Operational Status Cards ─────────────────────────────────────────── */
+  .status-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--acx-surface);
+    border: var(--acx-border-width) solid var(--acx-border);
+    border-radius: var(--acx-radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--acx-space-3);
+  }
+  .status-card {
+    padding: var(--acx-space-2) var(--acx-space-3);
+  }
+  .status-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--acx-space-2);
+    margin-bottom: var(--acx-space-1);
+  }
+  .status-card-title {
+    font: var(--acx-text-caption);
+    letter-spacing: var(--acx-tracking-overline);
+    text-transform: uppercase;
+    color: var(--acx-text-muted);
+    font-weight: 600;
+  }
+  .status-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--acx-space-1);
+  }
+  .stat-main {
+    display: flex;
+    align-items: baseline;
+    gap: var(--acx-space-2);
+  }
+  .stat-number {
+    font: var(--acx-text-mono-num);
+    color: var(--acx-text);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font: var(--acx-text-small);
+    color: var(--acx-text-muted);
+  }
+  .stat-meta {
+    font: var(--acx-text-caption);
+    color: var(--acx-text-subtle);
+  }
+  .stat-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--acx-space-2);
+    font: var(--acx-text-small);
+  }
+  .stat-sublabel {
+    color: var(--acx-text-muted);
+    font: var(--acx-text-caption);
+  }
+  .stat-time {
+    font: var(--acx-text-mono-caption);
+    color: var(--acx-text);
+    font-variant-numeric: tabular-nums;
+  }
+  .status-divider {
+    height: var(--acx-border-width);
+    background: var(--acx-border);
+    margin: 0;
+  }
+  .status-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--acx-space-2);
+    margin-top: var(--acx-space-1);
+  }
+  .sync-feedback {
+    font: var(--acx-text-caption);
+    color: var(--acx-error);
+    background: var(--acx-error-bg);
+    border: var(--acx-border-width) solid var(--acx-error);
+    border-radius: var(--acx-radius-sm);
+    padding: var(--acx-space-1) var(--acx-space-2);
+    line-height: 1.3;
+    margin-top: var(--acx-space-1);
+    word-break: break-word;
+  }
+
   /* ── Panels & Rows ────────────────────────────────────────────────────── */
   .section {
-    margin: var(--acx-space-3) var(--acx-space-0) var(--acx-space-1);
+    margin: var(--acx-space-2) var(--acx-space-0) var(--acx-space-1);
     font: var(--acx-text-caption);
     letter-spacing: var(--acx-tracking-overline);
     text-transform: uppercase;
@@ -586,38 +821,88 @@
     </span>
     <div class="brand-text">
       <span class="name">Acadrix</span>
-      <span class="subtitle">IITM study tools</span>
     </div>
   </div>
-  <div class="head-actions">
-    <button id="headMenuToggle" class="head-menu-toggle" type="button"
-      aria-label="More options" aria-controls="headMenu" aria-expanded="false" title="More options">
-      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-        <circle cx="2.5" cy="8" r="1.5" />
-        <circle cx="8" cy="8" r="1.5" />
-        <circle cx="13.5" cy="8" r="1.5" />
-      </svg>
-    </button>
-    <div id="headMenu" class="head-menu" aria-label="More options" hidden>
-      <div class="version-row">
-        <span class="version-label">Version</span>
-        <span class="version" role="status"><span id="ver"></span></span>
-      </div>
-      <a id="repo" href="#" target="_blank" rel="noopener" hidden>
-        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+  <div class="head-context">
+    <span id="portalBadge" class="acx-badge acx-badge-neutral" role="status" aria-live="polite">Checking...</span>
+    <div class="head-actions">
+      <button id="headMenuToggle" class="head-menu-toggle" type="button"
+        aria-label="More options" aria-controls="headMenu" aria-expanded="false" title="More options">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <circle cx="2.5" cy="8" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="13.5" cy="8" r="1.5" />
         </svg>
-        <span>GitHub repository</span>
-      </a>
+      </button>
+      <div id="headMenu" class="head-menu" aria-label="More options" hidden>
+        <div class="version-row">
+          <span class="version-label">Version</span>
+          <span class="version" role="status"><span id="ver"></span></span>
+        </div>
+        <a id="repo" href="#" target="_blank" rel="noopener" hidden>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          <span>GitHub repository</span>
+        </a>
+      </div>
     </div>
   </div>
 </header>
 
-<!-- ── Action: Open Reader ──────────────────────────────────────────────── -->
-<section class="hero-section" aria-label="Assessment Reader Action">
+<!-- ── Action: Context-Aware Primary Action ──────────────────────────────── -->
+<section class="hero-section" aria-label="Primary Action">
   <button id="open" type="button" disabled>Open Reader</button>
   <div id="openStatus" class="open-status" role="status" aria-live="polite">Checking page status...</div>
 </section>
+
+<!-- ── Upcoming Deadlines ───────────────────────────────────────────────── -->
+<div class="section">Upcoming Deadlines</div>
+<div id="upcomingContainer" class="upcoming-panel">
+  <div id="upcomingList" class="upcoming-list"></div>
+  <div id="upcomingEmpty" class="upcoming-empty" hidden>No upcoming deadlines tracked</div>
+</div>
+
+<!-- ── Operational Status Cards ─────────────────────────────────────────── -->
+<div class="section">Operational Status</div>
+<div class="status-panel">
+  <!-- Local Storage Card -->
+  <div class="status-card">
+    <div class="status-card-header">
+      <span class="status-card-title">Local Repository</span>
+      <span id="pendingBadge" class="acx-badge acx-badge-neutral">0 pending</span>
+    </div>
+    <div class="status-card-body">
+      <div class="stat-main">
+        <span id="extractedCount" class="stat-number">0</span>
+        <span class="stat-label">extracted grade records</span>
+      </div>
+      <div class="stat-meta">
+        <span id="coursesCount">0 courses tracked</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-divider"></div>
+
+  <!-- Cloud Sync Card -->
+  <div class="status-card">
+    <div class="status-card-header">
+      <span class="status-card-title">Supabase Cloud Sync</span>
+      <span id="syncBadge" class="acx-badge acx-badge-neutral">Not synced</span>
+    </div>
+    <div class="status-card-body">
+      <div class="stat-row">
+        <span class="stat-sublabel">Last successful sync:</span>
+        <span id="lastSyncTime" class="stat-time">Never</span>
+      </div>
+      <div id="syncFeedback" class="sync-feedback" hidden></div>
+      <div class="status-card-actions">
+        <button id="manualSyncBtn" class="shortcut-clear" type="button" aria-label="Sync pending grades to Supabase">Sync now</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── Section 1: Reader ────────────────────────────────────────────────── -->
 <div class="section">Reader</div>
@@ -670,6 +955,16 @@
     </label>
   </div>
   <div class="row">
+    <label class="body" for="notificationsToggle">
+      <span class="t">Deadline notifications</span>
+      <span class="sub">Alerts for unsubmitted assignments</span>
+    </label>
+    <label class="switch tail">
+      <input id="notificationsToggle" type="checkbox" role="switch" data-key="notificationsEnabled" aria-label="Deadline notifications" checked />
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="row">
     <div class="body">
       <span class="t">Keyboard shortcut</span>
     </div>
@@ -698,8 +993,16 @@
   <div class="row">
     <div class="body">
       <span class="t">Saved deadlines</span>
+      <span class="sub">Sidebar decorator metadata</span>
     </div>
     <button id="clearDeadlines" class="shortcut-clear tail" type="button" aria-label="Clear saved deadlines" title="Clear saved deadlines">Clear</button>
+  </div>
+  <div class="row">
+    <div class="body">
+      <span class="t">Local grade store</span>
+      <span class="sub">Extracted grades & pending queue</span>
+    </div>
+    <button id="clearGrades" class="shortcut-clear tail" type="button" aria-label="Clear local grade store" title="Clear local grade store">Clear</button>
   </div>
 </div>
 

@@ -165,6 +165,31 @@ class MockElement {
     return child;
   }
 
+  insertBefore(newChild, refChild) {
+    if (!newChild) return newChild;
+    if (!refChild) return this.appendChild(newChild);
+    const idx = this.children.indexOf(refChild);
+    if (idx === -1) return this.appendChild(newChild);
+    newChild.parentNode = this;
+    this.children.splice(idx, 0, newChild);
+    const nIdx = this.childNodes.indexOf(refChild);
+    if (nIdx !== -1) this.childNodes.splice(nIdx, 0, newChild);
+    else this.childNodes.push(newChild);
+    return newChild;
+  }
+
+  prepend(...children) {
+    for (let i = children.length - 1; i >= 0; i--) {
+      const c = children[i];
+      if (!c) continue;
+      if (this.children.length > 0) {
+        this.insertBefore(c, this.children[0]);
+      } else {
+        this.appendChild(c);
+      }
+    }
+  }
+
   removeChild(child) {
     const idx = this.children.indexOf(child);
     if (idx !== -1) {
@@ -216,16 +241,24 @@ class MockElement {
 
   dispatchEvent(event) {
     if (!event.target) {
-      event.target = this;
+      try {
+        Object.defineProperty(event, "target", { value: this, configurable: true, writable: true });
+      } catch {
+        event.target = this;
+      }
     }
-    event.currentTarget = this;
+    try {
+      Object.defineProperty(event, "currentTarget", { value: this, configurable: true, writable: true });
+    } catch {
+      event.currentTarget = this;
+    }
     const listeners = this._listeners.get(event.type);
     if (listeners) {
       for (const cb of Array.from(listeners)) {
         cb(event);
       }
     }
-    if (event.bubbles && this.parentNode) {
+    if (event.bubbles && !event._stopped && this.parentNode) {
       this.parentNode.dispatchEvent(event);
     }
     return !event.defaultPrevented;
@@ -235,12 +268,16 @@ class MockElement {
     const ev = {
       type: "click",
       target: this,
+      currentTarget: this,
       bubbles: true,
+      _stopped: false,
       defaultPrevented: false,
       preventDefault: () => {
         ev.defaultPrevented = true;
       },
-      stopPropagation: () => {},
+      stopPropagation: () => {
+        ev._stopped = true;
+      },
     };
     this.dispatchEvent(ev);
   }
@@ -264,6 +301,8 @@ class MockElement {
 
   set innerHTML(html) {
     this._innerHTML = html;
+    this.children = [];
+    this.childNodes = [];
     parseHtmlIntoMockElement(html, this);
   }
 
@@ -317,39 +356,55 @@ class MockElement {
 }
 
 /**
- * Basic HTML parser to construct MockElements from HTML strings.
+ * Stack-based HTML tokenizer to construct MockElements from HTML strings with nested tags.
  */
 function parseHtmlIntoMockElement(html, parent) {
   const clean = html.replace(/<!--[\s\S]*?-->/g, "");
-  const tagRegex = /<([a-zA-Z0-9-]+)([^>]*)>([\s\S]*?)<\/\1>|<([a-zA-Z0-9-]+)([^>]*)\/>|<(input|img|br|hr)([^>]*)>|([^<]+)/g;
-  let match;
+  let currentParent = parent;
+  const stack = [parent];
 
-  while ((match = tagRegex.exec(clean)) !== null) {
-    if (match[8]) {
-      const text = match[8].trim();
+  const tagTokenRegex = /<(\/)?([a-zA-Z0-9-]+)([^>]*)>|([^<]+)/g;
+  let token;
+
+  while ((token = tagTokenRegex.exec(clean)) !== null) {
+    if (token[4]) {
+      const text = token[4].trim();
       if (text) {
         const textNode = new MockElement("span");
         textNode.textContent = text;
-        parent.appendChild(textNode);
+        currentParent.appendChild(textNode);
       }
     } else {
-      const tagName = match[1] || match[4] || match[6];
-      const rawAttrs = match[2] || match[5] || match[7] || "";
-      const innerContent = match[3] || "";
+      const isClosing = Boolean(token[1]);
+      const tagName = token[2].toLowerCase();
+      const rawAttrs = token[3] || "";
+      const isSelfClosing =
+        rawAttrs.trim().endsWith("/") ||
+        ["input", "img", "br", "hr", "meta", "link"].includes(tagName);
 
-      const el = new MockElement(tagName);
-      const attrRegex = /([a-zA-Z0-9-]+)(?:="([^"]*)")?/g;
-      let attrMatch;
-      while ((attrMatch = attrRegex.exec(rawAttrs)) !== null) {
-        const attrName = attrMatch[1];
-        const attrVal = attrMatch[2] !== undefined ? attrMatch[2] : "";
-        el.setAttribute(attrName, attrVal);
+      if (isClosing) {
+        for (let i = stack.length - 1; i > 0; i--) {
+          if (stack[i].tagName.toLowerCase() === tagName) {
+            stack.splice(i);
+            currentParent = stack[stack.length - 1];
+            break;
+          }
+        }
+      } else {
+        const el = new MockElement(tagName);
+        const attrRegex = /([a-zA-Z0-9-]+)(?:="([^"]*)")?/g;
+        let attrMatch;
+        while ((attrMatch = attrRegex.exec(rawAttrs)) !== null) {
+          const attrName = attrMatch[1];
+          const attrVal = attrMatch[2] !== undefined ? attrMatch[2] : "";
+          el.setAttribute(attrName, attrVal);
+        }
+        currentParent.appendChild(el);
+        if (!isSelfClosing) {
+          stack.push(el);
+          currentParent = el;
+        }
       }
-
-      if (innerContent) {
-        parseHtmlIntoMockElement(innerContent, el);
-      }
-      parent.appendChild(el);
     }
   }
 }
@@ -617,11 +672,48 @@ async function runBrowserIntegrationTests() {
     // Check header export actions
     const mdBtn = sheet.querySelector("[data-act='export-md']");
     const printBtn = sheet.querySelector("[data-act='print']");
-    const bundleBtn = sheet.querySelector("[data-act='export-bundle']");
+    const copyQBtn = sheet.querySelector("[data-act='copy-questions']");
+    const importBtn = sheet.querySelector("[data-act='import-answers']");
+    const applyBtn = sheet.querySelector("[data-act='apply-answers']");
+    const refreshBtn = sheet.querySelector("[data-act='refresh']");
+    const closeBtn = sheet.querySelector("[data-act='dismiss']");
 
-    assert(mdBtn !== null, "Export Markdown button must be present in Reader header");
-    assert(printBtn !== null, "Print/PDF button must be present in Reader header");
-    assert(bundleBtn !== null, "Export Bundle button must be present in Reader header");
+    assert(mdBtn !== null, "Copy / Markdown button must be present in Reader header");
+    assert(printBtn !== null, "Download PDF button must be present in Reader header");
+    assert(copyQBtn !== null, "Copy Questions button must be present in Reader header");
+    assert(importBtn !== null, "Import Answers button must be present in Reader header");
+    assert(applyBtn !== null, "Apply Answers button must be present in Reader header");
+    assert(refreshBtn !== null, "Refresh button must be present in Reader header");
+    assert(closeBtn !== null, "Close button must be present in Reader header");
+  });
+
+  // ── Step 2b: Manual Option Selection in Reader ────────────────────────────
+  await check("Step 2b: Clicking MCQ option manually selects it, updates badge to Selected, and increments ready count", async () => {
+    const hostEl = document.getElementById("unfold-root");
+    const sheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+    assert(sheet !== null, "Reader sheet exists");
+
+    const q1Block = sheet.querySelector("#saq-q-0");
+    assert(q1Block !== null, "Question 1 block exists in Reader");
+
+    const optA = q1Block.querySelector(".saq-option[data-letter='A'], button.saq-option");
+    assert(optA !== null, "Option A button exists in Question 1");
+
+    // Click option A
+    optA.click();
+    await new Promise((r) => setTimeout(r, 10));
+
+    const refreshedOptA = q1Block.querySelector(".saq-option[data-letter='A'], button.saq-option");
+    assert(refreshedOptA.classList.contains("is-selected"), "Option A must have .is-selected class");
+    assert(refreshedOptA.getAttribute("aria-checked") === "true", "Option A must have aria-checked=true");
+
+    const statusBadge = q1Block.querySelector(".saq-status-badge");
+    assert(statusBadge !== null, "Status badge exists in Question 1 header");
+    assert(statusBadge.textContent === "Selected", "Status badge should display 'Selected'");
+
+    const readyBadge = sheet.querySelector("[data-ready-badge]");
+    assert(readyBadge !== null && !readyBadge.hasAttribute("hidden"), "Ready badge must be visible");
+    assert(Number(readyBadge.textContent) >= 1, "Ready badge count should be at least 1");
   });
 
   // ── Step 3: Trigger Markdown Export From Reader Action ────────────────────
@@ -650,17 +742,13 @@ async function runBrowserIntegrationTests() {
     assert(runtime.activeDocument === preDoc, "Document was reused without re-traversal");
   });
 
-  // ── Step 4: Trigger Bundle Export From Reader Action ──────────────────────
+  // ── Step 4: Trigger Bundle Export ─────────────────────────────────────────
   await check("Step 4: Triggering Bundle export creates valid ZIP download and cleans up resources", async () => {
-    const hostEl = document.getElementById("unfold-root");
-    const bundleBtn = hostEl.shadowRoot.querySelector("[data-act='export-bundle']");
-    assert(bundleBtn !== null, "Bundle button exists");
-
     triggeredDownloads.length = 0;
     createdObjectUrls.length = 0;
     revokedObjectUrls.length = 0;
 
-    bundleBtn.click();
+    await runtime.handleExportAction("bundle");
     await new Promise((r) => setTimeout(r, 300));
 
     assert(triggeredDownloads.length === 1, "Exactly one file download triggered for bundle");
@@ -678,11 +766,11 @@ async function runBrowserIntegrationTests() {
     runtime.reader.setExporting(true);
     const mdBtn = sheet.querySelector("[data-act='export-md']");
     const printBtn = sheet.querySelector("[data-act='print']");
-    const bundleBtn = sheet.querySelector("[data-act='export-bundle']");
+    const copyQBtn = sheet.querySelector("[data-act='copy-questions']");
 
     assert(mdBtn.hasAttribute("disabled"), "Markdown button has disabled attribute during export");
     assert(printBtn.hasAttribute("disabled"), "Print button has disabled attribute during export");
-    assert(bundleBtn.hasAttribute("disabled"), "Bundle button has disabled attribute during export");
+    assert(copyQBtn.hasAttribute("disabled"), "Copy Questions button has disabled attribute during export");
     assert(mdBtn.classList.contains("is-busy"), "Button has is-busy class");
 
     // Simulate duplicate handleExportAction call while orchestrator is busy
@@ -697,102 +785,76 @@ async function runBrowserIntegrationTests() {
     assert(!mdBtn.classList.contains("is-busy"), "is-busy removed");
   });
 
-  // ── Step 5b: "Copy for AI" Popover (§4) ───────────────────────────────────
-  await check("Step 5b: Copy for AI popover supports scopes, partial extraction warning, preview, clipboard copy, and layered Escape", async () => {
+  // ── Step 5b: Exactly 7 Top-Bar Actions & Direct Workflows (§4) ─────────────
+  await check("Step 5b: Reader exposes exactly 7 top-bar actions, 1-click Copy Questions, and panel/dialog Esc handlers", async () => {
     const hostEl = document.getElementById("unfold-root");
     const sheet = hostEl.shadowRoot.querySelector("#saq-sheet");
-    const copyAiBtn = sheet.querySelector("[data-act='copy-ai']");
-    const popover = sheet.querySelector("#saq-ai-popover");
 
-    assert(copyAiBtn !== null, "Copy for AI button must exist in Reader header");
-    assert(popover !== null, "#saq-ai-popover must exist in Reader sheet");
-    assert(!runtime.reader.isAiPopoverOpen(), "Popover starts closed");
+    // 1. Verify exact 7 top-bar actions exist
+    const importBtn = sheet.querySelector("[data-act='import-answers']");
+    const applyBtn = sheet.querySelector("[data-act='apply-answers']");
+    const copyQBtn = sheet.querySelector("[data-act='copy-questions']");
+    const printBtn = sheet.querySelector("[data-act='print']");
+    const exportMdBtn = sheet.querySelector("[data-act='export-md']");
+    const refreshBtn = sheet.querySelector("[data-act='refresh']");
+    const closeBtn = sheet.querySelector("[data-act='dismiss']");
 
-    // 1. Open popover via button click
-    copyAiBtn.click();
-    assert(runtime.reader.isAiPopoverOpen(), "Clicking Copy for AI opens popover");
-    assert(copyAiBtn.getAttribute("aria-expanded") === "true", "Trigger aria-expanded is true");
+    assert(importBtn !== null, "Import Answers button must exist in Reader header");
+    assert(applyBtn !== null, "Apply Answers button must exist in Reader header");
+    assert(copyQBtn !== null, "Copy Questions button must exist in Reader header");
+    assert(printBtn !== null, "Download PDF button must exist in Reader header");
+    assert(exportMdBtn !== null, "Copy (Markdown) button must exist in Reader header");
+    assert(refreshBtn !== null, "Refresh button must exist in Reader header");
+    assert(closeBtn !== null, "Close button must exist in Reader header");
 
-    // 2. Preview toggle and keyboard-scrollable <pre tabindex="0">
-    const previewPre = popover.querySelector("[data-ai-preview]");
-    const previewToggle = popover.querySelector("[data-act='ai-preview-toggle']");
-    assert(previewPre.getAttribute("tabindex") === "0", "Preview <pre> must have tabindex='0'");
-    assert(previewPre.hasAttribute("hidden"), "Preview starts collapsed");
-    previewToggle.click();
-    assert(!previewPre.hasAttribute("hidden"), "Clicking preview toggle reveals preview");
-    assert(previewPre.textContent.includes("<assignment>"), "Preview contains serialized prompt");
+    const importPanel = sheet.querySelector("#saq-import-panel");
+    const applyDialog = sheet.querySelector("#saq-apply-dialog");
+    assert(importPanel !== null, "#saq-import-panel must exist in Reader sheet");
+    assert(applyDialog !== null, "#saq-apply-dialog must exist in Reader sheet");
+    assert(importPanel.hasAttribute("hidden"), "Import panel starts hidden");
+    assert(applyDialog.hasAttribute("hidden"), "Apply dialog starts hidden");
 
-    // 3. Copy to clipboard + aria-live="polite" feedback
-    let copiedText = "";
+    // 2. Test 1-click Copy Questions action
+    let directCopied = "";
     Object.defineProperty(globalThis.navigator, "clipboard", {
       configurable: true,
       value: {
         writeText: (txt) => {
-          copiedText = txt;
+          directCopied = txt;
           return Promise.resolve();
         },
       },
     });
-    const copyConfirmBtn = popover.querySelector("[data-act='ai-copy-confirm']");
-    const savePdfBtn = popover.querySelector("[data-act='ai-save-pdf']");
-    const liveStatus = popover.querySelector("[data-ai-live-status]");
-    assert(savePdfBtn !== null, "Save PDF button must exist in Copy for AI popover");
-    assert(liveStatus.getAttribute("aria-live") === "polite", "Live status region has aria-live='polite'");
+    copyQBtn.click();
+    await new Promise((r) => setTimeout(r, 20));
+    assert(directCopied.includes("You are solving an assessment."), "1-click Copy Questions copies prompt directly");
+    assert(directCopied.includes("<assignment>"), "Prompt contains assignment XML structure");
 
-    await runtime.reader.copyAiPrompt();
-    assert(copiedText.includes("You are solving an assessment."), "Clipboard received prompt text");
-    assert(copiedText.includes("- Output ONLY the final answers in one fenced code block tagged json, with no other text."), "Prompt uses single no-reasoning rule");
-    assert(liveStatus.classList.contains("is-visible"), "Live status becomes visible after copy");
-    assert(liveStatus.textContent.includes("Copied to clipboard"), "Live status announces Copied to clipboard");
-
-    // 4. Scope validation (invalid range start > end disables copy and PDF buttons and shows warning)
-    runtime.reader.aiScopeState.type = "range";
-    const startInput = popover.querySelector("[data-ai-input='start']");
-    const endInput = popover.querySelector("[data-ai-input='end']");
-    if (startInput) startInput.setAttribute("value", "5");
-    if (endInput) endInput.setAttribute("value", "1");
-    runtime.reader.updateAiPopoverState();
-    const rangeErr = popover.querySelector("[data-ai-range-error]");
-    assert(!rangeErr.hasAttribute("hidden"), "Invalid range shows validation error");
-    assert(copyConfirmBtn.hasAttribute("disabled"), "Copy button disabled when range invalid");
-    assert(savePdfBtn.hasAttribute("disabled"), "Save PDF button disabled when range invalid");
-
-    // Restore valid Single scope (Q1) and verify session memory across close/reopen
-    runtime.reader.aiScopeState.type = "single";
-    runtime.reader.aiScopeState.single = 1;
-    const singleInput = popover.querySelector("[data-ai-input='single']");
-    if (singleInput) singleInput.setAttribute("value", "1");
-    runtime.reader.updateAiPopoverState();
-    assert(!copyConfirmBtn.hasAttribute("disabled"), "Copy button enabled for valid Single Q1");
-    assert(!savePdfBtn.hasAttribute("disabled"), "Save PDF button enabled for valid Single Q1");
-    assert(previewPre.textContent.includes("Q1 ["), "Single Q1 prompt includes Q1");
-
-    // 5. Layered Escape key: first Escape closes ONLY the popover; Reader remains open
+    // 3. Test Import Answers panel open & Escape
+    importBtn.click();
+    assert(!importPanel.hasAttribute("hidden"), "Import panel opens on click");
     runtime.handleKeydown({
       key: "Escape",
       preventDefault: () => {},
       stopPropagation: () => {},
     });
-    assert(!runtime.reader.isAiPopoverOpen(), "First Escape closes AI popover");
+    assert(importPanel.hasAttribute("hidden"), "Escape closes Import panel");
     assert(runtime.reader.isOpen(), "Reader drawer remains open after first Escape");
 
-    // Reopen and confirm session memory preserved Single scope
-    runtime.reader.openAiPopover();
-    assert(runtime.reader.aiScopeState.type === "single" && runtime.reader.aiScopeState.single === 1, "Popover remembers last selected scope in session");
-    runtime.reader.closeAiPopover();
-
-    // 6. Partial extraction warning ("N of M extracted")
-    const partialDoc = {
-      metadata: { ...runtime.activeDocument.metadata, totalQuestions: 10 },
-      questions: runtime.activeDocument.questions,
-    };
-    const partialHtml = runtime.reader.buildAiPopoverHtml(partialDoc);
-    assert(partialHtml.includes("of 10 extracted"), "Partial extraction shows 'N of 10 extracted'");
-    assert(partialHtml.includes("data-ai-partial-warn"), "Partial extraction renders warning banner");
+    // 4. Test Apply Answers dialog open & Escape
+    applyBtn.click();
+    assert(!applyDialog.hasAttribute("hidden"), "Apply dialog opens on click");
+    runtime.handleKeydown({
+      key: "Escape",
+      preventDefault: () => {},
+      stopPropagation: () => {},
+    });
+    assert(applyDialog.hasAttribute("hidden"), "Escape closes Apply dialog");
+    assert(runtime.reader.isOpen(), "Reader drawer remains open after dialog Escape");
   });
 
-  // ── Step 5c: Real Portal DOM Metadata, Review-Mode PDF Non-Leak, and Popover Hint ──
-  await check("Step 5c: Extracts real IITM portal h1.title + .side-nav-title, verifies review-mode PDF non-leak, and updates figure hint on fallback", async () => {
+  // ── Step 5c: Real Portal DOM Metadata, Review-Mode PDF Non-Leak, and Direct PDF ──
+  await check("Step 5c: Extracts real IITM portal h1.title + .side-nav-title, verifies review-mode PDF non-leak, and direct PDF availability", async () => {
     const { buildExportFilename, AssignmentDocument, QuestionNode, ContentNode } = await import("../src/model/document.js");
     const { ContentType, QuestionType } = await import("../src/model/types.js");
     const { renderPdfDocument } = await import("../src/exporters/pdf.js");
@@ -831,7 +893,7 @@ async function runBrowserIntegrationTests() {
       assessmentContainer.appendChild(prevBreadcrumb);
     }
 
-    // 2. Verify review-mode.html PDF non-leak (default options and saveAiPdf options)
+    // 2. Verify review-mode.html PDF non-leak
     const reviewDoc = new AssignmentDocument({
       metadata: {
         title: "IITM Assessment — Review Mode Fixture",
@@ -873,44 +935,13 @@ async function runBrowserIntegrationTests() {
     assert(!reviewPdfHtml.includes("Existing Selection"), "Default PDF must NOT leak selected option");
     assert(!reviewPdfHtml.includes('<div class="saq-pdf-review-box">'), "Default PDF must NOT render review box");
 
-    // 3. Verify popover figure warning hint omits "choose Save as PDF" when direct PDF is available,
-    // and includes it on the fallback path.
-    const figDoc = new AssignmentDocument({
-      metadata: { title: "Week 1 - Graded Assignment 1", course: "MAD II", totalQuestions: 1 },
-      questions: [
-        new QuestionNode({
-          index: 0,
-          number: 1,
-          label: "Question 1",
-          type: QuestionType.MCQ,
-          stem: [
-            new ContentNode({ type: ContentType.IMAGE, attributes: { src: "https://exam.iitm.ac.in/fig.png", alt: "Fig" } }),
-          ],
-          options: [{ index: 0, letter: "A", content: [new ContentNode({ type: ContentType.TEXT, value: "Opt A" })] }],
-        }),
-      ],
-    });
-    runtime.reader.documentModel = figDoc;
-    runtime.reader.aiScopeState = { type: "all", start: 1, end: 1, single: 1 };
-
+    // 3. Direct PDF mode detection
     const prevChrome = globalThis.chrome;
     globalThis.chrome = { runtime: { sendMessage: () => {} } };
     runtime.reader.setPdfFallbackMode(false);
-    runtime.reader.updateAiPopoverState();
-    const hostEl = document.getElementById("unfold-root");
-    const figWarnEl = hostEl.shadowRoot.querySelector("[data-ai-fig-warn]");
-    assert(
-      figWarnEl.textContent.includes("save PDF and attach in chat alongside prompt") &&
-        !figWarnEl.textContent.includes("choose Save as PDF"),
-      "Direct PDF mode must omit 'choose Save as PDF' in figure warning"
-    );
-
+    assert(runtime.reader.isDirectPdfAvailable() === true, "Direct PDF available when chrome.runtime is present");
     runtime.reader.setPdfFallbackMode(true);
-    runtime.reader.updateAiPopoverState();
-    assert(
-      figWarnEl.textContent.includes("click Save PDF, choose Save as PDF, and attach in chat"),
-      "Fallback mode must include 'choose Save as PDF' in figure warning"
-    );
+    assert(runtime.reader.isDirectPdfAvailable() === false, "Direct PDF unavailable in fallback mode");
     globalThis.chrome = prevChrome;
   });
 
@@ -1143,6 +1174,130 @@ async function runBrowserIntegrationTests() {
     await new Promise((resolve) => setTimeout(resolve, 10));
     assert(runtime.reader.isOpen(), "Reader must remain open after refresh");
   });
+  await check("Step 5d: Export dropdown toggles open/close, triggers export actions, and handles outside click & Escape", async () => {
+    const hostEl = document.getElementById("unfold-root");
+    const sheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+    const toggleBtn = sheet.querySelector("[data-act='toggle-export-menu']");
+    const exportMenu = sheet.querySelector("#saq-export-menu");
+    assert(toggleBtn !== null, "Export menu toggle button must exist");
+    assert(exportMenu !== null, "Export dropdown menu must exist");
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === true, "Export menu must initially be hidden");
+
+    // 1. Click toggle button -> menu opens
+    toggleBtn.click();
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === false, "Export menu must open on toggle click");
+    assert(toggleBtn.getAttribute("aria-expanded") === "true", "aria-expanded must be true when open");
+
+    // 2. Escape closes menu
+    sheet.dispatchEvent({ type: "keydown", key: "Escape", bubbles: true, cancelable: true, preventDefault() {}, stopPropagation() {} });
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === true, "Escape key must close export menu");
+    assert(toggleBtn.getAttribute("aria-expanded") === "false", "aria-expanded must be false after Escape");
+
+    // 3. Click toggle button -> outside click closes menu
+    toggleBtn.click();
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === false, "Export menu must open again");
+    const scrollArea = sheet.querySelector(".saq-scroll");
+    scrollArea.click();
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === true, "Outside click must close export menu");
+
+    // 4. Click Download PDF
+    let exportFormat = null;
+    runtime.reader.onExportCallback = (fmt) => { exportFormat = fmt; };
+    toggleBtn.click();
+    const pdfBtn = exportMenu.querySelector("[data-act='print']");
+    assert(pdfBtn !== null, "Download PDF button must exist");
+    pdfBtn.click();
+    assert(exportFormat === "pdf", "Clicking Download PDF must trigger pdf export");
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === true, "Export menu must close after PDF click");
+
+    // 5. Click Download Markdown
+    exportFormat = null;
+    toggleBtn.click();
+    const mdBtn = exportMenu.querySelector("[data-act='export-md']");
+    assert(mdBtn !== null, "Download Markdown button must exist");
+    mdBtn.click();
+    assert(exportFormat === "markdown", "Clicking Download Markdown must trigger markdown export");
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === true, "Export menu must close after Markdown click");
+
+    // 6. Click Download Bundle
+    exportFormat = null;
+    toggleBtn.click();
+    const bundleBtn = exportMenu.querySelector("[data-act='export-bundle']");
+    assert(bundleBtn !== null, "Download Bundle button must exist");
+    bundleBtn.click();
+    assert(exportFormat === "bundle", "Clicking Download Bundle must trigger bundle export");
+    assert(Boolean(exportMenu.hidden || exportMenu.hasAttribute("hidden")) === true, "Export menu must close after Bundle click");
+  });
+  await check("Step 5e: Zoom controls, Question selection (All/Invert/None), proper question types, and Lightbox image expansion", async () => {
+    const hostEl = document.getElementById("unfold-root");
+    const sheet = hostEl.shadowRoot.querySelector("#saq-sheet");
+
+    // 1. Verify proper question type names
+    const qTypeEl = sheet.querySelector(".saq-qtype");
+    assert(qTypeEl !== null, "Question type badge (.saq-qtype) must exist");
+    const typeText = qTypeEl.textContent.trim();
+    assert(
+      typeText.includes("Multiple Choice") || typeText.includes("Numerical") || typeText.includes("Short Answer") || typeText.includes("Descriptive"),
+      `Expected human-readable question type, got: '${typeText}'`
+    );
+
+    // 2. Verify Zoom In, Zoom Out, Zoom Reset in second row
+    const zoomInBtn = sheet.querySelector("[data-act='zoom-in']");
+    const zoomOutBtn = sheet.querySelector("[data-act='zoom-out']");
+    const zoomValBtn = sheet.querySelector("[data-act='zoom-reset']");
+    assert(zoomInBtn !== null, "Zoom In button must exist in rail");
+    assert(zoomOutBtn !== null, "Zoom Out button must exist in rail");
+    assert(zoomValBtn !== null, "Zoom Reset button must exist in rail");
+
+    const getZoomStyle = () => (typeof sheet.style.getPropertyValue === "function" ? sheet.style.getPropertyValue("--acx-zoom") : sheet.style["--acx-zoom"]);
+    zoomInBtn.click();
+    assert(getZoomStyle() === "1.15", `Clicking zoom-in must increase zoom to 1.15, got '${getZoomStyle()}'`);
+    assert(zoomValBtn.textContent.includes("115%"), "Zoom value text must display 115%");
+
+    zoomOutBtn.click();
+    assert(getZoomStyle() === "1", `Clicking zoom-out must decrease zoom back to 1, got '${getZoomStyle()}'`);
+    assert(zoomValBtn.textContent.includes("100%"), "Zoom value text must display 100%");
+
+    zoomInBtn.click();
+    zoomInBtn.click();
+    zoomValBtn.click();
+    assert(getZoomStyle() === "1", `Clicking zoom-reset must reset zoom to 1, got '${getZoomStyle()}'`);
+    // 3. Verify Question Selection (All, Invert, None)
+    const selectAllBtn = sheet.querySelector("[data-act='select-all-q']");
+    const invertBtn = sheet.querySelector("[data-act='invert-qselect']");
+    const clearBtn = sheet.querySelector("[data-act='clear-qselect']");
+    assert(selectAllBtn !== null, "Select All button must exist in rail");
+    assert(invertBtn !== null, "Invert selection button must exist in rail");
+    assert(clearBtn !== null, "Clear selection button must exist in rail");
+
+    clearBtn.click();
+    let checkedBoxes = sheet.querySelectorAll(".saq-qselect-cb.is-checked");
+    assert(checkedBoxes.length === 0, "Clear selection must uncheck all questions");
+
+    const totalQ = sheet.querySelectorAll(".saq-block").length;
+    selectAllBtn.click();
+    checkedBoxes = sheet.querySelectorAll(".saq-qselect-cb.is-checked");
+    assert(checkedBoxes.length === totalQ, `Select All must check all ${totalQ} questions, got ${checkedBoxes.length}`);
+
+    invertBtn.click();
+    checkedBoxes = sheet.querySelectorAll(".saq-qselect-cb.is-checked");
+    assert(checkedBoxes.length === 0, "Invert must invert questions to 0");
+
+    // 4. Verify Image Expansion Lightbox
+    runtime.reader.openLightbox({ src: "https://example.com/diagram.png", alt: "Test Diagram", caption: "Diagram 1" });
+    const lb = hostEl.shadowRoot.querySelector("#saq-image-lightbox");
+    assert(lb !== null, "Lightbox modal element must exist in shadow root");
+    assert(runtime.reader.isLightboxOpen() === true, "isLightboxOpen() must return true when lightbox is opened");
+    assert(lb.classList.contains("is-open"), "Lightbox must have .is-open class");
+
+    // Close via close button or Escape
+    const lbCloseBtn = lb.querySelector("[data-act='close-lightbox']");
+    assert(lbCloseBtn !== null, "Lightbox close button must exist");
+    lbCloseBtn.click();
+    assert(runtime.reader.isLightboxOpen() === false, "isLightboxOpen() must return false after closing");
+  });
+
+
 
   // ── Step 6: Dismiss & Escape Key ──────────────────────────────────────────
   await check("Step 6: Dismissing Reader closes drawer and restores launcher", () => {
