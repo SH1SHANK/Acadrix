@@ -1,6 +1,6 @@
 {
   "name": "unfold-iitm",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "High-fidelity assignment & document extractor for the IITM Online Degree portal.",
   "type": "module",

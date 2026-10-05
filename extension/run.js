@@ -16428,7 +16428,7 @@
       this.config.readerTextSize = "default";
       this.config.directPdfEnabled = true;
       if (typeof window !== "undefined") {
-        window.__saqVersion = "0.2.0";
+        window.__saqVersion = "0.3.0";
         window.__saqStatus = () => ({
           assessment: Boolean(this.portal?.detectAssessment?.()),
           readerOpen: Boolean(this.reader?.isOpen?.()),
