@@ -26,19 +26,13 @@ export class SemanticExtractor {
   detectQuestionType(qRoot) {
     if (!qRoot) return QuestionType.UNKNOWN;
 
-    // Numerical input
-    if (qRoot.querySelector("input[type=number]")) {
+    // Numerical input (input[type=number], input/textarea with inputmode decimal/numeric, or textarea-field with decimal inputmode)
+    if (
+      qRoot.querySelector(
+        "textarea[inputmode='decimal'], textarea[inputmode='numeric'], input[type=number], input[inputmode='decimal'], input[inputmode='numeric'], textarea.textarea-field[inputmode='decimal'], textarea.textarea-field[inputmode='numeric']"
+      )
+    ) {
       return QuestionType.NUMERICAL;
-    }
-
-    // Long descriptive text area
-    if (qRoot.querySelector("textarea")) {
-      return QuestionType.DESCRIPTIVE;
-    }
-
-    // Single line text input
-    if (qRoot.querySelector("input[type=text]")) {
-      return QuestionType.TEXT;
     }
 
     // Multiple selection (checkboxes or [role=checkbox])
@@ -51,6 +45,15 @@ export class SemanticExtractor {
     const radios = qRoot.querySelectorAll("button.choice[role=radio], input[type=radio], [role=radio]");
     if (radios.length > 0 || qRoot.querySelector("fieldset.mcq, .choices[role=radiogroup], [role=radiogroup]")) {
       return QuestionType.MCQ;
+    }
+
+    // Text input or single/short answer textarea
+    if (qRoot.querySelector("textarea, input[type=text]")) {
+      const ta = qRoot.querySelector("textarea");
+      if (ta && ta.getAttribute("rows") && parseInt(ta.getAttribute("rows"), 10) >= 5) {
+        return QuestionType.DESCRIPTIVE;
+      }
+      return QuestionType.TEXT;
     }
 
     return QuestionType.UNKNOWN;
@@ -83,12 +86,11 @@ export class SemanticExtractor {
     const textSeen = new Set();
 
     const isInsideControlsOrReview = (el) => {
-      if (qRoot && qRoot.contains(el)) return true;
       if (rp && rp.contains(el)) return true;
       if (
         el.closest &&
         el.closest(
-          ".choices, [role=radiogroup], .choice, button.choice, label.choice, [role=radio], [role=checkbox], .evaluated-answer"
+          ".choices, [role=radiogroup], .choice, button.choice, label.choice, [role=radio], [role=checkbox], .evaluated-answer, textarea, input, app-textarea, .textarea-field, .answer-field, .question-controls, .your-answer, label.label-textarea"
         )
       ) {
         return true;
@@ -247,13 +249,17 @@ export class SemanticExtractor {
           : [new ContentNode({ type: ContentType.TEXT, value: contentNodes[0].value })];
       }
 
-      // 3. Selection state (robust ARIA and class inspection)
+      // 3. Selection state (robust ARIA, attribute, and class inspection)
       const isSelected =
         choiceEl.getAttribute("aria-checked") === "true" ||
         choiceEl.getAttribute("aria-selected") === "true" ||
+        choiceEl.getAttribute("checked") === "true" ||
+        (choiceEl.hasAttribute("checked") && choiceEl.getAttribute("checked") !== "false") ||
         choiceEl.classList.contains("selected") ||
+        choiceEl.classList.contains("is-selected") ||
         choiceEl.classList.contains("active") ||
-        Boolean(choiceEl.querySelector("input:checked"));
+        choiceEl.classList.contains("is-active") ||
+        Boolean(choiceEl.querySelector("input:checked, .checkbox.checked, .radio.checked, .choice-indicator.checked"));
 
       // 4. Correctness state (review mode)
       let isCorrect = null;
@@ -404,7 +410,12 @@ export class SemanticExtractor {
 
     const hasAnswer =
       optsResult.options.some((o) => o.selected) ||
-      Boolean(qRoot.querySelector("input:checked, textarea:not(:empty)"));
+      Boolean(qRoot.querySelector("input:checked")) ||
+      Boolean(
+        Array.from(qRoot.querySelectorAll("textarea, input[type=text], input[type=number]")).some(
+          (el) => (el.value || el.textContent || "").trim().length > 0
+        )
+      );
 
     return new QuestionNode({
       id: `q-${number}`,

@@ -727,6 +727,30 @@ check("Test 29: buildExportFilename(meta, ext) handles real portal titles, fixtu
       ext: "pdf",
       expected: "MAD II - Week 01 - GA 1.pdf",
     },
+    {
+      label: "Real IITM portal DOM (Activity Questions 1.1 with week)",
+      meta: { course: "Sep 2026 - MAD II", title: "Activity Questions 1.1", week: "Week 1", timestamp: fixedDate },
+      ext: "pdf",
+      expected: "MAD II - Week 01 - AQ 1.1.pdf",
+    },
+    {
+      label: "Real IITM portal DOM (PPA 1 - Not Graded with week in subtitle)",
+      meta: { course: "Sep 2026 - MAD II", title: "PPA 1 - Not Graded", subtitle: "Week 1", timestamp: fixedDate },
+      ext: "pdf",
+      expected: "MAD II - Week 01 - PPA 1.pdf",
+    },
+    {
+      label: "Real IITM portal DOM (Week 1 Practice Assignment - 1 - Not Graded)",
+      meta: { course: "Sep 2026 - MAD II", title: "Week 1 Practice Assignment - 1 - Not Graded", timestamp: fixedDate },
+      ext: "pdf",
+      expected: "MAD II - Week 01 - PA 1.pdf",
+    },
+    {
+      label: "Real IITM portal DOM (Course VM Login Instructions - custom activity)",
+      meta: { course: "Sep 2026 - MAD II", title: "Course VM Login Instructions", timestamp: fixedDate },
+      ext: "pdf",
+      expected: "MAD II - Course VM Login Instructions.pdf",
+    },
     // Specification sample
     {
       label: "Spec example (Programming Data Structures and Algorithms, Week 3, GrPA 2)",

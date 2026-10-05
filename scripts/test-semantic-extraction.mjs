@@ -992,10 +992,138 @@ check("Category 18: Reader rendering neutralizes unsafe javascript: URLs", () =>
   }
 });
 
+// 19. Real IITM MCQ DOM Structure Verification
+check("Category 19: Real IITM Single Correct MCQ DOM structure (button.choice[role=radio])", () => {
+  const mcqHtml = `
+  <app-assessment-question-view>
+    <div class="question-header">
+      <span class="marks">2 Marks</span>
+    </div>
+    <div class="backend-html">
+      <p>Which feature is responsible for non-blocking I/O in JavaScript?</p>
+    </div>
+    <app-assessment-question>
+      <ul _ngcontent-ng-c4216914947="" class="choices" role="radiogroup">
+        <button _ngcontent-ng-c4216914947="" class="choice is-default ng-star-inserted" role="radio" aria-checked="false" aria-disabled="false">
+          <div _ngcontent-ng-c4216914947="" class="row">
+            <span _ngcontent-ng-c4216914947="" class="choice-indicator">
+              <span _ngcontent-ng-c4216914947="" class="radio ng-star-inserted"></span>
+            </span>
+            <span _ngcontent-ng-c4216914947="" class="choice-letter">A.</span>
+            <span _ngcontent-ng-c4216914947="" class="choice-text backend-html" style="font-size: 14px;">DOM Manipulation</span>
+          </div>
+        </button>
+        <button _ngcontent-ng-c4216914947="" class="choice is-default ng-star-inserted" role="radio" aria-checked="false" aria-disabled="false">
+          <div _ngcontent-ng-c4216914947="" class="row">
+            <span _ngcontent-ng-c4216914947="" class="choice-indicator">
+              <span _ngcontent-ng-c4216914947="" class="radio ng-star-inserted"></span>
+            </span>
+            <span _ngcontent-ng-c4216914947="" class="choice-letter">B.</span>
+            <span _ngcontent-ng-c4216914947="" class="choice-text backend-html" style="font-size: 14px;">Asynchronous Processing</span>
+          </div>
+        </button>
+        <button _ngcontent-ng-c4216914947="" class="choice is-default ng-star-inserted" role="radio" aria-checked="true" aria-disabled="false">
+          <div _ngcontent-ng-c4216914947="" class="row">
+            <span _ngcontent-ng-c4216914947="" class="choice-indicator">
+              <span _ngcontent-ng-c4216914947="" class="radio ng-star-inserted"></span>
+            </span>
+            <span _ngcontent-ng-c4216914947="" class="choice-letter">C.</span>
+            <span _ngcontent-ng-c4216914947="" class="choice-text backend-html" style="font-size: 14px;">Event Loop</span>
+          </div>
+        </button>
+        <button _ngcontent-ng-c4216914947="" class="choice is-default ng-star-inserted" role="radio" aria-checked="false" aria-disabled="false">
+          <div _ngcontent-ng-c4216914947="" class="row">
+            <span _ngcontent-ng-c4216914947="" class="choice-indicator">
+              <span _ngcontent-ng-c4216914947="" class="radio ng-star-inserted"></span>
+            </span>
+            <span _ngcontent-ng-c4216914947="" class="choice-letter">D.</span>
+            <span _ngcontent-ng-c4216914947="" class="choice-text backend-html" style="font-size: 14px;">All of the above</span>
+          </div>
+        </button>
+      </ul>
+    </app-assessment-question>
+  </app-assessment-question-view>`;
+
+  const dom = parseHtmlToDom(mcqHtml);
+  const mockPortal = {
+    getAssessmentView: () => dom.querySelector("app-assessment-question-view"),
+    getCurrentQuestionElement: () => dom.querySelector("app-assessment-question"),
+    getReviewPanel: () => null,
+    isReviewMode: () => false,
+    getActiveLogicalNumber: () => 3,
+    getActiveChip: () => null,
+  };
+
+  const extractor = new SemanticExtractor(mockPortal);
+  const q = extractor.captureCurrentQuestion(2, false);
+
+  if (q.type !== QuestionType.MCQ) {
+    throw new Error(`Expected QuestionType.MCQ, got ${q.type}`);
+  }
+  if (q.options.length !== 4) {
+    throw new Error(`Expected 4 options, got ${q.options.length}`);
+  }
+  if (q.options[0].letter !== "A" || q.options[0].selected !== false) {
+    throw new Error("Option A error");
+  }
+  if (q.options[2].letter !== "C" || q.options[2].selected !== true) {
+    throw new Error("Option C should be selected with letter C");
+  }
+  if (!q.options[2].content[0].value.includes("Event Loop")) {
+    throw new Error(`Option C text mismatch: ${q.options[2].content[0].value}`);
+  }
+  if (q.status.answered !== true) {
+    throw new Error("Question status should be answered = true");
+  }
+});
+
+// 20. Real IITM Numerical DOM Structure Verification
+check("Category 20: Real IITM Numerical DOM structure (textarea[inputmode=decimal])", () => {
+  const numHtml = `
+  <app-assessment-question-view>
+    <div class="question-header">
+      <span class="marks">1.5 Marks</span>
+    </div>
+    <div class="backend-html">
+      <p>Calculate the effective capacity of the buffer in megabytes:</p>
+    </div>
+    <app-assessment-question>
+      <textarea _ngcontent-ng-c3249990249="" class="textarea-field" id="app-textarea-0" placeholder="Enter your answer" inputmode="decimal" aria-describedby="app-textarea-0-help" aria-required="false" aria-invalid="false">42.5</textarea>
+    </app-assessment-question>
+  </app-assessment-question-view>`;
+
+  const dom = parseHtmlToDom(numHtml);
+  const mockPortal = {
+    getAssessmentView: () => dom.querySelector("app-assessment-question-view"),
+    getCurrentQuestionElement: () => dom.querySelector("app-assessment-question"),
+    getReviewPanel: () => null,
+    isReviewMode: () => false,
+    getActiveLogicalNumber: () => 4,
+    getActiveChip: () => null,
+  };
+
+  const extractor = new SemanticExtractor(mockPortal);
+  const q = extractor.captureCurrentQuestion(3, false);
+
+  if (q.type !== QuestionType.NUMERICAL) {
+    throw new Error(`Expected QuestionType.NUMERICAL, got ${q.type}`);
+  }
+  if (q.marks !== 1.5) {
+    throw new Error(`Expected 1.5 marks, got ${q.marks}`);
+  }
+  if (q.options.length !== 0) {
+    throw new Error(`Numerical question should have 0 options, got ${q.options.length}`);
+  }
+  if (q.status.answered !== true) {
+    throw new Error("Question status should be answered = true when textarea has content");
+  }
+});
+
 if (!passed) {
   console.error("\n❌ Semantic Extractor verification FAILED.\n");
   process.exit(1);
 } else {
-  console.log("\nAll 18 semantic extractor verification tests passed successfully!\n");
+  console.log("\nAll 20 semantic extractor verification tests passed successfully!\n");
 }
+
 

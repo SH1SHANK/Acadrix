@@ -412,18 +412,47 @@ export class IitmPortalAdapter {
   }
 
   /**
-   * Discovers the assessment title from page headers or breadcrumbs, excluding question stem headings.
+   * Discovers the assessment title from active side-nav items, page headers, or breadcrumbs,
+   * excluding question stem headings and choices.
    * @returns {string}
    */
   getAssessmentTitle() {
+    // 1. Selected or active child item in sidebar (most specific title)
+    const selectedChild = $(
+      "button.child-row.selected .child-title, .child-row.selected .child-title, button.child-row.active .child-title, .child-row.active .child-title",
+      this.doc
+    );
+    const selectedText = (selectedChild?.textContent || "").replace(/\s+/g, " ").trim();
+    if (selectedText && !/^(assignment|assessment|quiz)$/i.test(selectedText)) {
+      return selectedText;
+    }
+
+    // 2. Unit view / start page title bar or mobile header
+    const titleBarEl = $(
+      "app-title-bar h1.title, app-title-bar .title, .title-bar-container .title, .mobile-header .title-group .title, .mobile-header .title, app-pa-start-page h1, app-programming-assignment-view h1, .assignment-title, .assessment-title",
+      this.doc
+    );
+    const titleBarText = (titleBarEl?.textContent || "").replace(/\s+/g, " ").trim();
+    if (titleBarText && !/^(assignment|assessment|quiz)$/i.test(titleBarText)) {
+      return titleBarText;
+    }
+
+    // 3. General candidates, excluding question body, choices, backend HTML
     const candidates = $$(
       IITM_SELECTORS.metadata.assessmentTitle || ".assignment-title, .assessment-title, h1.title, .breadcrumb, h1, h2",
       this.doc
     );
-    const titleEl = candidates.find(
-      (el) => !el.closest?.(".question-body, .backend-html, app-assessment-question")
-    ) || candidates[0];
-    return (titleEl?.textContent || "").replace(/\s+/g, " ").trim() || "Assignment";
+    for (const el of candidates) {
+      if (el.closest?.(".question-body, .backend-html, app-assessment-question, .choices, .feedback, .info-banner")) {
+        continue;
+      }
+      const txt = (el.textContent || "").replace(/\s+/g, " ").trim();
+      if (txt && txt !== "Assignment" && txt !== "IIT Madras" && !txt.startsWith("IITM Assessment")) {
+        return txt;
+      }
+    }
+
+    return selectedText || titleBarText || "Assignment";
   }
 
   /**
@@ -443,20 +472,40 @@ export class IitmPortalAdapter {
       .trim();
   }
 
-  /** Discovers the assessment unit/week from the real portal's breadcrumb, sidebar, or title. */
+  /** Discovers the assessment unit/week from the real portal's sidebar, breadcrumb, or title. */
   getAssessmentWeek() {
     const weekRe = /\bweek[\s\-_:]*(\d{1,2})\b/i;
 
-    const breadcrumb = $(IITM_SELECTORS.metadata.breadcrumbCurrent, this.doc);
-    const breadcrumbMatch = (breadcrumb?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
-    if (breadcrumbMatch) return `Week ${breadcrumbMatch[1]}`;
-
-    const selected = $(IITM_SELECTORS.metadata.selectedChildRow, this.doc);
-    const unit = selected?.closest?.(IITM_SELECTORS.metadata.unitContainer);
-    const unitText = unit ? ($(IITM_SELECTORS.metadata.unitTitle, unit)?.textContent || "") : "";
+    // 1. Unit container of the active/selected child row
+    const selected = $(IITM_SELECTORS.metadata.selectedChildRow || "button.child-row.selected, .child-row.selected, .child-row.active", this.doc);
+    const unit = selected?.closest?.(IITM_SELECTORS.metadata.unitContainer || ".unit-container");
+    const unitText = unit ? ($(IITM_SELECTORS.metadata.unitTitle || ".unit-title", unit)?.textContent || "") : "";
     const unitMatch = unitText.replace(/\s+/g, " ").trim().match(weekRe);
     if (unitMatch) return `Week ${unitMatch[1]}`;
 
+    // 2. Mobile header parent title
+    const parentTitle = $(".mobile-header .parent-title, .parent-title", this.doc);
+    const parentMatch = (parentTitle?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
+    if (parentMatch) return `Week ${parentMatch[1]}`;
+
+    // 3. Breadcrumbs
+    const breadcrumb = $(IITM_SELECTORS.metadata.breadcrumbCurrent || "nav.breadcrumb .breadcrumb-item.current", this.doc);
+    const breadcrumbMatch = (breadcrumb?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
+    if (breadcrumbMatch) return `Week ${breadcrumbMatch[1]}`;
+
+    const breadcrumbs = $$("nav.breadcrumb .breadcrumb-item, .breadcrumb span", this.doc);
+    for (const b of breadcrumbs) {
+      const bMatch = (b.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
+      if (bMatch) return `Week ${bMatch[1]}`;
+    }
+
+    // 4. Active unit header
+    const activeHeader = $(IITM_SELECTORS.metadata.activeUnitHeader, this.doc);
+    const activeText = (activeHeader?.textContent || "").replace(/\s+/g, " ").trim();
+    const activeMatch = activeText.match(weekRe);
+    if (activeMatch) return `Week ${activeMatch[1]}`;
+
+    // 5. Title match
     const titleMatch = this.getAssessmentTitle().match(weekRe);
     if (titleMatch) return `Week ${titleMatch[1]}`;
     return "";

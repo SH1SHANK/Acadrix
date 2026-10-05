@@ -181,6 +181,8 @@ const WEEK_EXTRACT_REGEX = /\bweek[\s\-_:]*(\d{1,2})\b/i;
 
 const KIND_EXTRACT_PATTERNS = [
   { label: "GrPA", regex: /\b(?:grpa|graded\s+programming(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
+  { label: "PPA", regex: /\b(?:ppa|practice\s+programming(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
+  { label: "AQ", regex: /\b(?:aq|activity\s+questions?|weekly\s+activity|activity)(?:[\s\-_#:]*(\d+(?:\.\d+)?))?\b/i },
   { label: "GA", regex: /\b(?:ga|graded\s+assignment)(?:[\s\-_#:]*(\d+))?\b/i },
   { label: "PA", regex: /\b(?:pa|practice(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
   { label: "OPPE", regex: /\b(?:oppe)(?:[\s\-_#:]*(\d+))?\b/i },
@@ -259,7 +261,7 @@ export function buildExportFilename(meta = {}, ext = "pdf") {
     parseWeekCandidate(rawTitle, false) ||
     parseWeekCandidate(safeMeta.activeUnitHeader || safeMeta.unitHeader, false);
 
-  // 3. Kind (GrPA, GA, PA, OPPE, Quiz; first match wins, optional number suffix kept)
+  // 3. Kind (GrPA, PPA, AQ, GA, PA, OPPE, Quiz; first match wins, optional number suffix kept)
   let kindPart = "";
   const kindSource =
     typeof safeMeta.kind === "string" && safeMeta.kind.trim()
@@ -270,9 +272,26 @@ export function buildExportFilename(meta = {}, ext = "pdf") {
     for (const { label, regex } of KIND_EXTRACT_PATTERNS) {
       const m = kindSource.match(regex);
       if (m) {
-        const suffixNum = m[1] !== undefined ? ` ${parseInt(m[1], 10)}` : "";
+        const suffixNum = m[1] !== undefined ? ` ${m[1]}` : "";
         kindPart = sanitizeFilenameSegment(`${label}${suffixNum}`);
         break;
+      }
+    }
+  }
+
+  // If no standard kind acronym matched, check if rawTitle contains a specific non-generic title
+  if (!kindPart && rawTitle && typeof rawTitle === "string") {
+    const trimmedTitle = rawTitle.trim();
+    if (
+      !/^(?:IITM\s+Assessment|Assignment|Assessment|Quiz)$/i.test(trimmedTitle) &&
+      !trimmedTitle.startsWith("IITM Assessment")
+    ) {
+      const cleanedTitle = trimmedTitle
+        .replace(/\bweek[\s\-_:]*\d{1,2}\b/gi, "")
+        .replace(/^[\s\-_:]+|[\s\-_:]+$/g, "")
+        .trim();
+      if (cleanedTitle && !/^(?:Assignment|Assessment|Quiz)$/i.test(cleanedTitle)) {
+        kindPart = sanitizeFilenameSegment(cleanedTitle);
       }
     }
   }

@@ -294,6 +294,12 @@ export class MarkdownExporter {
           const num = Number(q.number) || idx + 1;
           return num === scope.number;
         });
+      } else if (scope.type === "custom" && (Array.isArray(scope.numbers) || scope.numbers instanceof Set)) {
+        const numSet = scope.numbers instanceof Set ? scope.numbers : new Set(scope.numbers);
+        questions = questions.filter((q, idx) => {
+          const num = Number(q.number) || idx + 1;
+          return numSet.has(num);
+        });
       }
     }
 
