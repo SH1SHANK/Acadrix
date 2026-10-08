@@ -35,7 +35,7 @@ button.child-row[data-acx-graded="true"],
 .child-row[data-acx-graded="true"] {
   position: relative !important;
   background-color: rgb(47 75 219 / 0.05) !important;
-  border-left: 3px solid #2F4BDB !important;
+  border-inline-start: 2px solid #2F4BDB !important;
   transition: background-color 120ms cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
@@ -65,18 +65,13 @@ button.child-row[data-acx-graded="true"] .child-title,
   font-weight: 600 !important;
 }
 
-/* Practice and other rows remain neutral */
-button.child-row:not([data-acx-graded="true"]),
-.child-row:not([data-acx-graded="true"]) {
-  border-left: 3px solid transparent !important;
-}
 
 /* Dark mode theme support */
 @media (prefers-color-scheme: dark) {
   button.child-row[data-acx-graded="true"],
   .child-row[data-acx-graded="true"] {
     background-color: rgb(142 162 255 / 0.10) !important;
-    border-left: 3px solid #8EA2FF !important;
+    border-inline-start: 2px solid #8EA2FF !important;
   }
   button.child-row[data-acx-graded="true"]:hover,
   .child-row[data-acx-graded="true"]:hover {
@@ -99,7 +94,7 @@ button.child-row:not([data-acx-graded="true"]),
 @media (forced-colors: active) {
   button.child-row[data-acx-graded="true"],
   .child-row[data-acx-graded="true"] {
-    border-left-color: Highlight !important;
+    border-inline-start-color: Highlight !important;
   }
   button.child-row[data-acx-graded="true"] app-icon.child-icon,
   .child-row[data-acx-graded="true"] app-icon.child-icon {
@@ -138,6 +133,7 @@ const DECOR_STYLES = `
   --acx-space-0: 0px;
   --acx-space-1: 4px;
   --acx-space-2: 8px;
+  --acx-space-3: 12px;
   --acx-tracking-overline: 0.04em;
 }
 
@@ -194,12 +190,12 @@ const DECOR_STYLES = `
 .acx-badge {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
+  padding: var(--acx-space-1) var(--acx-space-2);
   border-radius: var(--acx-radius-sm);
   font-family: var(--acx-font-ui);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 14px;
+  line-height: 16px;
   letter-spacing: var(--acx-tracking-overline);
   text-transform: uppercase;
   flex-shrink: 0;
@@ -208,7 +204,6 @@ const DECOR_STYLES = `
   color: var(--acx-accent);
   background: var(--acx-accent-subtle);
   border: var(--acx-border-width) solid var(--acx-accent-border);
-  box-shadow: 0 1px 2px rgb(47 75 219 / 0.06);
 }
 .acx-badge-practice {
   color: var(--acx-text-muted);
@@ -220,8 +215,8 @@ const DECOR_STYLES = `
   align-items: center;
   gap: var(--acx-space-1);
   font-family: var(--acx-font-ui);
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 12px;
+  line-height: 16px;
   color: var(--acx-text-muted);
   white-space: nowrap;
 }
@@ -415,6 +410,7 @@ export async function decorateSidebar(doc, store, now = () => Date.now(), grades
 
   const termId = parseTermId(courseKey);
   const courseCode = parseCourseCode(courseKey);
+  const canonicalCourseKey = `${termId} - ${courseCode}`;
 
   // Pre-fetch stored course grades if gradesStore is provided
   let courseGrades = [];
@@ -455,6 +451,10 @@ export async function decorateSidebar(doc, store, now = () => Date.now(), grades
 
       const key = assignmentKey(courseKey, unitTitle, title);
       let entry = await store.get(courseKey, key);
+      if (!entry && canonicalCourseKey !== courseKey) {
+        const legacyKey = assignmentKey(canonicalCourseKey, unitTitle, title);
+        entry = await store.get(canonicalCourseKey, legacyKey);
+      }
 
       // Fallback to gradesStore if entry is missing or has no deadline
       if ((!entry || !entry.deadlineIso) && courseGrades && courseGrades.length > 0) {

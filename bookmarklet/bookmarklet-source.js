@@ -1029,6 +1029,8 @@
       return $(IITM_SELECTORS.assessment.view, this.doc);
     }
   
+  
+  
     getCurrentQuestionElement() {
       return $(IITM_SELECTORS.assessment.root, this.doc);
     }
@@ -4557,6 +4559,7 @@
       // 3. Lifecycle-managed mutation observer
       this.startObserver();
   
+  
       // 4. Initial assessment check
       this.detect();
     }
@@ -4644,11 +4647,14 @@
   
     detect() {
       if (!this.config.enabled) {
+        this.assignmentNavigation?.clear?.();
         this.orchestrator?.cancel();
         this.invalidateDocument();
         this.destroyUi();
         return;
       }
+  
+      this.assignmentNavigation?.update?.();
   
       if (this.lifecycle.state === LifecycleState.TRAVERSING) {
         this.pendingDetectAfterTraversal = true;
@@ -5023,6 +5029,7 @@
     }
   
     destroyUi() {
+      this.assignmentNavigation?.clear?.();
       this.launcher.destroy();
       this.overlay.destroy();
       this.reader.destroy();

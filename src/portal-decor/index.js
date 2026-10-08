@@ -89,14 +89,16 @@ export function initPortalDecor({
       if (courseKey) {
         const termId = parseTermId(courseKey);
         const courseCode = parseCourseCode(courseKey);
+        const canonicalCourseKey = `${termId} - ${courseCode}`;
         const allDecors = await decorStore.getAll();
-        const hasDeadlines = Boolean(
-          allDecors?.[courseKey] && Object.values(allDecors[courseKey]).some((d) => d.deadlineIso)
+        const hasDeadlines = [courseKey, canonicalCourseKey].some((key) =>
+          Object.values(allDecors?.[key] || {}).some((entry) => entry.deadlineIso)
         );
         if (!hasDeadlines) {
           fetchDeadlinesFromSupabase({
             termId,
             courseCode,
+            decorCourseKey: courseKey,
             decorStore,
           })
             .then((res) => {

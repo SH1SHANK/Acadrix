@@ -16,6 +16,9 @@ import { LauncherButton } from "../ui/launcher.js";
 import { ProgressOverlay } from "../ui/overlay.js";
 import { ReaderDrawer } from "../ui/reader.js";
 import { ExportOrchestrator } from "../orchestration/orchestrator.js";
+/* @extension-only-start */
+import { GradedAssignmentNavigation } from "../portal/assignment-navigation.js";
+/* @extension-only-end */
 
 const DEFAULT_SHORTCUT = "Alt+Q";
 
@@ -108,6 +111,9 @@ export class AcadrixRuntime {
     // 3. Lifecycle-managed mutation observer
     this.startObserver();
 
+/* @extension-only-start */
+    this.assignmentNavigation = new GradedAssignmentNavigation(this.portal);
+/* @extension-only-end */
     // 4. Initial assessment check
     this.detect();
 /* @extension-only-start */
@@ -214,11 +220,14 @@ export class AcadrixRuntime {
 
   detect() {
     if (!this.config.enabled) {
+      this.assignmentNavigation?.clear?.();
       this.orchestrator?.cancel();
       this.invalidateDocument();
       this.destroyUi();
       return;
     }
+
+    this.assignmentNavigation?.update?.();
 
     if (this.lifecycle.state === LifecycleState.TRAVERSING) {
       this.pendingDetectAfterTraversal = true;
@@ -684,6 +693,7 @@ export class AcadrixRuntime {
   }
 
   destroyUi() {
+    this.assignmentNavigation?.clear?.();
     this.launcher.destroy();
     this.overlay.destroy();
     this.reader.destroy();
@@ -699,6 +709,8 @@ export class AcadrixRuntime {
       this.orchestrator.cancel();
     }/* @extension-only-start */
     try {
+      this.assignmentNavigation?.destroy?.();
+      this.assignmentNavigation = null;
       this.portalDecor?.destroy?.();
       this.portalDecor = null;
     } catch {}

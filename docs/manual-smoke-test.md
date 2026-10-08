@@ -16,6 +16,13 @@ This checklist is for a developer using an unpacked build and an authenticated I
 - Review an answer suggestion and confirm that portal changes occur only after the explicit apply action; verify Acadrix does not submit the assessment.
 - Close and reopen the Reader and confirm it remains usable.
 
+## Graded assignment navigation
+
+- Open a graded assignment that has earlier and later graded items in the course outline.
+- Confirm **Previous** and **Next** buttons appear above the assignment view and use the portal’s button styling.
+- Select each button and confirm IITM opens the adjacent graded assignment. Practice assignments, lessons, and videos should be skipped.
+- At the first or last graded assignment, confirm the unavailable direction is disabled. Open a practice item and confirm the navigation controls are absent.
+
 ## Programming assignment
 
 - Visit an assignment information page and confirm the programming launcher is not offered there.

@@ -139,6 +139,7 @@ export async function syncGradesToSupabase({
  * @param {object} options
  * @param {string} options.termId
  * @param {string} [options.courseCode]
+ * @param {string} [options.decorCourseKey] Display key used by the active portal sidebar; defaults to the canonical term/course key.
  * @param {object} [options.decorStore]
  * @param {string} [options.supabaseUrl]
  * @param {Function} [options.fetchFn]
@@ -147,6 +148,7 @@ export async function syncGradesToSupabase({
 export async function fetchDeadlinesFromSupabase({
   termId,
   courseCode,
+  decorCourseKey,
   decorStore = null,
   supabaseUrl,
   fetchFn = globalThis.fetch,
@@ -178,7 +180,7 @@ export async function fetchDeadlinesFromSupabase({
     }));
 
     if (decorStore?.capture && courseCode) {
-      const courseKey = `${termId} - ${courseCode}`;
+      const courseKey = decorCourseKey || `${termId} - ${courseCode}`;
       for (const item of deadlines) {
         const mode = classifyByTitle(item.title);
         const decorKey = assignmentKey(courseKey, item.module, item.title);

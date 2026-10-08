@@ -322,7 +322,7 @@ export class AcademicEventRepository {
   }
 
   /**
-   * Returns upcoming academic events sorted deterministically (§21).
+   * Returns the available weekly assignment deadlines sorted deterministically (§21).
    *
    * Sorting Precedence:
    * 1. Overdue hard cutoffs
@@ -368,7 +368,7 @@ export class AcademicEventRepository {
   }
 
   /**
-   * Retrieves a single canonical academic event by its ID.
+   * Retrieves a weekly assignment deadline by its ID.
    *
    * @param {string} eventId
    * @param {object} [options]

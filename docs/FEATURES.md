@@ -35,6 +35,12 @@ This page summarizes behavior present in the current extension. The [architectur
 - Caches those weekly deadlines in extension storage and schedules deadline-related browser notifications.
 - Does not infer submission status from IITM page content.
 
+## Course outline navigation
+
+- On a graded assignment, adds **Previous** and **Next** buttons above the assignment view; unavailable directions are disabled.
+- Uses the course-outline order and opens the selected item through IITM’s existing course-outline control. Practice work and course content are not navigation targets.
+- The controls use IITM’s secondary-button styling and do not appear on non-graded items.
+
 ## Browser extension surfaces
 
 The Manifest V3 extension includes a popup, content scripts, and a background service worker. The repository also builds a lightweight bookmarklet target; it does not have the extension background capabilities used for privileged programming writes and notification scheduling.

@@ -28,7 +28,7 @@ function makeDocument({ breadcrumb = "Week 1", selected = true, title = "Week 1 
   return {
     querySelector(selector) {
       if (selector === "nav.breadcrumb .breadcrumb-item.current") return breadcrumb ? { textContent: breadcrumb } : null;
-      if (selector === ".child-row.selected") return child;
+      if (selector.includes(".child-row.selected")) return child;
       if (selector.includes("h1.title")) return { textContent: title };
       return null;
     },

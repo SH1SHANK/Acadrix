@@ -119,6 +119,7 @@ export const IITM_SELECTORS = Object.freeze({
     childRow: "button.child-row, .child-row",
     childType: ".child-type",
     childTitle: ".child-title",
+    gradedAssignmentRows: "button.child-row[data-acx-graded='true'], button.child-row[data-acx-mode='graded']",
     decorHost: "acx-portal-decor",
     decorAttr: "data-acx-decor",
     decorCleanTargets: "[data-acx-graded], [data-acx-mode]",

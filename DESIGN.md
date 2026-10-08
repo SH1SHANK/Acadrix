@@ -281,7 +281,12 @@ Centered, `--acx-surface-raised`, 1px `--acx-border`, radius-lg, `--acx-shadow-3
 The primary surface. Fixed to the viewport bottom, `--acx-surface`, top border 1px `--acx-border`, top radius `--acx-radius-xl`, `--acx-shadow-3`. Structure: **handle → header → scroll region → (optional) footer**. Only the scroll region scrolls (`overscroll-behavior: contain`). Handle: 36×4px, `--acx-border-strong`, radius-full, centered, also a button for keyboard resize/close. Dimensions in §9. `role="dialog"` (non-modal unless a scrim is shown), labelled by the title; Esc closes; focus moves into the sheet on open and returns to the launcher on close. Enter/exit: translate-Y from 100% (`duration-slow`).
 
 ### Launcher
+
 Fixed, bottom-right, 16px inset (plus `env(safe-area-inset-*)`). 44×44, `--acx-radius-full`, `--acx-surface-raised`, 1px `--acx-border-strong`, `--acx-shadow-2`, Acadrix mark 20px in `--acx-accent`. Hover → border `--acx-accent`; active → `--acx-accent-subtle`. `aria-label="Open Acadrix"`, `aria-expanded` reflects reader state. Never animates idly (no pulse/bounce). Hidden while the reader is open.
+
+### Portal-integrated navigation
+
+Controls inserted into IITM pages stay in normal document flow and inherit the portal's native button classes, typography, and interaction states; do not restyle them as Acadrix buttons or make them fixed/floating. Group adjacent previous/next actions in a wrapping flex row with `space-2` between controls and `space-4` separation from the assignment content. Keep the injected wrapper scoped to its `data-acx-*` attribute so no host-page styles are changed outside the feature.
 
 ### Header (reader)
 Height 56, padding-inline `space-4`, bottom 1px `--acx-border`, `--acx-surface`. Left: wordmark (Outfit 600, 16px) or content title (Outfit, truncate with ellipsis). Right: icon buttons, `space-1` gap, ordered: export, theme/settings, close (rightmost). Sticky inside the sheet.

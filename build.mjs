@@ -50,6 +50,7 @@ export const EXTENSION_MODULES = [
   "src/utils/shortcut.js",
   "src/portal/selectors.js",
   "src/portal/adapter.js",
+  "src/portal/assignment-navigation.js",
   "src/parsers/semantic-walker.js",
   "src/extraction/errors.js",
   "src/extraction/extractor.js",

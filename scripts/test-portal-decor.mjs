@@ -651,8 +651,8 @@ const mockFetchSupabaseDeadlines = async (url) => {
     json: async () => [
       {
         term_id: "2026-09",
-        course_code: "CS2006",
-        id: "cs2006_week1_grpa1",
+        course_code: null,
+        id: "assignment_weekly_grpa1",
         sub_type: "Week 1",
         title: "GrPA 1 - JavaScript Basics",
         event_type: "assignment",
@@ -687,6 +687,24 @@ const fetchedDecor = await testFetchDecorStore.get(
 assert.ok(fetchedDecor, "decorStore must have the deadline populated");
 assert.equal(fetchedDecor.deadlineIso, "2026-10-11T18:29:00.000Z");
 assert.equal(fetchedDecor.source, "SUPABASE");
+
+// The live portal key may differ from the canonical term/course storage key.
+const displayKeyDecorStore = createPortalDecorStore(() => tick);
+await displayKeyDecorStore.clear();
+const displayKeyFetch = await fetchDeadlinesFromSupabase({
+  termId: "2026-09",
+  courseCode: "CS2006",
+  decorCourseKey: "Sep 2026 - MAD II",
+  decorStore: displayKeyDecorStore,
+  fetchFn: mockFetchSupabaseDeadlines,
+});
+assert.equal(displayKeyFetch.ok, true);
+const displayKeyDecor = await displayKeyDecorStore.get(
+  "Sep 2026 - MAD II",
+  assignmentKey("Sep 2026 - MAD II", "Week 1", "GrPA 1 - JavaScript Basics")
+);
+assert.ok(displayKeyDecor, "deadlines should be stored under the active portal display key");
+await displayKeyDecorStore.clear();
 
 // Test 5: decorateSidebar fallback to authoritative portal gradesStore
 const mockSidebarDoc = (() => {
@@ -742,6 +760,10 @@ const mockSidebarDoc = (() => {
         getAttribute(k) { return attrs[k]; },
         hasAttribute(k) { return k in attrs; },
         removeAttribute(k) { delete attrs[k]; },
+        remove() {
+          const index = attachedHosts.indexOf(this);
+          if (index >= 0) attachedHosts.splice(index, 1);
+        },
         classList: {
           add(c) { this.classes = this.classes || new Set(); this.classes.add(c); },
           contains(c) { return Boolean(this.classes?.has(c)); },
@@ -815,6 +837,25 @@ const cachedEntry = await emptyDecorStore.get(
 assert.ok(cachedEntry, "Entry must be populated and cached via gradesStore fallback");
 assert.equal(cachedEntry.deadlineIso, "2026-10-11T23:59:00+05:30");
 assert.equal(cachedEntry.yourScore, 98);
+
+// Previously fetched events used the canonical key; decoration keeps those records visible.
+const legacyCanonicalDecorStore = createPortalDecorStore(() => tick);
+await legacyCanonicalDecorStore.clear();
+await legacyCanonicalDecorStore.capture(
+  "2026-09 - CS2006",
+  assignmentKey("2026-09 - CS2006", "Week 1", "GrPA 1 - JavaScript Basics"),
+  {
+    id: "legacy-deadline",
+    mode: "graded",
+    modeRaw: "graded",
+    deadlineIso: "2026-10-11T18:29:00.000Z",
+    capturedAt: tick,
+  }
+);
+const previousDecorHost = mockSidebarDoc.attachedHosts[0];
+await decorateSidebar(mockSidebarDoc, legacyCanonicalDecorStore, () => new Date("2026-10-05T00:00:00Z"));
+assert.equal(mockSidebarDoc.attachedHosts.length, 1, "legacy canonical-key records should still decorate the active course row");
+assert.notEqual(mockSidebarDoc.attachedHosts[0], previousDecorHost, "the legacy record should rerender the row decoration");
 
 await testGradesStore.clear();
 await testPendingQueue.clear();

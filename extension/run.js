@@ -863,6 +863,7 @@
       childRow: "button.child-row, .child-row",
       childType: ".child-type",
       childTitle: ".child-title",
+      gradedAssignmentRows: "button.child-row[data-acx-graded='true'], button.child-row[data-acx-mode='graded']",
       decorHost: "acx-portal-decor",
       decorAttr: "data-acx-decor",
       decorCleanTargets: "[data-acx-graded], [data-acx-mode]",
@@ -1047,6 +1048,65 @@
     getAssessmentView() {
       return $(IITM_SELECTORS.assessment.view, this.doc);
     }
+  
+  /* @extension-only-start */
+    /**
+     * Returns neighboring graded assignments in the current course outline.
+     * The active selection must itself be marked as graded by the portal decorator.
+     * @returns {{ current: { row: Element, title: string }, previous: { row: Element, title: string }|null, next: { row: Element, title: string }|null }|null}
+     */
+    getGradedAssignmentNavigation() {
+      const sidebar = $(IITM_SELECTORS.decor?.sidebarContainer || "#side-nav-content", this.doc);
+      if (!sidebar) return null;
+  
+      const gradedRows = $$(IITM_SELECTORS.decor?.gradedAssignmentRows || "button.child-row[data-acx-graded='true']", sidebar);
+      const selectedRow = $(IITM_SELECTORS.metadata.selectedChildRow, sidebar);
+      const currentIndex = gradedRows.findIndex((row) => row === selectedRow);
+      if (currentIndex < 0) return null;
+  
+      const getAssignment = (row) => {
+        if (!row) return null;
+        const titleEl = $(IITM_SELECTORS.decor?.childTitle || ".child-title", row);
+        const title = (titleEl?.textContent || "").replace(/\s+/g, " ").trim();
+        return title ? { row, title } : null;
+      };
+  
+      const current = getAssignment(gradedRows[currentIndex]);
+      if (!current) return null;
+      return {
+        current,
+        previous: getAssignment(gradedRows[currentIndex - 1]),
+        next: getAssignment(gradedRows[currentIndex + 1]),
+      };
+    }
+  
+    /** Returns the assignment view position and a portal-native secondary button prototype. */
+    getAssignmentNavigationMount() {
+      const pageType = this.detectPageType();
+      const view = pageType === PortalPageType.PROGRAMMING_ASSIGNMENT
+        ? this.getProgrammingView()
+        : pageType === PortalPageType.ASSESSMENT
+          ? this.getAssessmentView()
+          : null;
+      const parent = view?.parentElement || view?.parentNode || null;
+      const portalButton = "button.btn.btn-secondary, button.btn-secondary";
+      const buttonPrototype = view?.querySelector?.(portalButton)
+        || $(portalButton, parent)
+        || $(portalButton, this.doc);
+      return parent && view && buttonPrototype
+        ? { parent, before: view, buttonPrototype }
+        : null;
+    }
+  
+    /** Activates the requested adjacent assignment via its real portal sidebar button. */
+    navigateGradedAssignment(direction) {
+      if (direction !== "previous" && direction !== "next") return false;
+      const assignment = this.getGradedAssignmentNavigation()?.[direction];
+      if (!assignment?.row || assignment.row.disabled || typeof assignment.row.click !== "function") return false;
+      assignment.row.click();
+      return true;
+    }
+  /* @extension-only-end */
   
     getCurrentQuestionElement() {
       return $(IITM_SELECTORS.assessment.root, this.doc);
@@ -1539,6 +1599,120 @@
   }
   
   const portalAdapter = new IitmPortalAdapter();
+
+  // ── [Module: src/portal/assignment-navigation.js] ──
+  /**
+   * Top-of-view previous/next navigation for the currently selected graded assignment.
+   * Buttons inherit their visual treatment from IITM's native secondary button.
+   */
+  class GradedAssignmentNavigation {
+    constructor(portal) {
+      this.portal = portal;
+      this.root = null;
+      this.signature = "";
+    }
+  
+    createButton(prototype, direction, assignment) {
+      const doc = this.portal?.doc;
+      if (!doc || !prototype || typeof prototype.cloneNode !== "function") return null;
+  
+      const button = prototype.cloneNode(false);
+      button.classList?.remove("selected", "active", "btn-icon-only", "child-row");
+      button.removeAttribute?.("style");
+      for (const attribute of [
+        "aria-selected",
+        "aria-current",
+        "aria-label",
+        "aria-disabled",
+        "aria-busy",
+        "title",
+        "disabled",
+        "data-acx-graded",
+        "data-acx-mode",
+      ]) {
+        button.removeAttribute?.(attribute);
+      }
+      button.setAttribute?.("type", "button");
+      button.setAttribute?.("data-acx-assignment-nav-button", direction);
+      button.setAttribute?.("aria-label", assignment
+        ? `${direction === "previous" ? "Previous" : "Next"} graded assignment: ${assignment.title}`
+        : `No ${direction} graded assignment`);
+      button.setAttribute?.("title", assignment?.title || `No ${direction} graded assignment`);
+      button.disabled = !assignment;
+      button.setAttribute?.("aria-disabled", String(!assignment));
+      button.textContent = assignment
+        ? `${direction === "previous" ? "Previous" : "Next"}: ${assignment.title}`
+        : `${direction === "previous" ? "Previous" : "Next"} graded assignment`;
+  
+      button.addEventListener?.("click", (event) => {
+        event.preventDefault?.();
+        if (!button.disabled) this.portal?.navigateGradedAssignment?.(direction);
+      });
+      return button;
+    }
+  
+    update() {
+      const state = this.portal?.getGradedAssignmentNavigation?.();
+      const mount = this.portal?.getAssignmentNavigationMount?.();
+      if (
+        !state ||
+        !mount?.parent ||
+        !mount.before ||
+        !mount.buttonPrototype ||
+        typeof mount.parent.insertBefore !== "function"
+      ) {
+        this.clear();
+        return false;
+      }
+  
+      const signature = [state.current.title, state.previous?.title || "", state.next?.title || ""].join("\u0000");
+      if (
+        this.root &&
+        this.root.parentNode === mount.parent &&
+        this.root.nextSibling === mount.before &&
+        this.signature === signature
+      ) {
+        return true;
+      }
+  
+      this.clear();
+      const doc = this.portal?.doc;
+      const prototype = mount.buttonPrototype;
+      if (!doc || typeof doc.createElement !== "function" || !prototype) return false;
+  
+      const nav = doc.createElement("nav");
+      nav.className = "acx-assignment-navigation";
+      nav.setAttribute("data-acx-assignment-navigation", "true");
+      nav.setAttribute("aria-label", "Graded assignment navigation");
+      nav.style.display = "flex";
+      nav.style.flexWrap = "wrap";
+      nav.style.alignItems = "center";
+      nav.style.gap = "var(--acx-space-2, 8px)";
+      nav.style.marginBlockEnd = "var(--acx-space-4, 16px)";
+  
+      for (const direction of ["previous", "next"]) {
+        const button = this.createButton(prototype, direction, state[direction]);
+        if (button) nav.appendChild(button);
+      }
+  
+      if (nav.children?.length !== 2) return false;
+      mount.parent.insertBefore(nav, mount.before);
+      this.root = nav;
+      this.signature = signature;
+      return true;
+    }
+  
+    clear() {
+      this.root?.remove?.();
+      this.root = null;
+      this.signature = "";
+    }
+  
+    destroy() {
+      this.clear();
+      this.portal = null;
+    }
+  }
 
   // ── [Module: src/parsers/semantic-walker.js] ──
   /**
@@ -5583,19 +5757,19 @@
         root
       );
       if (!instEl) {
-        console.log("[ProgrammingExtractor] extractInstructions: no instructions element found.");
+  
         return null;
       }
   
       const { nodes } = this.walker.walk(instEl);
       if (nodes && nodes.length > 0) {
-        console.log(`[ProgrammingExtractor] extractInstructions: extracted ${nodes.length} instruction AST node(s).`);
+  
         return nodes;
       }
   
       const text = (instEl.textContent || "").trim();
       if (text) {
-        console.log(`[ProgrammingExtractor] extractInstructions: fallback paragraph (${text.length} chars).`);
+  
         return [new ContentNode({ type: ContentType.PARAGRAPH, value: text })];
       }
       return null;
@@ -6408,7 +6582,7 @@
         }
       }
   
-      console.log(`[ProgrammingExtractor] enumerateQuestionTargets: found ${chips.length} chips, resolved ${targets.length} question target(s):`, targets.map(t => t.number));
+  
       return targets;
     }
   
@@ -6758,7 +6932,6 @@
         questions.some((q) => q.programmingData?.extractionStatus === "PARTIAL");
       this.state = isPartial ? ExtractionState.PARTIAL : ExtractionState.SUCCESS;
   
-      console.log(`[ProgrammingExtractor] extractAssignment: finished in ${Date.now() - startTime}ms. Extracted ${questions.length}/${targets.length} question(s). Status: "${this.state}". Warnings: ${warnings.length}`);
   
       return new AssignmentDocument({
         metadata: {
@@ -34687,6 +34860,7 @@
         childRow: "button.child-row, .child-row",
         childType: ".child-type",
         childTitle: ".child-title",
+        gradedAssignmentRows: "button.child-row[data-acx-graded='true'], button.child-row[data-acx-mode='graded']",
         decorHost: "acx-portal-decor",
         decorAttr: "data-acx-decor",
         decorCleanTargets: "[data-acx-graded], [data-acx-mode]",
@@ -48849,6 +49023,7 @@
    * @param {object} options
    * @param {string} options.termId
    * @param {string} [options.courseCode]
+   * @param {string} [options.decorCourseKey] Display key used by the active portal sidebar; defaults to the canonical term/course key.
    * @param {object} [options.decorStore]
    * @param {string} [options.supabaseUrl]
    * @param {Function} [options.fetchFn]
@@ -48857,6 +49032,7 @@
   async function fetchDeadlinesFromSupabase({
     termId,
     courseCode,
+    decorCourseKey,
     decorStore = null,
     supabaseUrl,
     fetchFn = globalThis.fetch,
@@ -48888,7 +49064,7 @@
       }));
   
       if (decorStore?.capture && courseCode) {
-        const courseKey = `${termId} - ${courseCode}`;
+        const courseKey = decorCourseKey || `${termId} - ${courseCode}`;
         for (const item of deadlines) {
           const mode = classifyByTitle(item.title);
           const decorKey = assignmentKey(courseKey, item.module, item.title);
@@ -48947,7 +49123,7 @@
   .child-row[data-acx-graded="true"] {
     position: relative !important;
     background-color: rgb(47 75 219 / 0.05) !important;
-    border-left: 3px solid #2F4BDB !important;
+    border-inline-start: 2px solid #2F4BDB !important;
     transition: background-color 120ms cubic-bezier(0.2, 0, 0, 1) !important;
   }
   
@@ -48977,18 +49153,13 @@
     font-weight: 600 !important;
   }
   
-  /* Practice and other rows remain neutral */
-  button.child-row:not([data-acx-graded="true"]),
-  .child-row:not([data-acx-graded="true"]) {
-    border-left: 3px solid transparent !important;
-  }
   
   /* Dark mode theme support */
   @media (prefers-color-scheme: dark) {
     button.child-row[data-acx-graded="true"],
     .child-row[data-acx-graded="true"] {
       background-color: rgb(142 162 255 / 0.10) !important;
-      border-left: 3px solid #8EA2FF !important;
+      border-inline-start: 2px solid #8EA2FF !important;
     }
     button.child-row[data-acx-graded="true"]:hover,
     .child-row[data-acx-graded="true"]:hover {
@@ -49011,7 +49182,7 @@
   @media (forced-colors: active) {
     button.child-row[data-acx-graded="true"],
     .child-row[data-acx-graded="true"] {
-      border-left-color: Highlight !important;
+      border-inline-start-color: Highlight !important;
     }
     button.child-row[data-acx-graded="true"] app-icon.child-icon,
     .child-row[data-acx-graded="true"] app-icon.child-icon {
@@ -49050,6 +49221,7 @@
     --acx-space-0: 0px;
     --acx-space-1: 4px;
     --acx-space-2: 8px;
+    --acx-space-3: 12px;
     --acx-tracking-overline: 0.04em;
   }
   
@@ -49106,12 +49278,12 @@
   .acx-badge {
     display: inline-flex;
     align-items: center;
-    padding: 1px 6px;
+    padding: var(--acx-space-1) var(--acx-space-2);
     border-radius: var(--acx-radius-sm);
     font-family: var(--acx-font-ui);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
-    line-height: 14px;
+    line-height: 16px;
     letter-spacing: var(--acx-tracking-overline);
     text-transform: uppercase;
     flex-shrink: 0;
@@ -49120,7 +49292,6 @@
     color: var(--acx-accent);
     background: var(--acx-accent-subtle);
     border: var(--acx-border-width) solid var(--acx-accent-border);
-    box-shadow: 0 1px 2px rgb(47 75 219 / 0.06);
   }
   .acx-badge-practice {
     color: var(--acx-text-muted);
@@ -49132,8 +49303,8 @@
     align-items: center;
     gap: var(--acx-space-1);
     font-family: var(--acx-font-ui);
-    font-size: 11px;
-    line-height: 14px;
+    font-size: 12px;
+    line-height: 16px;
     color: var(--acx-text-muted);
     white-space: nowrap;
   }
@@ -49327,6 +49498,7 @@
   
     const termId = parseTermId(courseKey);
     const courseCode = parseCourseCode(courseKey);
+    const canonicalCourseKey = `${termId} - ${courseCode}`;
   
     // Pre-fetch stored course grades if gradesStore is provided
     let courseGrades = [];
@@ -49367,6 +49539,10 @@
   
         const key = assignmentKey(courseKey, unitTitle, title);
         let entry = await store.get(courseKey, key);
+        if (!entry && canonicalCourseKey !== courseKey) {
+          const legacyKey = assignmentKey(canonicalCourseKey, unitTitle, title);
+          entry = await store.get(canonicalCourseKey, legacyKey);
+        }
   
         // Fallback to gradesStore if entry is missing or has no deadline
         if ((!entry || !entry.deadlineIso) && courseGrades && courseGrades.length > 0) {
@@ -49617,14 +49793,16 @@
         if (courseKey) {
           const termId = parseTermId(courseKey);
           const courseCode = parseCourseCode(courseKey);
+          const canonicalCourseKey = `${termId} - ${courseCode}`;
           const allDecors = await decorStore.getAll();
-          const hasDeadlines = Boolean(
-            allDecors?.[courseKey] && Object.values(allDecors[courseKey]).some((d) => d.deadlineIso)
+          const hasDeadlines = [courseKey, canonicalCourseKey].some((key) =>
+            Object.values(allDecors?.[key] || {}).some((entry) => entry.deadlineIso)
           );
           if (!hasDeadlines) {
             fetchDeadlinesFromSupabase({
               termId,
               courseCode,
+              decorCourseKey: courseKey,
               decorStore,
             })
               .then((res) => {
@@ -49818,8 +49996,8 @@
   /**
    * Canonical Academic Event Repository for Acadrix.
    * 
-   * Consolidates all academic dates, deadlines, and milestones into a single
-   * authoritative data-access layer consuming Supabase public.academic_events.
+   * Retrieves course-independent weekly assignment deadlines from the
+   * authoritative Supabase public.academic_events table.
    * 
    * Enforces Sections 1, 2, 7-10, 13, 18, 21, 23 of the Academic Data Architecture:
    * - Single source of truth: public.academic_events
@@ -49834,7 +50012,7 @@
   const DEFAULT_SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvY3JjcmRtd21kdHRocnd5cGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0ODg5OTYsImV4cCI6MjEwNjA2NDk5Nn0.LTTbBscGie1nfUTnjAjvuuJ2tjW0F4znDl9C5C8bAp8";
   
-  const ACADEMIC_EVENTS_CACHE_KEY = "acx:events:v1";
+  const ACADEMIC_EVENTS_CACHE_KEY = "acx:events:v2";
   const DEFAULT_TERM_ID = "2026-09";
   
   const RepositoryState = Object.freeze({
@@ -49860,6 +50038,14 @@
     MILESTONE: "academic_milestone",
     EXAM: "exam",
   });
+  
+  function isWeeklyAssignmentDeadline(row) {
+    if (!row || typeof row !== "object") return false;
+    const courseCode = row.course_code ?? row.courseCode;
+    const eventType = String(row.event_type ?? row.eventType ?? "").toLowerCase();
+    const id = String(row.id ?? "");
+    return courseCode == null && eventType === "assignment" && id.startsWith("assignment_weekly_");
+  }
   
   /**
    * Checks whether an academic event record constitutes a time-sensitive deadline.
@@ -50025,7 +50211,7 @@
     }
   
     /**
-     * Fetches all canonical academic events for a term, utilizing resilient local caching.
+     * Fetches only course-independent weekly assignment deadlines for a term, using local caching.
      *
      * @param {object} [options]
      * @param {string} [options.termId] Target term (default: 2026-09)
@@ -50046,10 +50232,10 @@
         cached &&
         cached.termId === termId &&
         Array.isArray(cached.events) &&
-        cached.events.length > 0
+        cached.events.some(isWeeklyAssignmentDeadline)
       ) {
         return {
-          events: cached.events,
+          events: cached.events.filter(isWeeklyAssignmentDeadline),
           state: RepositoryState.UP_TO_DATE,
           fetchedAt: cached.fetchedAt || null,
           error: null,
@@ -50066,6 +50252,9 @@
           if (termId) {
             queryParams.set("term_id", `eq.${termId}`);
           }
+          queryParams.set("course_code", "is.null");
+          queryParams.set("event_type", "eq.assignment");
+          queryParams.set("id", "like.assignment_weekly_%");
   
           const endpoint = `${this.supabaseUrl}/rest/v1/academic_events?${queryParams.toString()}`;
           const resp = await fetchFn(endpoint, {
@@ -50080,7 +50269,9 @@
           if (resp.ok) {
             const rawRows = await resp.json();
             if (Array.isArray(rawRows)) {
-              const normalized = rawRows.map((r) => normalizeAcademicEvent(r));
+              const normalized = rawRows
+                .filter(isWeeklyAssignmentDeadline)
+                .map((r) => normalizeAcademicEvent(r));
               const nowIso = new Date().toISOString();
               const cachePayload = {
                 fetchedAt: nowIso,
@@ -50105,13 +50296,16 @@
       }
   
       // Offline / Network Failure Fallback (§18)
-      if (cached && Array.isArray(cached.events) && cached.events.length > 0) {
-        return {
-          events: cached.events,
-          state: RepositoryState.STALE,
-          fetchedAt: cached.fetchedAt || null,
-          error: "Supabase unavailable; serving stale cached events.",
-        };
+      if (cached && Array.isArray(cached.events)) {
+        const cachedWeeklyEvents = cached.events.filter(isWeeklyAssignmentDeadline);
+        if (cachedWeeklyEvents.length > 0) {
+          return {
+            events: cachedWeeklyEvents,
+            state: RepositoryState.STALE,
+            fetchedAt: cached.fetchedAt || null,
+            error: "Supabase unavailable; serving stale cached events.",
+          };
+        }
       }
   
       return {
@@ -50123,7 +50317,7 @@
     }
   
     /**
-     * Returns upcoming academic events sorted deterministically (§21).
+     * Returns the available weekly assignment deadlines sorted deterministically (§21).
      *
      * Sorting Precedence:
      * 1. Overdue hard cutoffs
@@ -50169,7 +50363,7 @@
     }
   
     /**
-     * Retrieves a single canonical academic event by its ID.
+     * Retrieves a weekly assignment deadline by its ID.
      *
      * @param {string} eventId
      * @param {object} [options]
@@ -51457,6 +51651,10 @@
   
   
   
+  /* @extension-only-start */
+  
+  /* @extension-only-end */
+  
   const DEFAULT_SHORTCUT = "Alt+Q";
   
   class AcadrixRuntime {
@@ -51509,7 +51707,7 @@
       this.generateAiPrompt = typeof generateAiPrompt !== "undefined" ? generateAiPrompt : null;
       this.serializeProgrammingPrompt = typeof serializeProgrammingPrompt !== "undefined" ? serializeProgrammingPrompt : null;
       this.copyAiContext = typeof copyAiContext !== "undefined" ? copyAiContext : null;
-      this.parseStructuredAiResponse = typeof parseStructuredAiResponse !== "undefined" ? parseStructuredAiResponse : null;
+  
   /* @extension-only-end */  }
   
     getContextKey() {
@@ -51548,6 +51746,9 @@
       // 3. Lifecycle-managed mutation observer
       this.startObserver();
   
+  /* @extension-only-start */
+      this.assignmentNavigation = new GradedAssignmentNavigation(this.portal);
+  /* @extension-only-end */
       // 4. Initial assessment check
       this.detect();
   /* @extension-only-start */
@@ -51654,11 +51855,14 @@
   
     detect() {
       if (!this.config.enabled) {
+        this.assignmentNavigation?.clear?.();
         this.orchestrator?.cancel();
         this.invalidateDocument();
         this.destroyUi();
         return;
       }
+  
+      this.assignmentNavigation?.update?.();
   
       if (this.lifecycle.state === LifecycleState.TRAVERSING) {
         this.pendingDetectAfterTraversal = true;
@@ -52124,6 +52328,7 @@
     }
   
     destroyUi() {
+      this.assignmentNavigation?.clear?.();
       this.launcher.destroy();
       this.overlay.destroy();
       this.reader.destroy();
@@ -52139,6 +52344,8 @@
         this.orchestrator.cancel();
       }/* @extension-only-start */
       try {
+        this.assignmentNavigation?.destroy?.();
+        this.assignmentNavigation = null;
         this.portalDecor?.destroy?.();
         this.portalDecor = null;
       } catch {}

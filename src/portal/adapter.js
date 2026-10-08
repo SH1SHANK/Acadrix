@@ -176,6 +176,65 @@ export class IitmPortalAdapter {
     return $(IITM_SELECTORS.assessment.view, this.doc);
   }
 
+/* @extension-only-start */
+  /**
+   * Returns neighboring graded assignments in the current course outline.
+   * The active selection must itself be marked as graded by the portal decorator.
+   * @returns {{ current: { row: Element, title: string }, previous: { row: Element, title: string }|null, next: { row: Element, title: string }|null }|null}
+   */
+  getGradedAssignmentNavigation() {
+    const sidebar = $(IITM_SELECTORS.decor?.sidebarContainer || "#side-nav-content", this.doc);
+    if (!sidebar) return null;
+
+    const gradedRows = $$(IITM_SELECTORS.decor?.gradedAssignmentRows || "button.child-row[data-acx-graded='true']", sidebar);
+    const selectedRow = $(IITM_SELECTORS.metadata.selectedChildRow, sidebar);
+    const currentIndex = gradedRows.findIndex((row) => row === selectedRow);
+    if (currentIndex < 0) return null;
+
+    const getAssignment = (row) => {
+      if (!row) return null;
+      const titleEl = $(IITM_SELECTORS.decor?.childTitle || ".child-title", row);
+      const title = (titleEl?.textContent || "").replace(/\s+/g, " ").trim();
+      return title ? { row, title } : null;
+    };
+
+    const current = getAssignment(gradedRows[currentIndex]);
+    if (!current) return null;
+    return {
+      current,
+      previous: getAssignment(gradedRows[currentIndex - 1]),
+      next: getAssignment(gradedRows[currentIndex + 1]),
+    };
+  }
+
+  /** Returns the assignment view position and a portal-native secondary button prototype. */
+  getAssignmentNavigationMount() {
+    const pageType = this.detectPageType();
+    const view = pageType === PortalPageType.PROGRAMMING_ASSIGNMENT
+      ? this.getProgrammingView()
+      : pageType === PortalPageType.ASSESSMENT
+        ? this.getAssessmentView()
+        : null;
+    const parent = view?.parentElement || view?.parentNode || null;
+    const portalButton = "button.btn.btn-secondary, button.btn-secondary";
+    const buttonPrototype = view?.querySelector?.(portalButton)
+      || $(portalButton, parent)
+      || $(portalButton, this.doc);
+    return parent && view && buttonPrototype
+      ? { parent, before: view, buttonPrototype }
+      : null;
+  }
+
+  /** Activates the requested adjacent assignment via its real portal sidebar button. */
+  navigateGradedAssignment(direction) {
+    if (direction !== "previous" && direction !== "next") return false;
+    const assignment = this.getGradedAssignmentNavigation()?.[direction];
+    if (!assignment?.row || assignment.row.disabled || typeof assignment.row.click !== "function") return false;
+    assignment.row.click();
+    return true;
+  }
+/* @extension-only-end */
+
   getCurrentQuestionElement() {
     return $(IITM_SELECTORS.assessment.root, this.doc);
   }
