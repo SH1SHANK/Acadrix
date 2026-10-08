@@ -50,13 +50,12 @@
         updates.portalFont = "default";
       }
 
-      // 2. Remove legacy hide toggles
-      for (const key of ["hideBreadcrumb", "hideBanner", "hideSidebar"]) {
+      // 2. Remove legacy hide toggles & deprecated grade store keys
+      for (const key of ["hideBreadcrumb", "hideBanner", "hideSidebar", "acx:grades:v1", "acx:pending-sync:v1"]) {
         if (key in items) {
           keysToRemove.push(key);
         }
       }
-
       // 3. Preserve shortcut & derive openShortcutEnabled
       let finalShortcut = items.openShortcut;
       if (finalShortcut === undefined) {
@@ -284,6 +283,162 @@
           (result) => sendResponse({ ok: true, result }),
           (err) => sendResponse({ ok: false, error: err?.message || String(err) })
         );
+        return true;
+      }
+
+      if (message?.type === "ACADRIX_ENSURE_PDF_LIBS") {
+        const senderTabId = sender?.tab?.id;
+        if (senderTabId && typeof chrome.scripting?.executeScript === "function") {
+          chrome.scripting
+            .executeScript({
+              target: { tabId: senderTabId },
+              files: [
+                "vendor/pdfmake.min.js",
+                "vendor/vfs_fonts.js",
+                "vendor/pdf-lib.min.js",
+              ],
+            })
+            .then(
+              () => sendResponse({ ok: true }),
+              (err) => sendResponse({ ok: false, error: err?.message || String(err) })
+            );
+          return true;
+        }
+      }
+
+      if (message?.type === "ACADRIX_PROGRAMMING_WRITE") {
+        const senderTabId = sender?.tab?.id;
+        if (!senderTabId || typeof chrome.scripting?.executeScript !== "function") {
+          sendResponse({ ok: false, error: "Scripting API or valid sender tab unavailable." });
+          return true;
+        }
+
+        chrome.scripting
+          .executeScript({
+            target: { tabId: senderTabId },
+            world: "MAIN",
+            func: (payload) => {
+              const sel = [
+                "app-pa-code-editor .ace_editor",
+                "app-pa-code-editor .ace-container",
+                "app-code-editor .ace_editor",
+                "app-code-editor .ace-container",
+                ".ace-container.ace_editor",
+                "[id^='app-code-editor-']",
+              ];
+              let aceEl = null;
+              for (const s of sel) {
+                aceEl = document.querySelector(s);
+                if (aceEl) break;
+              }
+              if (!aceEl) {
+                return { ok: false, error: "Ace editor DOM element not found.", errorCode: "EDITOR_NOT_FOUND" };
+              }
+              const editor = aceEl.env?.editor || aceEl._editor || aceEl.editor || (window.ace?.edit ? window.ace.edit(aceEl) : null);
+              if (!editor) {
+                return { ok: false, error: "Ace editor instance not found on element.", errorCode: "EDITOR_NOT_READY" };
+              }
+              const session = editor.getSession ? editor.getSession() : editor.session;
+              if (!session || typeof session.getValue !== "function") {
+                return { ok: false, error: "Ace edit session not found.", errorCode: "EDITOR_NOT_READY" };
+              }
+
+              const currentId = editor.id ? `editor-${editor.id}` : (aceEl.id ? `container-${aceEl.id}` : "ace-editor");
+              if (payload.editorIdentity && payload.editorIdentity !== currentId) {
+                return { ok: false, error: `Editor identity mismatch: expected "${payload.editorIdentity}", found "${currentId}".`, errorCode: "EDITOR_IDENTITY_CHANGED" };
+              }
+
+              if (payload.questionNumber !== undefined && payload.questionNumber !== null) {
+                const activeChip = document.querySelector("div.chips button.chip.is-active, div.chips button.chip[aria-selected='true'], button.chip.is-active");
+                const activeNum = activeChip ? parseInt((activeChip.textContent || "").trim(), 10) : null;
+                if (activeNum !== null && !isNaN(activeNum) && activeNum !== payload.questionNumber) {
+                  return { ok: false, error: `Question identity mismatch: expected Q${payload.questionNumber}, found Q${activeNum}.`, errorCode: "QUESTION_IDENTITY_CHANGED" };
+                }
+              }
+
+              const totalRows = session.getLength();
+              const frontMarkers = (typeof session.getMarkers === "function" ? session.getMarkers(true) : null) || {};
+              const defaultMarkers = (typeof session.getMarkers === "function" ? session.getMarkers() : null) || {};
+              const allMarkers = { ...defaultMarkers, ...frontMarkers, ...(session.$frontMarkers || {}) };
+              const readonlyMarkers = Object.values(allMarkers).filter((m) => {
+                if (!m) return false;
+                const c = typeof m.clazz === "string" ? m.clazz : "";
+                const t = typeof m.type === "string" ? m.type : "";
+                return /(readonly|read-only|protected|locked)/i.test(c) || /(readonly|read-only|protected|locked)/i.test(t);
+              });
+
+              let prefixEndRow = -1;
+              for (const m of readonlyMarkers) {
+                const startRow = Math.max(0, m.range?.start?.row ?? m.startRow ?? 0);
+                const endRow = Math.max(startRow, m.range?.end?.row ?? m.endRow ?? startRow);
+                const endCol = m.range?.end?.column ?? (m.endRow !== undefined && !m.range ? 1 : 0);
+                const effectiveEnd = (endCol === 0 && endRow > startRow) ? endRow - 1 : endRow;
+                if (startRow <= prefixEndRow + 1 && effectiveEnd > prefixEndRow) {
+                  prefixEndRow = effectiveEnd;
+                }
+              }
+
+              let suffixStartRow = totalRows;
+              for (const m of readonlyMarkers) {
+                const startRow = Math.max(0, m.range?.start?.row ?? m.startRow ?? 0);
+                const endRow = Math.max(startRow, m.range?.end?.row ?? m.endRow ?? startRow);
+                if (startRow > prefixEndRow && startRow < suffixStartRow) {
+                  suffixStartRow = startRow;
+                }
+              }
+
+              const hasPrefix = prefixEndRow >= 0;
+              const hasSuffix = suffixStartRow < totalRows && suffixStartRow > prefixEndRow;
+              const editStartRow = hasPrefix ? prefixEndRow + 1 : 0;
+              const editEndRow = hasSuffix ? suffixStartRow - 1 : Math.max(0, totalRows - 1);
+              const getLastCol = (r) => (typeof session.getLine === "function" ? (session.getLine(r) || "").length : 0);
+
+              const originalPrefix = hasPrefix ? session.getLines(0, prefixEndRow).join("\n") : null;
+              const originalSuffix = hasSuffix ? session.getLines(suffixStartRow, totalRows - 1).join("\n") : null;
+
+              const RangeCtor = session.getSelection?.()?.getRange?.()?.constructor || window.ace?.Range;
+              const startObj = { row: editStartRow, column: 0 };
+              const endObj = { row: editEndRow, column: getLastCol(editEndRow) };
+              const aceRange = RangeCtor ? new RangeCtor(startObj.row, startObj.column, endObj.row, endObj.column) : { start: startObj, end: endObj };
+
+              session.replace(aceRange, payload.code);
+
+              try {
+                const textarea = aceEl.querySelector("textarea.ace_text-input, textarea") || aceEl;
+                textarea.dispatchEvent(new Event("input", { bubbles: true, cancelable: true }));
+                textarea.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
+              } catch {}
+
+              const postTotal = session.getLength();
+              const postPrefix = hasPrefix ? session.getLines(0, prefixEndRow).join("\n") : null;
+              if (originalPrefix !== null && postPrefix !== originalPrefix) {
+                return { ok: false, error: "Protected prefix was altered.", errorCode: "CODE_WRITE_VERIFICATION_FAILED" };
+              }
+              const postSuffix = hasSuffix ? session.getLines(postTotal - (totalRows - suffixStartRow), postTotal - 1).join("\n") : null;
+              if (originalSuffix !== null && postSuffix !== originalSuffix) {
+                return { ok: false, error: "Protected suffix was altered.", errorCode: "CODE_WRITE_VERIFICATION_FAILED" };
+              }
+
+              return {
+                ok: true,
+                data: {
+                  code: payload.code,
+                  verified: true,
+                  editorIdentity: currentId,
+                },
+              };
+            },
+            args: [message.payload],
+          })
+          .then(
+            (results) => {
+              const res = results?.[0]?.result;
+              sendResponse(res || { ok: false, error: "No execution result from main world.", errorCode: "EXECUTION_EMPTY" });
+            },
+            (err) => {
+              sendResponse({ ok: false, error: err?.message || String(err), errorCode: "SCRIPTING_FAILED" });
+            }
+          );
         return true;
       }
 

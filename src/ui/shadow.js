@@ -13,8 +13,11 @@ export class ShadowHost {
   }
 
   ensure() {
+    if (typeof window !== "undefined") {
+      window.__ensureStacks = window.__ensureStacks || [];
+      window.__ensureStacks.push(new Error().stack);
+    }
     if (this.host && this.shadow) return this.shadow;
-
     // Register local @font-face declarations in host document.head if available
     if (
       typeof document !== "undefined" &&
@@ -50,8 +53,15 @@ export class ShadowHost {
         }
         @font-face {
           font-family: "JetBrainsMono Nerd Font";
-          src: local("JetBrainsMono Nerd Font"), local("JetBrains Mono"), local("JetBrainsMono-Regular");
+          src: local("JetBrainsMono Nerd Font"), local("JetBrains Mono"), local("JetBrainsMono-Regular"), url("${getFontUrl("JetBrainsMonoNerdFont-Regular.ttf")}") format("truetype");
           font-weight: 400 500;
+          font-style: normal;
+          font-display: swap;
+        }
+        @font-face {
+          font-family: "JetBrainsMono Nerd Font";
+          src: local("JetBrainsMono Nerd Font Bold"), local("JetBrains Mono Bold"), local("JetBrainsMono-Bold"), url("${getFontUrl("JetBrainsMonoNerdFont-Bold.ttf")}") format("truetype");
+          font-weight: 600 700;
           font-style: normal;
           font-display: swap;
         }
@@ -159,7 +169,7 @@ export class ShadowHost {
   }
 
   setTheme(theme) {
-    this.ensure();
+    this._theme = theme;
     if (!this.host) return;
     if (theme === "light" || theme === "dark") {
       this.host.setAttribute("data-theme", theme);
@@ -169,12 +179,14 @@ export class ShadowHost {
   }
 
   getTheme() {
-    if (!this.host) return "system";
-    return this.host.getAttribute("data-theme") || "system";
+    if (this.host) {
+      return this.host.getAttribute("data-theme") || "system";
+    }
+    return this._theme || "system";
   }
 
   setTextSize(size) {
-    this.ensure();
+    this._textSize = size;
     if (!this.host) return;
     if (size === "small" || size === "large") {
       this.host.setAttribute("data-text-size", size);
@@ -184,26 +196,26 @@ export class ShadowHost {
   }
 
   getTextSize() {
-    if (!this.host) return "default";
-    return this.host.getAttribute("data-text-size") || "default";
+    if (this.host) {
+      return this.host.getAttribute("data-text-size") || "default";
+    }
+    return this._textSize || "default";
   }
 
   toggleTheme() {
-    this.ensure();
-    if (!this.host) return "light";
-    const current = this.host.getAttribute("data-theme");
+    const current = this.getTheme();
     const systemDark =
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isCurrentlyDark = current ? current === "dark" : systemDark;
-    const next = isCurrentlyDark ? "light" : "dark";
-    this.host.setAttribute("data-theme", next);
+    const isDark = current === "dark" || (current === "system" && systemDark);
+    const next = isDark ? "light" : "dark";
+    this.setTheme(next);
     return next;
   }
 
   get root() {
-    return this.shadow || this.ensure();
+    return this.shadow || (this.host ? this.ensure() : null);
   }
 
   $(selector) {

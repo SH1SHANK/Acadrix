@@ -7,16 +7,165 @@
 import { $, $$ } from "../utils/dom.js";
 import { IITM_SELECTORS } from "./selectors.js";
 
+/**
+ * Normalized Portal Page Types.
+ */
+export const PortalPageType = Object.freeze({
+  ASSESSMENT: "ASSESSMENT",
+  PROGRAMMING_ASSIGNMENT_INFO: "PROGRAMMING_ASSIGNMENT_INFO",
+  PROGRAMMING_ASSIGNMENT: "PROGRAMMING_ASSIGNMENT",
+  COURSE_CONTENT: "COURSE_CONTENT",
+  GRADES: "GRADES",
+  UNKNOWN: "UNKNOWN",
+});
+
+/**
+ * Determines whether the FAB (and shortcut) should be enabled for a given page type.
+ * @param {string} pageType
+ * @returns {boolean}
+ */
+export function isFabEligible(pageType) {
+  return (
+    pageType === PortalPageType.ASSESSMENT ||
+    pageType === PortalPageType.PROGRAMMING_ASSIGNMENT
+  );
+}
+
 export class IitmPortalAdapter {
   constructor(doc = typeof document !== "undefined" ? document : null) {
     this.doc = doc;
   }
 
   /**
-   * Returns true if an IITM assessment view is currently active in the DOM.
+   * Identifies the current portal page type from the DOM.
+   * First-class support for Standard Assessments and Programming Assignments.
+   * @param {Document|Element} [root]
+   * @returns {string} One of PortalPageType values
+   */
+  detectPageType(root = this.doc) {
+    if (!root || typeof root.querySelector !== "function") return PortalPageType.UNKNOWN;
+
+    // The assignment overview and the active coding route can share metadata and
+    // sometimes the outer PA wrapper. Require a coding surface inside that wrapper;
+    // a title, deadline, resume CTA, or wrapper alone is not editor evidence.
+    const paView = $(IITM_SELECTORS.programming?.view || "app-programming-assignment-view, .programming-assignment-view", root);
+    const hasPaView = Boolean(paView);
+    const hasPaOverview = Boolean(
+      $("app-pa-start-page, .pa-start-page, app-pa-instructions, .pa-instructions", root)
+    );
+    const paRoot = paView || root;
+    const hasPaQuestion = Boolean(
+      $(IITM_SELECTORS.programming?.questionRoot || "app-pa-question, .pa-question", paRoot)
+    );
+    const paEditor = $(IITM_SELECTORS.programming?.editorRoot || "app-pa-code-editor, app-code-editor, .pa-code-editor", paRoot);
+    const hasPaEditor = Boolean(paEditor);
+    const hasAce = Boolean(
+      $(IITM_SELECTORS.programming?.aceContainer || ".ace-container, .ace_editor", paEditor || paRoot)
+    );
+    const hasRunBtn = Boolean(
+      $(IITM_SELECTORS.programming?.runCodeButton || "button[aria-label='Run Code']", paRoot)
+    );
+    const hasPaTabs = $$(IITM_SELECTORS.programming?.tabItem || "button[role=tab], .tab-item", paRoot).some(
+      (b) => /test\s*cases|question/i.test(b.textContent || "")
+    );
+    const hasCodingSurface = Boolean(
+      hasPaEditor ||
+      (hasPaQuestion && hasAce) ||
+      (hasAce && (hasRunBtn || hasPaTabs))
+    );
+    const hasResumeAction = $$("button, a, [role='button']", root).some((el) => {
+      const label = el.getAttribute?.("aria-label") || "";
+      return /^resume assignment$/i.test((el.textContent || label).trim());
+    });
+
+    if ((hasPaOverview || hasResumeAction) && !hasCodingSurface) {
+      return PortalPageType.PROGRAMMING_ASSIGNMENT_INFO;
+    }
+    if (hasPaView && hasCodingSurface) {
+      return PortalPageType.PROGRAMMING_ASSIGNMENT;
+    }
+
+    // 2. Standard Assessment check
+    const hasAssessmentView = Boolean($(IITM_SELECTORS.assessment.view, root));
+    const hasAssessmentRoot = Boolean($(IITM_SELECTORS.assessment.root, root));
+    const hasPaginator = Boolean($(IITM_SELECTORS.navigation.paginator, root));
+
+    if (hasAssessmentView || (hasPaginator && hasAssessmentRoot) || hasAssessmentRoot) {
+      return PortalPageType.ASSESSMENT;
+    }
+
+    // 3. Grades / Scores view
+    if ($("app-grades, .grades-view, app-score-card, .score-card-container", root)) {
+      return PortalPageType.GRADES;
+    }
+
+    // 4. Course Content / Videos / Syllabus
+    if ($("app-course-content, .course-content, app-unit-view, .unit-content, app-video-player", root)) {
+      return PortalPageType.COURSE_CONTENT;
+    }
+
+    return PortalPageType.UNKNOWN;
+  }
+
+  /**
+   * Returns true if an IITM assessment view (Standard or Programming) is currently active in the DOM.
    */
   detectAssessment() {
-    return Boolean(this.getPaginator() && this.getCurrentQuestionElement());
+    return isFabEligible(this.detectPageType());
+  }
+
+  isProgrammingAssignment() {
+    return this.detectPageType() === PortalPageType.PROGRAMMING_ASSIGNMENT;
+  }
+
+  isStandardAssessment() {
+    return this.detectPageType() === PortalPageType.ASSESSMENT;
+  }
+
+  getProgrammingView() {
+    return $(IITM_SELECTORS.programming?.view || "app-programming-assignment-view, .programming-assignment-view", this.doc);
+  }
+
+  /**
+   * Resolves canonical capabilities supported on the current page.
+   * @returns {object}
+   */
+  getPageCapabilities() {
+    const pageType = this.detectPageType();
+    if (pageType === PortalPageType.PROGRAMMING_ASSIGNMENT) {
+      return {
+        canReadAssessment: true,
+        canReadProgrammingAssignment: true,
+        canCopyQuestion: true,
+        canCopyStarterCode: true,
+        canCopyTestCases: true,
+        canCopyCurrentCode: true,
+        canEditProgrammingCode: true,
+        canApplyAnswers: false,
+      };
+    }
+    if (pageType === PortalPageType.ASSESSMENT) {
+      return {
+        canReadAssessment: true,
+        canReadProgrammingAssignment: false,
+        canCopyQuestion: true,
+        canCopyStarterCode: false,
+        canCopyTestCases: false,
+        canCopyCurrentCode: false,
+        canEditProgrammingCode: false,
+        canApplyAnswers: true,
+      };
+    }
+    return {
+      canReadAssessment: false,
+      canReadProgrammingAssignment: false,
+      canCopyQuestion: false,
+      canCopyStarterCode: false,
+      canCopyTestCases: false,
+      canCopyCurrentCode: false,
+      canEditProgrammingCode: false,
+      canApplyAnswers: false,
+    };
   }
 
   getPaginator() {
@@ -129,10 +278,15 @@ export class IitmPortalAdapter {
    * @returns {number|null}
    */
   getTotalQuestionCount() {
-    const view = this.getAssessmentView();
-    if (!view) return null;
-    const match = (view.textContent || "").match(IITM_SELECTORS.metadata.totalCountRegex);
-    return match ? parseInt(match[1], 10) : null;
+    const view = this.getAssessmentView() || this.getProgrammingView();
+    if (view) {
+      const match = (view.textContent || "").match(IITM_SELECTORS.metadata.totalCountRegex);
+      if (match) return parseInt(match[1], 10);
+    }
+    const chips = this.getQuestionChips();
+    if (chips.length > 0) return chips.length;
+    if (this.isProgrammingAssignment()) return 1;
+    return null;
   }
 
   /**

@@ -2,15 +2,17 @@
 
 ## What does this PR do?
 
-<!-- A short description. Link any related issue: "Closes #123". -->
+<!-- Describe the behavior change and link related issues. -->
 
 ## Checklist
 
-- [ ] I edited the source, not generated files (`bookmarklet/bookmarklet-source.js`, `bookmarklet/styles.css`, or files in `extension/`) — see [CONTRIBUTING](CONTRIBUTING.md)
-- [ ] I ran `npm run build` after changing the source
-- [ ] `npm run verify` passes (build + no stale bookmarklet artifacts — this is what CI checks)
-- [ ] I tested the change in the browser (loaded the extension and reloaded a quiz page)
+- [ ] I edited source files rather than generated `build/` output.
+- [ ] I ran `node build.mjs` and `npm run check` when relevant.
+- [ ] I ran `npm test` or explained why it was not applicable.
+- [ ] I updated current documentation when behavior or commands changed.
+- [ ] I included no credentials, local configuration, or debugging artifacts.
+- [ ] If browser behavior changed, I performed the relevant browser check or described what remains unverified.
 
-## Notes for reviewers (optional)
+## Notes for reviewers
 
-<!-- Anything tricky, screenshots, or things you're unsure about. -->
+<!-- Include constraints, test results, or known limitations. -->

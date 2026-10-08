@@ -1,13 +1,23 @@
 /** Shared Reader interaction behavior. */
+import {
+  formatProgrammingPrompt,
+  serializeProgrammingPrompt,
+  copyQuestion,
+  copyTestCases,
+  copyCurrentCode,
+  copyAiContext,
+  copyFullAssignment,
+} from "../bridge/prompt.js";
+
 
 const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
-
 export function handleReaderKeyDown(e) {
   if (!this.sheetElement || !this.isOpen()) return;
 
   if (this.runReaderFeatureHook("handleKeydown", e)) return;
 
   if (e.key === "Escape") {
+
     if (this.isLightboxOpen?.()) {
       e.preventDefault();
       e.stopPropagation();
@@ -52,11 +62,13 @@ export function handleReaderKeyDown(e) {
     }
   }
 
-  if (e.key !== "Tab") return;
+  if (e.defaultPrevented || e.key !== "Tab") return;
 
+  const activeDialog = this.sheetElement.querySelector(".saq-dialog-modal:not([hidden])");
+  const focusScope = activeDialog || this.sheetElement;
   const focusables = Array.from(
-    this.sheetElement.querySelectorAll(
-      "button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
+    focusScope.querySelectorAll(
+      "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
     )
   ).filter((el) => {
     if (el.hasAttribute("disabled")) return false;
@@ -69,13 +81,15 @@ export function handleReaderKeyDown(e) {
   const first = focusables[0];
   const last = focusables[focusables.length - 1];
   const active = this.shadowHost.root?.activeElement;
+  const activeIsInScope = focusScope.contains(active);
 
-  if (e.shiftKey) {
-    if (active === first || active === this.sheetElement || !active) {
-      e.preventDefault();
-      last.focus?.();
-    }
-  } else if (active === last) {
+  if (!activeIsInScope) {
+    e.preventDefault();
+    (e.shiftKey ? last : first).focus?.();
+  } else if (e.shiftKey && (active === first || active === this.sheetElement || !active)) {
+    e.preventDefault();
+    last.focus?.();
+  } else if (!e.shiftKey && active === last) {
     e.preventDefault();
     first.focus?.();
   }
@@ -107,7 +121,7 @@ export function handleReaderActionClick(e) {
     }
   }
 
-  const splitGroup = this.sheetElement?.querySelector("#saq-export-split");
+  const splitGroup = this.sheetElement?.querySelector("#saq-export-split, .saq-dropdown-wrap");
   const exportMenu = this.sheetElement?.querySelector("#saq-export-menu");
   const splitArrow = this.sheetElement?.querySelector("[data-act='toggle-export-menu']");
   if (exportMenu && !exportMenu.hasAttribute("hidden") && !exportMenu.hidden && splitGroup && !splitGroup.contains(e.target)) {
@@ -188,7 +202,15 @@ export function handleReaderActionClick(e) {
         exportMenu.querySelector(".saq-dropdown-item")?.focus?.();
       }
     }
+  } else if (action === "apply-programming-code") {
+    this.programmingEditor?.applyChanges?.();
   } else if (action === "refresh") {
+    if (this.programmingEditor?.isModified()) {
+      const keepChanges = typeof window !== "undefined" && window.confirm
+        ? !window.confirm("You have unsaved Reader changes. Refresh from the assignment and discard them?")
+        : true;
+      if (keepChanges) return;
+    }
     if (exportMenu) {
       exportMenu.hidden = true;
       exportMenu.setAttribute("hidden", "");
@@ -196,14 +218,14 @@ export function handleReaderActionClick(e) {
     }
     this.closeAiPopover?.({ restoreFocus: false });
     if (this.onRefreshCallback) this.onRefreshCallback();
-  } else if (action === "export-md") {
+  } else if (action === "export-md" || action === "export-txt") {
     if (exportMenu) {
       exportMenu.hidden = true;
       exportMenu.setAttribute("hidden", "");
       if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
     }
     this.closeAiPopover?.({ restoreFocus: false });
-    if (this.onExportCallback) this.onExportCallback("markdown");
+    if (this.onExportCallback) this.onExportCallback(action === "export-md" ? "markdown" : "text");
   } else if (action === "print") {
     if (exportMenu) {
       exportMenu.hidden = true;
@@ -236,10 +258,57 @@ export function handleReaderActionClick(e) {
     const next = this.shadowHost.toggleTheme?.() || "light";
     btn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
     if (this.onThemeCallback) this.onThemeCallback(next);
+  } else if (action === "copy-problem" || action === "copy-question") {
+    const text = copyQuestion(this.documentModel);
+    const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+    Promise.resolve(write).then(() => {
+      this.notify?.("Problem statement copied", "success", 2500);
+    }).catch(() => {
+      this.notify?.("Failed to copy problem", "error", 2500);
+    });
+  } else if (action === "copy-testcases") {
+    const text = copyTestCases(this.documentModel);
+    const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+    Promise.resolve(write).then(() => {
+      this.notify?.("Test cases copied", "success", 2500);
+    }).catch(() => {
+      this.notify?.("Failed to copy test cases", "error", 2500);
+    });
+  } else if (action === "copy-current-code" || action === "copy-code") {
+    const editorCode = this.programmingEditor?.getFullCode?.();
+    const pData = this.documentModel?.questions?.[0]?.programmingData || {};
+    const text = editorCode ?? [
+      pData.prefixCode,
+      pData.currentCode ?? pData.starterCode ?? copyCurrentCode(this.documentModel),
+      pData.suffixCode,
+    ].filter((part) => part !== null && part !== undefined).join("\n");
+    const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+    Promise.resolve(write).then(() => {
+      this.notify?.("Current code copied", "success", 2500);
+    }).catch(() => {
+      this.notify?.("Failed to copy current code", "error", 2500);
+    });
+  } else if (action === "copy-prompt-context" || action === "copy-prompt") {
+    const text = copyAiContext(this.documentModel);
+    const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+    Promise.resolve(write).then(() => {
+      this.notify?.("AI context prompt copied", "success", 2500);
+    }).catch(() => {
+      this.notify?.("Failed to copy AI prompt", "error", 2500);
+    });
+  } else if (action === "copy-full-assignment") {
+    const text = copyFullAssignment(this.documentModel);
+    const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+    Promise.resolve(write).then(() => {
+      this.notify?.("Full assignment Markdown copied", "success", 2500);
+    }).catch(() => {
+      this.notify?.("Failed to copy assignment", "error", 2500);
+    });
   } else if (action === "dismiss") {
     this.dismiss();
   }
 }
+
 
 export function wireReaderDrag(grip, sheet) {
   if (!grip) return;

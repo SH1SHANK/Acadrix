@@ -564,6 +564,7 @@ check("Portal decor is isolated from bookmarklet and decoupled from Reader/expor
 
   const requiredNotificationModules = [
     "src/notifications/types.js",
+    "src/notifications/events.js",
     "src/notifications/evaluator.js",
     "src/notifications/storage.js",
     "src/notifications/scheduler.js",

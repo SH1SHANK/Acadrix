@@ -10,3 +10,6 @@ node_modules/
 # build
 build/
 scratch/
+
+# Local agent/MCP configuration
+.omp/

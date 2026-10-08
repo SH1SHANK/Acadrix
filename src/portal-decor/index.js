@@ -10,8 +10,8 @@ import {
   PORTAL_DECOR_STORAGE_KEY,
   PORTAL_GRADES_STORAGE_KEY,
 } from "./storage.js";
-import { captureStartPage, captureGrades, getCourseKey } from "./capture.js";
-import { syncGradesToSupabase, fetchDeadlinesFromSupabase } from "./sync.js";
+import { getCourseKey } from "./capture.js";
+import { fetchDeadlinesFromSupabase } from "./sync.js";
 import { decorateSidebar, createSidebarObserver, removeHostStyles } from "./decorator.js";
 import { IITM_SELECTORS } from "../portal/selectors.js";
 import { parseTermId, parseCourseCode } from "./core.js";
@@ -85,52 +85,26 @@ export function initPortalDecor({
     if (isDestroyed || !highlightDeadlinesEnabled || isRunning) return;
     isRunning = true;
     try {
-      const startResult = await captureStartPage(doc, decorStore, now);
-      const gradeResult = await captureGrades(doc, portalGradesStore, portalPendingQueue, decorStore, now);
-
-      if (startResult || (gradeResult?.ok && gradeResult.records?.length > 0)) {
-        try {
-          if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
-            chrome.runtime.sendMessage({ type: "RECONCILE_NOTIFICATIONS" }, () => {
-              if (chrome.runtime?.lastError) {}
-            });
-          }
-        } catch {}
-      }
-
-      if (gradeResult?.ok) {
-        syncGradesToSupabase({
-          gradesStore: portalGradesStore,
-          pendingQueue: portalPendingQueue,
-        }).catch((err) => {
-          console.warn("[Acadrix] Grade sync background error:", err);
-        });
-      } else {
-        // If not on grades page, check if decor store has any deadlines for current course; if not, fetch deadlines from Supabase in background
-        const courseKey = getCourseKey(doc);
-        if (courseKey) {
-          const termId = parseTermId(courseKey);
-          const courseCode = parseCourseCode(courseKey);
-          const allDecors = await decorStore.getAll();
-          const hasDeadlines = Boolean(allDecors?.[courseKey] && Object.values(allDecors[courseKey]).some((d) => d.deadlineIso));
-          if (!hasDeadlines) {
-            fetchDeadlinesFromSupabase({
-              termId,
-              courseCode,
-              decorStore,
-            }).then((res) => {
+      const courseKey = getCourseKey(doc);
+      if (courseKey) {
+        const termId = parseTermId(courseKey);
+        const courseCode = parseCourseCode(courseKey);
+        const allDecors = await decorStore.getAll();
+        const hasDeadlines = Boolean(
+          allDecors?.[courseKey] && Object.values(allDecors[courseKey]).some((d) => d.deadlineIso)
+        );
+        if (!hasDeadlines) {
+          fetchDeadlinesFromSupabase({
+            termId,
+            courseCode,
+            decorStore,
+          })
+            .then((res) => {
               if (res?.ok && res.deadlines?.length > 0 && highlightDeadlinesEnabled && !isDestroyed) {
                 decorateSidebar(doc, decorStore, now, portalGradesStore);
-                try {
-                  if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
-                    chrome.runtime.sendMessage({ type: "RECONCILE_NOTIFICATIONS" }, () => {
-                      if (chrome.runtime?.lastError) {}
-                    });
-                  }
-                } catch {}
               }
-            }).catch(() => {});
-          }
+            })
+            .catch(() => {});
         }
       }
       await decorateSidebar(doc, decorStore, now, portalGradesStore);

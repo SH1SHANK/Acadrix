@@ -787,6 +787,9 @@ export class SemanticWalker {
   parseImage(imgElement, diagnostics) {
     diagnostics.imageCount += 1;
     const src =
+      (imgElement.getAttribute ? imgElement.getAttribute("data-src") : "") ||
+      (imgElement.getAttribute ? imgElement.getAttribute("data-lazy-src") : "") ||
+      (imgElement.getAttribute ? imgElement.getAttribute("data-original") : "") ||
       imgElement.currentSrc ||
       (imgElement.getAttribute ? imgElement.getAttribute("src") : "") ||
       "";

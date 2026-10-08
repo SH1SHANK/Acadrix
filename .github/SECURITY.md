@@ -1,29 +1,7 @@
 # Security Policy
 
-Acadrix is a browser extension / bookmarklet that runs on the IITM Online Degree
-portal and reads and replays answers on the live quiz form. If you find a
-vulnerability — especially anything that could corrupt answers, leak data, or run
-unexpected code on the portal — please report it.
+Please report vulnerabilities privately rather than opening a public issue. Use [GitHub's private vulnerability reporting](https://github.com/SH1SHANK/unfold-iitm/security/advisories/new).
 
-## Reporting a vulnerability
+Include the affected version, browser, impact, and reproducible steps. Do not include account credentials, private answers, or sensitive assessment content in a report unless it is necessary and shared through the private channel.
 
-Please **do not** open a public issue for security problems.
-
-Instead, use GitHub's private vulnerability reporting:
-**[Report a vulnerability](https://github.com/civiks/unfold-iitm/security/advisories/new)**
-
-(Repo → Security tab → "Report a vulnerability".)
-
-Include:
-
-- What the issue is and the impact
-- Steps to reproduce
-- The Acadrix version and browser
-
-You can expect an initial response within a few days. Once confirmed and fixed,
-we'll publish a release and credit you if you'd like.
-
-## Supported versions
-
-Only the latest release is supported. Please make sure you're on the newest
-version before reporting.
+The project does not publish a guaranteed response or fix timeline. The current security and data-handling model is documented in [docs/SECURITY.md](../docs/SECURITY.md).

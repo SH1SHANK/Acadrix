@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Acadrix System Architecture",
+    "output": "docs/diagrams/acadrix-architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "full-flow",
+        "label": "Complete Architecture",
+        "focus": ["portal", "adapter", "runtime", "extractor", "shadow_ui", "bridge", "ace", "code_editor", "bg_worker", "export_engine", "supabase"],
+        "note": "Complete overview of Acadrix execution worlds, extraction pipeline, and privileged write path."
+      },
+      {
+        "id": "read-path",
+        "label": "Assessment Extraction Path",
+        "focus": ["portal", "adapter", "runtime", "extractor", "shadow_ui"],
+        "note": "Traverses paginated chips, settles Angular DOM, and extracts semantic AST into the closed Shadow DOM reader."
+      },
+      {
+        "id": "write-path",
+        "label": "Privileged Code Write Pipeline",
+        "focus": ["code_editor", "bg_worker", "ace", "bridge"],
+        "note": "Student applies changes through the background service worker with byte-for-byte scaffold verification."
+      }
+    ]
+  },
+  "components": [
+    { "id": "portal", "type": "external", "label": "IITM Portal", "sublabel": "Angular Assessment View", "pos": [40, 200], "size": [140, 60] },
+    { "id": "ace", "type": "backend", "label": "IITM Ace Editor", "sublabel": "EditSession & Markers", "pos": [40, 360], "size": [140, 60] },
+    { "id": "bridge", "type": "security", "label": "Main-World Bridge", "sublabel": "page-bridge.js (MAIN)", "pos": [40, 520], "size": [140, 60], "tag": "Read-Only" },
+
+    { "id": "adapter", "type": "backend", "label": "Portal Adapter", "sublabel": "DOM Probing & Routes", "pos": [260, 200], "size": [140, 60] },
+    { "id": "runtime", "type": "frontend", "label": "Acadrix Runtime", "sublabel": "Lifecycle & Dispatch", "pos": [480, 200], "size": [140, 60] },
+
+    { "id": "extractor", "type": "backend", "label": "Semantic Extractor", "sublabel": "AST Compiler & Math", "pos": [700, 200], "size": [140, 60] },
+    { "id": "shadow_ui", "type": "frontend", "label": "Shadow DOM UI", "sublabel": "#unfold-root (Drawer)", "pos": [700, 360], "size": [140, 60] },
+    { "id": "code_editor", "type": "frontend", "label": "Acadrix Code Editor", "sublabel": "In-Drawer Working Buffer", "pos": [700, 520], "size": [140, 60] },
+
+    { "id": "export_engine", "type": "backend", "label": "Export Engine", "sublabel": "CDP PDF, Markdown, ZIP", "pos": [940, 360], "size": [140, 60] },
+    { "id": "bg_worker", "type": "security", "label": "Background Worker", "sublabel": "MV3 Service Worker", "pos": [940, 520], "size": [140, 60], "tag": "Privileged" },
+    { "id": "supabase", "type": "cloud", "label": "Academic Events", "sublabel": "Supabase Calendar Store", "pos": [1160, 520], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Page Main World (Host Context)", "wraps": ["portal", "ace", "bridge"] },
+    { "kind": "region", "label": "Extension Isolated World", "wraps": ["adapter", "runtime", "extractor", "shadow_ui", "code_editor"] },
+    { "kind": "region", "label": "Extension Background Context", "wraps": ["bg_worker", "export_engine"] }
+  ],
+  "connections": [
+    { "id": "adapter-probes-portal", "from": "adapter", "to": "portal", "label": "probe DOM" },
+    { "id": "adapter-reports-runtime", "from": "adapter", "to": "runtime", "label": "route type" },
+    { "id": "runtime-runs-extractor", "from": "runtime", "to": "extractor", "label": "traverse" },
+    { "id": "extractor-feeds-ui", "from": "extractor", "to": "shadow_ui", "label": "compile AST", "variant": "emphasis", "labelDy": 30 },
+    { "id": "ui-embeds-editor", "from": "shadow_ui", "to": "code_editor", "label": "mount", "labelDy": 30 },
+    { "id": "editor-snapshots-bridge", "from": "code_editor", "to": "bridge", "label": "getSnapshot", "variant": "security" },
+    { "id": "bridge-inspects-ace", "from": "bridge", "to": "ace", "label": "read buffer", "labelDy": -30 },
+    { "id": "editor-applies-bg", "from": "code_editor", "to": "bg_worker", "label": "Apply Changes", "variant": "emphasis" },
+    { "id": "bg-runs-cdp", "from": "bg_worker", "to": "export_engine", "label": "printToPDF", "labelDy": -30 },
+    { "id": "bg-syncs-supabase", "from": "bg_worker", "to": "supabase", "label": "sync deadlines" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Page Main World",
+      "items": [
+        "IITM Angular forms and Ace EditSession operate as authoritative state",
+        "page-bridge.js exposes strictly read-only CustomEvents with replay deduplication"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Extension Isolated World",
+      "items": [
+        "Closed Shadow DOM (#unfold-root) prevents all style bleeding",
+        "Semantic Extractor compiles LaTeX and MathML without layout shifts",
+        "Acadrix Code Editor isolates student drafts with local undo/redo"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Privileged Execution & Storage",
+      "items": [
+        "chrome.scripting gates all writes under 4-point identity validation",
+        "Byte-for-byte prefix and suffix scaffold verification post-write",
+        "Supabase authoritative event store eliminates portal DOM scraping"
+      ]
+    }
+  ]
+}

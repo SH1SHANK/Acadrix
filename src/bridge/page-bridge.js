@@ -1,0 +1,592 @@
+/**
+ * Acadrix — Main-World Programming Editor Bridge.
+ * 
+ * Executes strictly in the PAGE MAIN WORLD to interact directly with
+ * the IITM Ace Editor instance and its EditSession, while preserving
+ * extension security boundaries.
+ * 
+ * Invariants:
+ * - Pure JavaScript; no dynamic code evaluation.
+ * - Communicates only via versioned, validated structured CustomEvents for READ operations.
+ * - NEVER passes live Ace Editor / EditSession / Angular objects across worlds.
+ * - Dispatches only serializable JSON-compatible data.
+ * - Public CustomEvent channel accepts ONLY read requests ('ping', 'getSnapshot').
+ * - Arbitrary page-originated 'writeCode' requests over CustomEvent are strictly rejected (UNAUTHORIZED_OPERATION).
+ * - Code writes require privileged execution, verifying editor, question, and assignment identity.
+ * - Mutates ONLY the resolved editable main-content range via session.replace().
+ * - NEVER calls session.setValue() or editor.setValue().
+ * - Preserves protected prefix and suffix scaffold with byte-for-byte verification.
+ */
+
+export const BRIDGE_PROTOCOL_VERSION = 1;
+export const BRIDGE_CHANNEL = "programming-editor";
+export const BRIDGE_REQUEST_EVENT = "acadrix:programming-request";
+export const BRIDGE_RESPONSE_EVENT = "acadrix:programming-response";
+
+const IITM_ACE_CONTAINER_SELECTORS = [
+  "app-pa-code-editor .ace_editor",
+  "app-pa-code-editor .ace-container",
+  "app-code-editor .ace_editor",
+  "app-code-editor .ace-container",
+  ".ace-container.ace_editor",
+  "[id^='app-code-editor-']",
+];
+
+export function resolveLiveAce(root, win = typeof window !== "undefined" ? window : globalThis) {
+  if (!root) return null;
+
+  let aceEl = null;
+  for (const sel of IITM_ACE_CONTAINER_SELECTORS) {
+    aceEl = root.querySelector ? root.querySelector(sel) : null;
+    if (aceEl) break;
+  }
+
+  if (!aceEl) return null;
+
+  const editor =
+    aceEl.env?.editor ||
+    aceEl._editor ||
+    aceEl.editor ||
+    (win?.ace && typeof win.ace.edit === "function" ? win.ace.edit(aceEl) : null);
+
+  if (!editor) return null;
+
+  const session = editor.getSession ? editor.getSession() : editor.session;
+  if (!session || typeof session.getValue !== "function") return null;
+
+  return { aceEl, editor, session };
+}
+
+export function parseReadonlyMarkers(session) {
+  if (!session || typeof session.getLength !== "function") {
+    return { markers: [], totalRows: 0 };
+  }
+
+  const totalRows = session.getLength();
+  const frontMarkers = (typeof session.getMarkers === "function" ? session.getMarkers(true) : null) || {};
+  const backMarkers = (typeof session.getMarkers === "function" ? session.getMarkers(false) : null) || {};
+  const defaultMarkers = (typeof session.getMarkers === "function" ? session.getMarkers() : null) || {};
+  const rawFront = session.$frontMarkers || {};
+  const rawBack = session.$backMarkers || {};
+  const rawMarkers = session.markers || {};
+
+  const allMarkers = {
+    ...defaultMarkers,
+    ...rawBack,
+    ...backMarkers,
+    ...rawFront,
+    ...frontMarkers,
+    ...rawMarkers,
+  };
+
+  const isReadonlyMarker = (m) => {
+    if (!m) return false;
+    const clazz = typeof m.clazz === "string" ? m.clazz : "";
+    const type = typeof m.type === "string" ? m.type : "";
+    return (
+      /(readonly|read-only|protected|locked)/i.test(clazz) ||
+      /(readonly|read-only|protected|locked)/i.test(type) ||
+      Boolean(m.readonly || m.readOnly || m.isReadonly || m.isReadOnly)
+    );
+  };
+
+  const markers = Object.values(allMarkers).filter(isReadonlyMarker);
+  return { markers, totalRows };
+}
+
+export function computeProtectedRegions(session) {
+  const { markers, totalRows } = parseReadonlyMarkers(session);
+  const getLastCol = (row) => {
+    if (row < 0 || row >= totalRows) return 0;
+    return typeof session.getLine === "function" ? (session.getLine(row) || "").length : 0;
+  };
+
+  if (markers.length === 0) {
+    const lastRow = Math.max(0, totalRows - 1);
+    const fullValue = typeof session.getValue === "function" ? session.getValue() : "";
+    return {
+      hasPrefix: false,
+      hasSuffix: false,
+      prefixCode: null,
+      suffixCode: null,
+      currentCode: fullValue,
+      fullCode: fullValue,
+      prefixRange: null,
+      suffixRange: null,
+      editableRange: {
+        start: { row: 0, column: 0 },
+        end: { row: lastRow, column: getLastCol(lastRow) },
+      },
+      isGuarded: false,
+      isAmbiguous: false,
+    };
+  }
+
+  const markerRowSets = [];
+  const allReadonlyRows = new Set();
+
+  for (const m of markers) {
+    const range = m.range;
+    const startRow = Math.max(0, range?.start?.row ?? m.startRow ?? 0);
+    let endRow = Math.max(startRow, range?.end?.row ?? m.endRow ?? startRow);
+    const endCol = range?.end?.column ?? (m.endRow !== undefined && !range ? 1 : 0);
+
+    if (endCol === 0 && endRow > startRow) {
+      endRow = endRow - 1;
+    }
+
+    const rows = [];
+    for (let r = startRow; r <= endRow; r++) {
+      if (r < totalRows) {
+        rows.push(r);
+        allReadonlyRows.add(r);
+      }
+    }
+    if (rows.length > 0) {
+      markerRowSets.push({ marker: m, rows });
+    }
+  }
+
+  // 1. Prefix: contiguous from row 0 upwards
+  let prefixEndRow = -1;
+  let advancedPrefix = true;
+  while (advancedPrefix) {
+    advancedPrefix = false;
+    for (const item of markerRowSets) {
+      const minRow = Math.min(...item.rows);
+      const maxRow = Math.max(...item.rows);
+      if (minRow <= prefixEndRow + 1 && maxRow > prefixEndRow) {
+        prefixEndRow = maxRow;
+        advancedPrefix = true;
+      }
+    }
+  }
+
+  // 2. Suffix: contiguous from totalRows - 1 downwards
+  let suffixStartRow = totalRows;
+  let advancedSuffix = true;
+  while (advancedSuffix) {
+    advancedSuffix = false;
+    for (const item of markerRowSets) {
+      const minRow = Math.min(...item.rows);
+      const maxRow = Math.max(...item.rows);
+      if (maxRow >= suffixStartRow - 1 && minRow < suffixStartRow) {
+        if (minRow > prefixEndRow || (markerRowSets.length > 1 && item.rows[0] > 0)) {
+          suffixStartRow = minRow;
+          advancedSuffix = true;
+        }
+      }
+    }
+  }
+
+  if (markerRowSets.length === 1 && prefixEndRow === totalRows - 1) {
+    suffixStartRow = totalRows;
+  }
+
+  const hasPrefix = prefixEndRow >= 0;
+  const hasSuffix =
+    suffixStartRow < totalRows &&
+    (suffixStartRow > prefixEndRow || (markerRowSets.length > 1 && suffixStartRow >= prefixEndRow));
+
+  let isAmbiguous = false;
+  for (let r = prefixEndRow + 1; r < suffixStartRow; r++) {
+    if (allReadonlyRows.has(r)) {
+      isAmbiguous = true;
+      break;
+    }
+  }
+
+  let editStartRow = hasPrefix ? prefixEndRow + 1 : 0;
+  let editEndRow = hasSuffix ? suffixStartRow - 1 : Math.max(0, totalRows - 1);
+
+  if (editStartRow > editEndRow) {
+    editStartRow = Math.min(editStartRow, Math.max(0, totalRows - 1));
+    editEndRow = editStartRow;
+  }
+
+  const prefixCode =
+    hasPrefix && typeof session.getLines === "function"
+      ? session.getLines(0, prefixEndRow).join("\n")
+      : null;
+
+  const suffixCode =
+    hasSuffix && typeof session.getLines === "function"
+      ? session.getLines(suffixStartRow, totalRows - 1).join("\n")
+      : null;
+
+  const currentCode =
+    editStartRow <= editEndRow && typeof session.getLines === "function"
+      ? session.getLines(editStartRow, editEndRow).join("\n")
+      : "";
+
+  const fullCode = typeof session.getValue === "function" ? session.getValue() : "";
+
+  return {
+    hasPrefix,
+    hasSuffix,
+    prefixCode,
+    suffixCode,
+    currentCode,
+    fullCode,
+    prefixRange: hasPrefix
+      ? { start: { row: 0, column: 0 }, end: { row: prefixEndRow, column: getLastCol(prefixEndRow) } }
+      : null,
+    suffixRange: hasSuffix
+      ? { start: { row: suffixStartRow, column: 0 }, end: { row: totalRows - 1, column: getLastCol(totalRows - 1) } }
+      : null,
+    editableRange: {
+      start: { row: editStartRow, column: 0 },
+      end: { row: editEndRow, column: getLastCol(editEndRow) },
+    },
+    isGuarded: hasPrefix || hasSuffix,
+    isAmbiguous,
+  };
+}
+
+export function createRange(session, start, end, win = typeof window !== "undefined" ? window : globalThis) {
+  const RangeCtor =
+    session?.getSelection?.()?.getRange?.()?.constructor ||
+    win?.ace?.Range ||
+    null;
+
+  if (RangeCtor) {
+    try {
+      return new RangeCtor(start.row, start.column, end.row, end.column);
+    } catch {}
+  }
+
+  return {
+    start: { row: start.row, column: start.column },
+    end: { row: end.row, column: end.column },
+  };
+}
+
+export function notifyDomChange(container) {
+  if (!container || typeof container.dispatchEvent !== "function") return;
+  try {
+    const textarea = container.querySelector("textarea.ace_text-input, textarea") || container;
+    textarea.dispatchEvent(new Event("input", { bubbles: true, cancelable: true }));
+    textarea.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
+  } catch {}
+}
+
+/**
+ * Privileged main-world write function.
+ * Must NOT be attached to window or exposed to untrusted page scripts.
+ * 
+ * Verifies:
+ * - Current assignment identity
+ * - Current question identity
+ * - Current editor identity
+ * - Dynamic resolution of protected regions
+ * - Range-bounded replacement
+ * - Post-write verification of prefix, suffix, and editable result
+ * 
+ * @param {object} payload
+ * @param {Window|object} [win]
+ * @returns {{ ok: boolean, data?: object, error?: string, errorCode?: string }}
+ */
+export function executePrivilegedWrite(payload, win = typeof window !== "undefined" ? window : globalThis) {
+  if (!payload || typeof payload !== "object" || typeof payload.code !== "string") {
+    return {
+      ok: false,
+      error: "Code payload must be an object with a string 'code' property.",
+      errorCode: "EDITABLE_RANGE_INVALID",
+    };
+  }
+
+  const root = win?.document || (win?.nodeType === 9 ? win : (win?.ownerDocument || null));
+  if (!root) {
+    return {
+      ok: false,
+      error: "Target document or window unavailable.",
+      errorCode: "EDITOR_NOT_READY",
+    };
+  }
+
+  const resolved = resolveLiveAce(root, win);
+  if (!resolved) {
+    return {
+      ok: false,
+      error: "Ace editor is not mounted or session is unavailable.",
+      errorCode: "EDITOR_NOT_READY",
+    };
+  }
+
+  const { aceEl, editor, session } = resolved;
+  const currentId = editor.id ? `editor-${editor.id}` : (aceEl.id ? `container-${aceEl.id}` : "ace-editor");
+
+  // Invariant 1: current editor identity
+  if (payload.editorIdentity && payload.editorIdentity !== currentId) {
+    return {
+      ok: false,
+      error: `Editor identity mismatch: expected "${payload.editorIdentity}", found "${currentId}".`,
+      errorCode: "EDITOR_IDENTITY_CHANGED",
+    };
+  }
+
+  // Invariant 2: current question identity
+  if (payload.questionNumber !== undefined && payload.questionNumber !== null) {
+    const activeChip = root.querySelector?.("div.chips button.chip.is-active, div.chips button.chip[aria-selected='true'], button.chip.is-active");
+    const activeNum = activeChip ? parseInt((activeChip.textContent || "").trim(), 10) : null;
+    if (activeNum !== null && !isNaN(activeNum) && activeNum !== payload.questionNumber) {
+      return {
+        ok: false,
+        error: `Question identity mismatch: expected Question ${payload.questionNumber}, but active question is Question ${activeNum}.`,
+        errorCode: "QUESTION_IDENTITY_CHANGED",
+      };
+    }
+  }
+
+  // Invariant 3: current assignment identity
+  if (payload.assignmentTitle) {
+    const titleEl = root.querySelector?.("app-title-bar .title, .title-bar h1, header h1, .top-bar-title");
+    const titleText = (titleEl?.textContent || "").trim();
+    if (titleText && !titleText.toLowerCase().includes(payload.assignmentTitle.toLowerCase())) {
+      return {
+        ok: false,
+        error: `Assignment identity mismatch: expected "${payload.assignmentTitle}", found "${titleText}".`,
+        errorCode: "ASSIGNMENT_IDENTITY_CHANGED",
+      };
+    }
+  }
+
+  // Invariant 4: recompute protected regions and editable range dynamically
+  const regions = computeProtectedRegions(session);
+  if (regions.isAmbiguous) {
+    return {
+      ok: false,
+      error: "Ambiguous or fragmented protected regions detected. Aborting write to prevent scaffold corruption.",
+      errorCode: "PROTECTED_REGION_UNKNOWN",
+    };
+  }
+
+  const originalPrefix = regions.prefixCode;
+  const originalSuffix = regions.suffixCode;
+  const editableRange = regions.editableRange;
+
+  try {
+    const aceRange = createRange(session, editableRange.start, editableRange.end, win);
+    session.replace(aceRange, payload.code);
+    notifyDomChange(aceEl);
+
+    // Invariant 5: verify prefix, suffix, and editable result
+    const postRegions = computeProtectedRegions(session);
+    if (originalPrefix !== null && postRegions.prefixCode !== originalPrefix) {
+      return {
+        ok: false,
+        error: "Protected prefix was altered during write operation.",
+        errorCode: "CODE_WRITE_VERIFICATION_FAILED",
+      };
+    }
+    if (originalSuffix !== null && postRegions.suffixCode !== originalSuffix) {
+      return {
+        ok: false,
+        error: "Protected suffix was altered during write operation.",
+        errorCode: "CODE_WRITE_VERIFICATION_FAILED",
+      };
+    }
+    if (postRegions.currentCode !== payload.code) {
+      return {
+        ok: false,
+        error: "Editable code does not match requested code.",
+        errorCode: "CODE_WRITE_VERIFICATION_FAILED",
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        code: postRegions.currentCode,
+        verified: true,
+        editorIdentity: currentId,
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err.message || "Failed to replace editable code range.",
+      errorCode: "CODE_WRITE_FAILED",
+    };
+  }
+}
+
+/**
+ * Self-contained Main-World Bridge Controller.
+ * Registers event listeners for READ-ONLY inspection ('ping', 'getSnapshot').
+ * Disallows arbitrary writes from page context.
+ */
+export function initPageBridge(win = typeof window !== "undefined" ? window : globalThis) {
+  if (!win || win.__ACADRIX_PAGE_BRIDGE_INITIALIZED__) {
+    return;
+  }
+  win.__ACADRIX_PAGE_BRIDGE_INITIALIZED__ = true;
+
+  const seenRequestIds = new Set();
+  const MAX_SEEN_REQUEST_IDS = 1000;
+
+  function trackRequestId(id) {
+    if (seenRequestIds.size >= MAX_SEEN_REQUEST_IDS) {
+      const first = seenRequestIds.values().next().value;
+      seenRequestIds.delete(first);
+    }
+    seenRequestIds.add(id);
+  }
+
+  function handlePing() {
+    const resolved = resolveLiveAce(win.document, win);
+    return {
+      ok: true,
+      data: {
+        isReady: Boolean(resolved),
+        hasAceDom: Boolean(win.document?.querySelector("app-pa-code-editor .ace_editor, app-code-editor .ace_editor, .ace_editor")),
+        hasAceInstance: Boolean(resolved),
+      },
+    };
+  }
+
+  function handleGetSnapshot() {
+    const resolved = resolveLiveAce(win.document, win);
+    if (!resolved) {
+      return {
+        ok: false,
+        error: "Ace editor is not mounted or session is unavailable.",
+        errorCode: "EDITOR_NOT_READY",
+      };
+    }
+
+    const { aceEl, editor, session } = resolved;
+    const regions = computeProtectedRegions(session);
+    const mode = session.getMode ? session.getMode()?.$id?.replace(/^ace\/mode\//, "") : null;
+    const editorId = editor.id ? `editor-${editor.id}` : (aceEl.id ? `container-${aceEl.id}` : "ace-editor");
+
+    return {
+      ok: true,
+      data: {
+        editorIdentity: editorId,
+        language: mode || "javascript",
+        fullCode: regions.fullCode,
+        currentCode: regions.currentCode,
+        prefixCode: regions.prefixCode,
+        suffixCode: regions.suffixCode,
+        hasPrefixCode: regions.hasPrefix,
+        hasSuffixCode: regions.hasSuffix,
+        isGuarded: regions.isGuarded,
+        hasProtectedRegions: regions.isGuarded,
+        protectedRegions: {
+          hasPrefix: regions.hasPrefix,
+          hasSuffix: regions.hasSuffix,
+          prefixRange: regions.prefixRange,
+          suffixRange: regions.suffixRange,
+          isGuarded: regions.isGuarded,
+          isAmbiguous: regions.isAmbiguous,
+        },
+        totalLines: session.getLength(),
+        isReady: true,
+      },
+    };
+  }
+
+  function processRequest(req) {
+    if (!req || typeof req !== "object") {
+      return {
+        source: "acadrix-page-bridge",
+        channel: BRIDGE_CHANNEL,
+        version: BRIDGE_PROTOCOL_VERSION,
+        requestId: null,
+        ok: false,
+        data: null,
+        error: "Malformed request payload: expected an object.",
+        errorCode: "MALFORMED_REQUEST",
+      };
+    }
+
+    const { requestId, operation, source, channel, version } = req;
+
+    if (!requestId || typeof requestId !== "string" || !requestId.trim()) {
+      return {
+        source: "acadrix-page-bridge",
+        channel: BRIDGE_CHANNEL,
+        version: BRIDGE_PROTOCOL_VERSION,
+        requestId: null,
+        ok: false,
+        data: null,
+        error: "Missing or invalid requestId.",
+        errorCode: "MISSING_REQUEST_ID",
+      };
+    }
+
+    let result = {
+      source: "acadrix-page-bridge",
+      channel: BRIDGE_CHANNEL,
+      version: BRIDGE_PROTOCOL_VERSION,
+      requestId,
+      ok: false,
+      data: null,
+      error: null,
+      errorCode: null,
+    };
+
+    if (source !== "acadrix" || channel !== BRIDGE_CHANNEL) {
+      result.error = "Invalid message source or channel.";
+      result.errorCode = "MALFORMED_REQUEST";
+      return result;
+    }
+
+    if (version !== BRIDGE_PROTOCOL_VERSION) {
+      result.error = `Unsupported protocol version: ${version}. Expected ${BRIDGE_PROTOCOL_VERSION}.`;
+      result.errorCode = "UNSUPPORTED_VERSION";
+      return result;
+    }
+
+    if (seenRequestIds.has(requestId)) {
+      result.error = `Duplicate requestId rejected: ${requestId}.`;
+      result.errorCode = "DUPLICATE_REQUEST_ID";
+      return result;
+    }
+    trackRequestId(requestId);
+
+    if (operation === "getSnapshot") {
+      const snap = handleGetSnapshot();
+      result.ok = snap.ok;
+      result.data = snap.data || null;
+      result.error = snap.error || null;
+      result.errorCode = snap.errorCode || null;
+    } else if (operation === "ping") {
+      const ping = handlePing();
+      result.ok = ping.ok;
+      result.data = ping.data || null;
+    } else if (operation === "writeCode") {
+      // Hardened security invariant: writeCode is strictly disallowed over unauthenticated page CustomEvents.
+      result.error = "writeCode is not permitted over the unauthenticated page CustomEvent channel.";
+      result.errorCode = "UNAUTHORIZED_OPERATION";
+    } else {
+      result.error = `Unknown operation: "${operation}"`;
+      result.errorCode = "UNKNOWN_OPERATION";
+    }
+
+    return result;
+  }
+
+  // Listener for CustomEvent messaging (READ-ONLY)
+  win.addEventListener(BRIDGE_REQUEST_EVENT, (evt) => {
+    const response = processRequest(evt?.detail);
+    if (response) {
+      win.dispatchEvent(new CustomEvent(BRIDGE_RESPONSE_EVENT, { detail: response }));
+    }
+  });
+
+  // Fallback listener for postMessage (READ-ONLY)
+  win.addEventListener("message", (evt) => {
+    if (evt.source !== win || !evt.data || evt.data.source !== "acadrix") return;
+    const response = processRequest(evt.data);
+    if (response) {
+      win.postMessage(response, "*");
+    }
+  });
+}
+
+// Self-initialize if running directly in page environment
+if (typeof window !== "undefined") {
+  initPageBridge(window);
+}

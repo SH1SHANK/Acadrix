@@ -2,15 +2,17 @@ name: CI Verification
 
 on:
   push:
-    branches: [main, modular-architecture]
+    branches: [main]
   pull_request:
-    branches: [main, modular-architecture]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  validate:
-    name: Build, Lint & Test Extension
+  build-and-test:
+    name: Build and test extension
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,30 +21,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install locked dependencies
+        run: npm ci
 
-      - name: Validate manifest JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('extension/manifest.json','utf8'))"
+      - name: Validate extension manifest
+        run: node -e "JSON.parse(require('node:fs').readFileSync('extension/manifest.json', 'utf8'))"
 
-      - name: Build & Assemble Targets
+      - name: Build extension and bookmarklet
         run: npm run build
 
-      - name: Verify Code Syntax
+      - name: Check generated JavaScript syntax
         run: npm run check
 
-      - name: Check Bookmarklet Consistency
+      - name: Check generated bookmarklet files are current
         run: git diff --exit-code -- bookmarklet/bookmarklet.txt bookmarklet/install.html
 
-      - name: Run Test Suite
+      - name: Run deterministic test suite
         run: npm test
 
-      - name: Zip Chrome Extension Bundle
+      - name: Package extension artifact
         run: cd build && zip -r -FS ../acadrix-chrome-extension.zip . -x '*.DS_Store'
 
-      - name: Upload Extension Artifact
+      - name: Upload extension artifact
         uses: actions/upload-artifact@v4
         with:
           name: acadrix-chrome-extension
           path: acadrix-chrome-extension.zip
+          if-no-files-found: error

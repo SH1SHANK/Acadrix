@@ -108,26 +108,20 @@ export function formatKolkataDeadline(iso) {
 }
 
 /**
- * Deterministically resolves assessment deadline following the exact source precedence:
- * Priority 1: Fresh IITM Portal evidence
- * Priority 2: Existing Local canonical data
- * Priority 3: Supabase academic data
- * Priority 4: UNKNOWN
+ * Deterministically resolves assessment deadline from canonical academic event data.
+ * Authoritative source: Supabase public.academic_events.
  *
- * @param {object} assessment
+ * @param {object} event Academic event or assessment record
  * @param {object} [options]
- * @param {object|null} [options.localAssessment] Previously captured canonical record
- * @param {Array<object>} [options.supabaseRecords] Records fetched from Supabase
- * @param {Date|number|string} [options.now]
  * @returns {{
  *   deadlineIso: string|null,
  *   deadlineRaw: string|null,
- *   source: "PORTAL"|"LOCAL"|"SUPABASE"|"UNKNOWN",
+ *   source: "SUPABASE"|"LOCAL"|"UNKNOWN",
  *   verifiedAt: string|null,
  * }}
  */
-export function resolveDeadline(assessment, { localAssessment = null, supabaseRecords = [], now = new Date() } = {}) {
-  if (!assessment) {
+export function resolveDeadline(event, options = {}) {
+  if (!event) {
     return {
       deadlineIso: null,
       deadlineRaw: null,
@@ -136,68 +130,29 @@ export function resolveDeadline(assessment, { localAssessment = null, supabaseRe
     };
   }
 
-  const nowDate = now instanceof Date ? now : new Date(now);
-  const nowIso = nowDate.toISOString();
-  const isValidDate = (iso) => Boolean(iso && !isNaN(new Date(iso).getTime()));
+  const rawIso =
+    event.deadlineIso ||
+    event.endTime ||
+    event.end_time ||
+    event.dueDate ||
+    (event.eventDate ? `${event.eventDate}T18:29:00.000Z` : null);
 
-  // ── Priority 1 — IITM Portal Evidence ─────────────────────────────────────
-  // If the current extraction provides an explicit, valid deadline from the portal
-  const isPortalSource =
-    assessment.deadlineSource === DeadlineSource.PORTAL ||
-    (assessment.source !== "supabase_deadlines" &&
-      assessment.source !== "supabase" &&
-      assessment.deadlineSource !== DeadlineSource.SUPABASE &&
-      (assessment.source === "grades" || assessment.source === "start"));
-
-  const portalDeadlineIso = assessment.dueDate || assessment.deadlineIso;
-  if (isPortalSource && isValidDate(portalDeadlineIso)) {
+  if (rawIso && !isNaN(new Date(rawIso).getTime())) {
     return {
-      deadlineIso: new Date(portalDeadlineIso).toISOString(),
-      deadlineRaw: assessment.dueDateText || assessment.deadlineRaw || null,
-      source: DeadlineSource.PORTAL,
-      verifiedAt: assessment.deadlineVerifiedAt || assessment.submissionCheckedAt || assessment.capturedAt || nowIso,
+      deadlineIso: new Date(rawIso).toISOString(),
+      deadlineRaw: event.timeStr || event.time_str || event.dueDateText || event.deadlineRaw || null,
+      source: DeadlineSource.SUPABASE,
+      verifiedAt: event.fetchedAt || event.deadlineVerifiedAt || new Date().toISOString(),
     };
   }
+  // 2. Fallback matching against provided Supabase records
+  if (Array.isArray(options.supabaseRecords) && options.supabaseRecords.length > 0) {
+    const termId = event.termId;
+    const courseCode = event.courseCode;
+    const extId = event.externalAssignmentId || event.assignmentId || event.id;
+    const canonicalId = event.canonicalAssessmentId;
 
-  // ── Priority 2 — Existing Local Canonical Data ────────────────────────────
-  // If the current portal page omitted a deadline, but local canonical store has a valid previously captured deadline
-  if (localAssessment) {
-    const localDeadlineIso = localAssessment.dueDate || localAssessment.deadlineIso;
-    if (isValidDate(localDeadlineIso)) {
-      const localSource =
-        localAssessment.deadlineSource === DeadlineSource.SUPABASE || localAssessment.source === "supabase_deadlines"
-          ? DeadlineSource.SUPABASE
-          : (localAssessment.deadlineSource || DeadlineSource.LOCAL);
-
-      return {
-        deadlineIso: new Date(localDeadlineIso).toISOString(),
-        deadlineRaw: localAssessment.dueDateText || localAssessment.deadlineRaw || null,
-        source: localSource,
-        verifiedAt: localAssessment.deadlineVerifiedAt || localAssessment.submissionCheckedAt || localAssessment.capturedAt || null,
-      };
-    }
-  }
-
-  // Also check if assessment itself has a local deadline if localAssessment wasn't explicitly passed separately
-  if (isValidDate(portalDeadlineIso) && !isPortalSource) {
-    return {
-      deadlineIso: new Date(portalDeadlineIso).toISOString(),
-      deadlineRaw: assessment.dueDateText || assessment.deadlineRaw || null,
-      source: assessment.deadlineSource || DeadlineSource.LOCAL,
-      verifiedAt: assessment.deadlineVerifiedAt || assessment.submissionCheckedAt || assessment.capturedAt || null,
-    };
-  }
-
-  // ── Priority 3 — Supabase Academic Data ───────────────────────────────────
-  // Query/check Supabase records when neither portal nor local has a deadline
-  if (Array.isArray(supabaseRecords) && supabaseRecords.length > 0) {
-    const termId = assessment.termId;
-    const courseCode = assessment.courseCode;
-    const extId = assessment.externalAssignmentId || assessment.assignmentId;
-    const canonicalId = assessment.canonicalAssessmentId;
-    const titleNorm = String(assessment.title || "").trim().toLowerCase();
-
-    const matched = supabaseRecords.find((rec) => {
+    const matched = options.supabaseRecords.find((rec) => {
       if (!rec) return false;
       const recTerm = rec.termId || rec.term_id;
       const recCourse = rec.courseCode || rec.course_code;
@@ -207,41 +162,26 @@ export function resolveDeadline(assessment, { localAssessment = null, supabaseRe
       if (courseCode && recCourse && String(courseCode).toLowerCase() !== String(recCourse).toLowerCase()) {
         return false;
       }
-
-      const recExtId = rec.externalAssignmentId || rec.external_assignment_id;
+      const recExtId = rec.externalAssignmentId || rec.external_assignment_id || rec.id;
       const recCanonId = rec.canonicalAssessmentId || rec.canonical_assessment_id;
-
-      // 1. Stable externalAssignmentId match
-      if (extId && recExtId && String(extId) === String(recExtId)) {
-        return true;
-      }
-      // 2. CanonicalAssessmentId match
-      if (canonicalId && recCanonId && String(canonicalId) === String(recCanonId)) {
-        return true;
-      }
-      // 3. Normalized module + title within the same term and course
-      if (titleNorm && rec.title && String(rec.title).trim().toLowerCase() === titleNorm) {
-        if (!assessment.module || !rec.module || String(assessment.module).toLowerCase() === String(rec.module).toLowerCase()) {
-          return true;
-        }
-      }
+      if (extId && recExtId && String(extId) === String(recExtId)) return true;
+      if (canonicalId && recCanonId && String(canonicalId) === String(recCanonId)) return true;
       return false;
     });
 
     if (matched) {
-      const sbDeadline = matched.dueDate || matched.due_date || matched.deadlineIso;
-      if (isValidDate(sbDeadline)) {
+      const matchIso = matched.dueDate || matched.due_date || matched.deadlineIso || matched.end_time;
+      if (matchIso && !isNaN(new Date(matchIso).getTime())) {
         return {
-          deadlineIso: new Date(sbDeadline).toISOString(),
-          deadlineRaw: matched.dueDateText || matched.due_date_text || matched.deadlineRaw || null,
+          deadlineIso: new Date(matchIso).toISOString(),
+          deadlineRaw: matched.dueDateText || matched.timeStr || null,
           source: DeadlineSource.SUPABASE,
-          verifiedAt: matched.deadlineVerifiedAt || nowIso,
+          verifiedAt: new Date().toISOString(),
         };
       }
     }
   }
 
-  // ── Priority 4 — UNKNOWN / No Deadline ────────────────────────────────────
   return {
     deadlineIso: null,
     deadlineRaw: null,
@@ -427,11 +367,11 @@ export function determineActionableNotification({
     // Future deadline windows in order of urgency
     if (diffMs <= 6 * 3600 * 1000 && preferences.notify6Hours !== false) {
       category = NotificationCategory.WINDOW_6_HOURS;
-    } else if (isDueToday && preferences.notifyDueToday !== false && submissionStatus !== SubmissionStatus.UNKNOWN) {
+    } else if (isDueToday && preferences.notifyDueToday !== false) {
       category = NotificationCategory.WINDOW_DUE_TODAY;
     } else if (diffMs <= 24 * 3600 * 1000 && preferences.notify24Hours !== false) {
       category = NotificationCategory.WINDOW_24_HOURS;
-    } else if (diffMs <= 72 * 3600 * 1000 && preferences.notify3Days !== false && submissionStatus !== SubmissionStatus.UNKNOWN) {
+    } else if (diffMs <= 72 * 3600 * 1000 && preferences.notify3Days !== false) {
       category = NotificationCategory.WINDOW_3_DAYS;
     } else {
       return null;
@@ -468,21 +408,21 @@ export function determineActionableNotification({
   let notifTitle = "";
   let notifBody = "";
 
+  const statusNote =
+    submissionStatus === SubmissionStatus.UNKNOWN
+      ? " Submission status could not be verified."
+      : (submissionStatus === SubmissionStatus.NOT_SUBMITTED ? " Not submitted." : "");
+
   switch (category) {
     case NotificationCategory.WINDOW_6_HOURS:
       notifTitle = "Assignment Due Soon";
-      notifBody = `${coursePrefix}${title} is due in less than 6 hours (${formattedTime}). ${
-        submissionStatus === SubmissionStatus.UNKNOWN ? "Submission status could not be verified." : "Not submitted."
-      }`;
+      notifBody = `${coursePrefix}${title} is due in less than 6 hours (${formattedTime}).${statusNote}`;
       break;
 
     case NotificationCategory.WINDOW_24_HOURS:
       notifTitle = "Assignment Due Tomorrow";
-      notifBody = `${coursePrefix}${title} is due tomorrow at ${formattedTime}. ${
-        submissionStatus === SubmissionStatus.UNKNOWN ? "Submission status could not be verified." : "Not submitted."
-      }`;
+      notifBody = `${coursePrefix}${title} is due tomorrow at ${formattedTime}.${statusNote}`;
       break;
-
     case NotificationCategory.WINDOW_DUE_TODAY:
       notifTitle = "Assignment Due Today";
       notifBody = `${coursePrefix}${title} is due today at ${formattedTime}.`;
@@ -495,9 +435,8 @@ export function determineActionableNotification({
 
     case NotificationCategory.WINDOW_OVERDUE:
       notifTitle = "Assignment Overdue";
-      notifBody = `${coursePrefix}${title} passed its deadline (${formattedTime}). Not submitted.`;
+      notifBody = `${coursePrefix}${title} passed its deadline (${formattedTime}).`;
       break;
-
     default:
       return null;
   }

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IITM Programming Assignment Fixture</title>
+</head>
+<body>
+  <div class="unit-view">
+    <header class="mobile-header">
+      <div class="title-group">
+        <span class="title">JavaScript Graded Assignment - Simple and Compound Interest</span>
+        <span class="parent-title">Week 1</span>
+      </div>
+      <app-submission-timer class="mobile-due-pill">
+        <div class="is-compact is-warning submission-timer">
+          <span class="due-label">11th Oct</span>
+        </div>
+      </app-submission-timer>
+    </header>
+
+    <app-title-bar>
+      <div class="title-bar size-small">
+        <div class="left-content">
+          <div class="left-actions">
+            <button class="btn btn-secondary btn-icon-only" type="button" aria-label="Back to start page"></button>
+          </div>
+        </div>
+        <div class="center-content">
+          <div class="title-content">
+            <div class="title-row">
+              <h1 class="title size-small">JavaScript Graded Assignment - Simple and Compound Interest</h1>
+            </div>
+            <nav aria-label="Breadcrumb" class="breadcrumb">
+              <span class="breadcrumb-item current" aria-current="page">Week 1</span>
+            </nav>
+          </div>
+        </div>
+        <div class="right-content">
+          <app-submission-timer>
+            <div class="is-full is-warning submission-timer">
+              <span class="due-label">
+                <span>Due Oct 11, 2026</span>
+                <span class="separator"></span>
+                <span>11:59 PM IST</span>
+              </span>
+            </div>
+          </app-submission-timer>
+        </div>
+      </div>
+    </app-title-bar>
+
+    <div class="unit-body">
+      <app-programming-assignment-view>
+        <div class="programming-assignment-view">
+          <div class="question-layout">
+            <div class="column" style="flex: 0 0 calc(50% - 6px);">
+              <div class="cell has-default" style="flex: 1 1 0px;">
+                <div class="tabs-pane">
+                  <div class="tab-bar-wrapper">
+                    <app-tab-bar variant="reverse-filled">
+                      <div role="tablist" class="tab-bar-wrapper primary reverse-filled">
+                        <div class="tab-scroller">
+                          <button role="tab" type="button" class="tab-item active" aria-selected="true">
+                            <span class="tab-label">Question</span>
+                          </button>
+                          <button role="tab" type="button" class="tab-item" aria-selected="false">
+                            <span class="tab-label">Test Cases</span>
+                          </button>
+                          <button role="tab" type="button" class="tab-item disabled" disabled="" aria-selected="false" aria-disabled="true">
+                            <span class="tab-label">Solution</span>
+                          </button>
+                        </div>
+                      </div>
+                    </app-tab-bar>
+                  </div>
+                  <div class="tabs-content">
+                    <app-pa-question class="pa-question-active">
+                      <div class="pa-question">
+                        <div class="backend-html" style="font-size: 14px;">
+                          <p>Write the definitions of the functions given below with the help of given information.</p>
+                          <p>Calculate simple interest and compound interest according to standard banking formulas.</p>
+                          <figure>
+                            <img src="/assets/interest_formula.png" alt="Interest Calculation Diagram" width="400" height="200">
+                            <figcaption>Figure 1: Interest Rate Schedule</figcaption>
+                          </figure>
+                          <div class="example">
+                            <p class="title">Example 1</p>
+                            <pre class="input">20000 1 2020-12-27 2021-08-27</pre>
+                            <pre class="output">48600 204452 320</pre>
+                            <div class="explanation">Floor interest values calculated across interval.</div>
+                          </div>
+                          <div class="constraints">
+                            <ul>
+                              <li>1000 &lt;= principal &lt;= 1000000</li>
+                              <li>Daily interest rate is non-negative</li>
+                            </ul>
+                          </div>
+                          <p class="return-instructions">Return only the completed, working code inside a single ```javascript code block.</p>
+                        </div>
+                    </app-pa-question>
+                    <app-pa-testcases class="pa-testcases" style="display: none;">
+                      <div class="pa-testcases">
+                        <div class="accordion-panel">
+                          <button type="button" class="accordion-header" aria-expanded="true" aria-controls="public-test-cases-content">
+                            <div class="header-main">
+                              <span class="header-title">Public Test Cases</span>
+                            </div>
+                          </button>
+                          <div class="accordion-content" id="public-test-cases-content">
+                            <div class="test-case-card">
+                              <div class="test-case-slider">
+                                <button class="test-case-pill is-selected" aria-selected="true">Case 1</button>
+                                <button class="test-case-pill" aria-selected="false">Case 2</button>
+                              </div>
+                              <div class="test-case-details">
+                                <div class="test-case-block">
+                                  <div class="title">Input</div>
+                                  <div class="content">20000
+1
+2020-12-27
+2021-08-27</div>
+                                </div>
+                                <div class="test-case-block">
+                                  <div class="title">Expected Output</div>
+                                  <div class="content">48600
+204452
+320</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </app-pa-testcases>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="vertical-divider"></div>
+
+            <div class="column" style="flex: 0 0 calc(50% - 6px);">
+              <div class="cells-area">
+                <div class="cell has-default" style="flex: 1 1 0px;">
+                  <div class="submission-pane">
+                    <app-pa-code-editor>
+                      <div class="pa-code-editor">
+                        <div class="toolbar">
+                          <div class="language-input">
+                            <app-input-dropdown class="language-selection">
+                              <div class="dropdown is-disabled size-small">
+                                <div class="dropdown-wrapper">
+                                  <button type="button" aria-haspopup="listbox" class="select-trigger" id="app-dropdown-0" disabled="">
+                                    <span class="current-value">Javascript</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </app-input-dropdown>
+                          </div>
+                          <div class="toolbar-actions">
+                            <button class="btn btn-text btn-icon-only" type="button" aria-label="More options"></button>
+                          </div>
+                        </div>
+
+                        <div class="editor-pane">
+                          <app-code-editor style="display: block;" class="ng-untouched ng-pristine ng-valid">
+                            <div class="code-editor fill-parent">
+                              <div class="editor-wrapper">
+                                <div class="ace-container ace_editor ace_hidpi ace-github-dark ace_dark" id="app-code-editor-0">
+                                  <textarea class="ace_text-input" wrap="off" role="textbox" aria-label="Cursor at row 1"></textarea>
+                                  <div class="ace_gutter" aria-hidden="true" style="left: 0px; width: 48px;"></div>
+                                  <div class="ace_scroller">
+                                    <div class="ace_content">
+                                      <div class="ace_layer ace_marker-layer">
+                                        <div class="readonly_line" style="height: 36px; top: 0px; left: 0px; right: 0px;"></div>
+                                        <div class="readonly_line" style="height: 36px; top: 108px; left: 0px; right: 0px;"></div>
+                                      </div>
+                                      <div class="ace_layer ace_text-layer">
+                                        <div class="ace_line"><span class="ace_comment">/* Protected Prefix: IITM Header */</span></div>
+                                        <div class="ace_line"><span class="ace_comment">/* DO NOT MODIFY */</span></div>
+                                        <div class="ace_line"><span class="ace_keyword">function</span> <span class="ace_identifier">calculateSimpleInterest</span>(p, r, t) {</div>
+                                        <div class="ace_line">  <span class="ace_keyword">return</span> (p * r * t) / 100;</div>
+                                        <div class="ace_line">}</div>
+                                        <div class="ace_line"><span class="ace_comment">/* Protected Suffix: IITM Runner */</span></div>
+                                        <div class="ace_line"><span class="ace_comment">/* DO NOT MODIFY */</span></div>
+                                      </div>
+                                    </div>
+                                </div>
+                              </div>
+                            </div>
+                          </app-code-editor>
+                        </div>
+                      </div>
+                    </app-pa-code-editor>
+                  </div>
+                </div>
+              </div>
+
+              <div class="footer">
+                <div class="submission-toolbar">
+                  <div class="submission-actions">
+                    <button class="btn btn-ghost" type="button" aria-label="Run Code">
+                      <span class="ng-star-inserted">Run Code</span>
+                    </button>
+                    <button class="btn btn-gradient" type="button" aria-label="Submit">
+                      <span class="ng-star-inserted">Submit</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </app-programming-assignment-view>
+    </div>
+  </div>
+</body>
+</html>

@@ -7,12 +7,28 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node --check bookmarklet/bookmarklet-source.js && node --check build/run.js",
-    "test": "node scripts/verify-architecture.mjs && node scripts/test-fixtures.mjs && node scripts/test-traversal.mjs && node scripts/test-semantic-extraction.mjs && node scripts/test-markdown-exporter.mjs && node scripts/test-resource-engine.mjs && node scripts/test-pdf-exporter.mjs && node scripts/test-export-orchestration.mjs && node scripts/test-portal-decor.mjs && node scripts/test-browser-integration.mjs && node scripts/test-popup-runtime.mjs && node tests/test-prompt.mjs && node tests/test-parser.mjs && node tests/test-answer-review.mjs && node tests/test-notifications.mjs",
-    "test:browser": "node scripts/test-real-browser.mjs",
+    "test": "node scripts/verify-architecture.mjs && node scripts/test-fixtures.mjs && node scripts/test-traversal.mjs && node scripts/test-semantic-extraction.mjs && node scripts/test-markdown-exporter.mjs && node scripts/test-resource-engine.mjs && node scripts/test-pdf-exporter.mjs && node scripts/test-export-orchestration.mjs && node scripts/test-portal-decor.mjs && node scripts/test-browser-integration.mjs && node scripts/test-popup-runtime.mjs && node tests/test-prompt.mjs && node tests/test-parser.mjs && node tests/test-answer-review.mjs && node tests/test-notifications.mjs && node tests/test-document-pipeline.mjs && node tests/test-academic-architecture.mjs && node tests/test-programming-editor.mjs && node tests/test-programming-rich-export.mjs && node tests/test-programming-assignment.mjs",
+    "test:browser": "node scripts/test-real-browser.mjs && node scripts/test-real-browser-programming.mjs",
     "verify": "node build.mjs && git diff --exit-code -- bookmarklet/bookmarklet.txt bookmarklet/install.html && npm test"
   },
   "license": "MIT",
   "dependencies": {
-    "katex": "^0.19.0"
+    "katex": "^0.19.0",
+    "pdf-lib": "^1.17.1",
+    "pdfmake": "^0.3.11"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-java": "^6.0.2",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/legacy-modes": "^6.5.5",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.14",
+    "@lezer/highlight": "^1.2.5",
+    "esbuild": "^0.28.2"
   }
 }

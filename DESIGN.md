@@ -14,7 +14,7 @@ Canonical design language for Acadrix. This document is normative: implementers 
 2. **Three token tiers.** Brand → Semantic UI → Component. Components reference semantic tokens only; semantic tokens reference brand tokens. Components never reference brand tokens directly.
 3. **Shadow DOM first.** All UI lives inside a shadow root. Tokens are declared on `:host`. The host page's CSS must not affect Acadrix and Acadrix must not leak out.
 4. **Primitives over bespoke styling.** Build from a small set of primitives (`Button`, `IconButton`, `Input`, `Badge`, `Card`, `Surface`, `Overlay`). Components compose primitives; they do not restyle them.
-5. **No new dependencies.** Plain CSS custom properties and native elements. No CSS framework, no CSS-in-JS runtime, no icon font.
+5. **Dependencies by exception.** Prefer plain CSS custom properties and native elements; do not add UI frameworks, CSS-in-JS runtimes, or icon fonts. The programming Reader's explicitly specified CodeMirror 6 editing engine is an approved runtime dependency and must remain modular and ShadowRoot-scoped.
 6. **Native semantics first.** Use `<button>`, `<input>`, `<dialog>`-like patterns, and real headings before ARIA.
 7. **Units.** Use `px` for UI chrome. Do not use `rem`/`em` for layout inside the shadow root: `rem` resolves against the host page's root font size, which is unpredictable. Use `em` only for typographic spacing within content (e.g., paragraph margins).
 
@@ -191,6 +191,20 @@ State derivation (do not hand-pick per component):
 --acx-control-h-sm: 28px;  --acx-control-h-md: 36px;  --acx-control-h-lg: 44px;
 --acx-target-min: 32px;    /* fine pointer */  /* 44px under (pointer: coarse); see §9 */
 --acx-reader-measure: 68ch;
+--acx-textarea-min-h: 192px; /* answer import and other multiline inputs */
+
+/* Code editor */
+--acx-editor-min-height: 320px;
+--acx-editor-max-height: 480px;
+--acx-editor-font-size: 13px; /* adjustable from 12px to 20px */
+--acx-editor-font-size-min: 12px;
+--acx-editor-font-size-max: 20px;
+--acx-editor-line-height: 20px; /* recalculated with the selected font size */
+--acx-editor-tab-size: 4;
+--acx-editor-padding-block: 12px;
+--acx-editor-padding-inline: 16px;
+--acx-editor-gutter-width: 48px;
+--acx-editor-autocomplete-min-width: 180px;
 ```
 
 ### 3.4 Theme strategy
@@ -249,7 +263,10 @@ Native `<button>`. `--acx-text-ui`, weight 500, radius-md, 1px border.
 Square, `--acx-control-h-md` (36) visual min 32; 44 under coarse pointers. Icon 18px, stroke 1.5–2px, `currentColor`. Ghost style by default. **Requires `aria-label`** and a tooltip (`title` or custom) with shortcut in mono if one exists. Toggle variants use `aria-pressed` and the `selected` treatment.
 
 ### Input
-Native `<input>`/`<textarea>`/`<select>`. Fill `--acx-surface`, 1px `--acx-border-strong`, radius-md, height 36, `--acx-text-ui` weight 400. Placeholder `--acx-text-subtle`. Hover: border `--acx-text-subtle`. Focus: border `--acx-accent` + focus ring. Invalid: border `--acx-error`, error icon + message below (`--acx-text-small`, `--acx-error`), `aria-invalid` and `aria-describedby`. Label always visible above (`--acx-text-caption`, 500); never placeholder-only.
+Native `<input>`/`<textarea>`/`<select>`. Single-line inputs and selects use `--acx-surface`, 1px `--acx-border-strong`, radius-md, height 36, `--acx-text-ui` weight 400. Multiline textareas use `--acx-textarea-min-h` minimum height and may resize vertically when useful. Placeholder `--acx-text-subtle`. Hover: border `--acx-text-subtle`. Focus: border `--acx-accent` + focus ring. Invalid: border `--acx-error`, error icon + message below (`--acx-text-small`, `--acx-error`), `aria-invalid` and `aria-describedby`. Label always visible above (`--acx-text-caption`, 500); never placeholder-only.
+
+### Code editor
+Use CodeMirror 6 as the sole local editing engine. Mount one `EditorView` inside the Reader ShadowRoot and pass that ShadowRoot as CodeMirror's `root`, so its generated styles remain encapsulated. Render protected prefix, editable code, and protected suffix as one continuous document; use CodeMirror transaction filtering to reject changes outside the editable range. CodeMirror owns caret geometry, selection, line numbers, history, indentation, completion, and language highlighting—never layer a textarea or manual cursor-positioning renderer over it. Style the editor with Acadrix semantic tokens and mono typography. Protected scaffold remains visibly distinguished, read-only, and part of copied full-code output. Undo/redo controls reflect CodeMirror history availability.
 
 ### Badge / status indicator
 `--acx-text-caption`, radius-sm, `--acx-<status>-bg` fill, `--acx-<status>` text, 1px border at same hue (α 0.3). **Always includes an icon or text label**, never color alone. Neutral badge: `--acx-surface-sunken` + `--acx-text-muted`. Technical badges (IDs, versions) use mono.

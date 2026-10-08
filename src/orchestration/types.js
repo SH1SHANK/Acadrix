@@ -50,6 +50,13 @@ export class MarkdownExportError extends ExportError {
   }
 }
 
+export class TextExportError extends ExportError {
+  constructor(message, details = {}) {
+    super(message, details);
+    this.name = "TextExportError";
+  }
+}
+
 export class PdfExportError extends ExportError {
   constructor(message, details = {}) {
     super(message, details);

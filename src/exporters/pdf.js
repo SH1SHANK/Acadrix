@@ -8,6 +8,11 @@
 
 import { ContentType, QuestionType, MathType, MathFormat } from "../model/types.js";
 import { buildExportFilename } from "../model/document.js";
+import { normalizeDocument } from "../document/normalizer.js";
+import { compilePdfDocument } from "../document/compiler.js";
+import { postProcessPdf } from "../document/post-processor.js";
+import { validatePdfCompilation } from "../document/validator.js";
+import { DocNodeType, QuestionKind } from "../document/ast.js";
 
 // ── Default Print Stylesheet (Inlined for standalone portability) ────────────
 
@@ -1109,17 +1114,96 @@ function sendPrintToPdfRuntimeMessage() {
  * @param {Object} [options]
  * @returns {Promise<{success: boolean, method?: string, filename?: string, fallbackReason?: string}>}
  */
+/**
+ * Programmatic Entry Point: Compiles an AssignmentDocument into a validated,
+ * post-processed, publication-grade PDF binary artifact.
+ * 
+ * @param {AssignmentDocument|DocRoot} assignmentDoc
+ * @param {Object} [options]
+ * @returns {Promise<{ pdfBytes: Uint8Array, pageCount: number, docRoot: DocRoot, validation: Object, filename: string }>}
+ */
+export async function compileAcademicPdf(assignmentDoc, options = {}) {
+  const filename = options.filename || buildExportFilename(assignmentDoc?.metadata || {}, "pdf");
+  const docRoot = normalizeDocument(assignmentDoc, options);
+  const rawBytes = await compilePdfDocument(docRoot, options);
+  const postProcessed = await postProcessPdf(rawBytes, docRoot.metadata);
+  const validation = await validatePdfCompilation(postProcessed.pdfBytes, docRoot, {
+    strict: options.strictValidation ?? false,
+  });
+
+  return {
+    pdfBytes: postProcessed.pdfBytes,
+    pageCount: postProcessed.pageCount,
+    docRoot,
+    validation,
+    filename,
+  };
+}
+
+async function ensureBrowserPdfDependencies() {
+  if (typeof globalThis !== "undefined" && globalThis.pdfMake && globalThis.PDFLib) {
+    return true;
+  }
+  if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+    try {
+      const resp = await new Promise((resolve) => {
+        chrome.runtime.sendMessage({ type: "ACADRIX_ENSURE_PDF_LIBS" }, (res) => {
+          resolve(res);
+        });
+      });
+      if (resp && resp.ok) {
+        return Boolean(globalThis.pdfMake && globalThis.PDFLib);
+      }
+    } catch {
+      // Ignored: continue to fallback
+    }
+  }
+  return Boolean(typeof globalThis !== "undefined" && globalThis.pdfMake);
+}
+
 export async function exportPdf(assignmentDoc, options = {}) {
   if (typeof window === "undefined" || typeof document === "undefined") {
     throw new Error("exportPdf requires a browser environment with window and document.");
   }
 
   const filename = options.filename || buildExportFilename(assignmentDoc?.metadata || {}, "pdf");
+
+  const isSemanticRequested =
+    options.mode === "semantic" ||
+    options.compiler === "semantic" ||
+    options.useSemanticCompiler === true ||
+    (typeof globalThis !== "undefined" && Boolean(globalThis.pdfMake) && options.mode !== "source-fidelity");
+
+  // Modern Semantic PDF Compiler path
+  if (isSemanticRequested && options.mode !== "source-fidelity" && options.useLegacyPrint !== true) {
+    try {
+      await ensureBrowserPdfDependencies();
+      const compiled = await compileAcademicPdf(assignmentDoc, { ...options, filename });
+      triggerPdfBlobDownload(filename, compiled.pdfBytes);
+      return {
+        success: true,
+        method: "pdfmake",
+        filename,
+        pageCount: compiled.pageCount,
+        diagnostics: compiled.validation?.diagnostics || null,
+        valid: compiled.validation?.valid ?? true,
+      };
+    } catch (compileErr) {
+      console.warn(
+        "[Acadrix] Modern PDF compilation failed or was unavailable, falling back to print pipeline:",
+        compileErr
+      );
+      if (typeof options.onFallback === "function") {
+        options.onFallback(compileErr);
+      }
+    }
+  }
+
+  // Legacy fallback print pipeline (window.print() / iframe.print())
   const printTitle = filename.replace(/\.pdf$/i, "");
   const html = renderPdfDocument(assignmentDoc, options);
   const printTimeoutMs = options.printTimeoutMs ?? 60000;
   const imageTimeoutMs = options.imageTimeoutMs ?? 3000;
-
   return new Promise((resolve, reject) => {
     try {
       const iframe = document.createElement("iframe");

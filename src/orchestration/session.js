@@ -16,6 +16,7 @@ import {
   ExtractionError,
   ResourceError,
   MarkdownExportError,
+  TextExportError,
   PdfExportError,
   PackagingError,
   CancellationError,
@@ -23,9 +24,42 @@ import {
 import { AssignmentAssembler } from "../model/assembler.js";
 import { buildExportFilename } from "../model/document.js";
 import { exportAssignmentToMarkdown } from "../exporters/markdown.js";
+import { exportAssignmentToText } from "../exporters/plain-text.js";
 import { renderPdfDocument, exportPdf } from "../exporters/pdf.js";
 import { ResourceEngine } from "../resources/engine.js";
+import { inferExtension } from "../resources/naming.js";
+import { EXTENSION_TO_MIME } from "../resources/types.js";
 import { createZipArchive, downloadFile, getSafeBaseName } from "./bundle.js";
+
+function bytesToBase64(bytes) {
+  if (typeof Buffer !== "undefined") return Buffer.from(bytes).toString("base64");
+  if (typeof btoa === "function") {
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+    }
+    return btoa(binary);
+  }
+  throw new Error("No base64 encoder available for embedding exported images.");
+}
+
+export function createPdfDataUrlResourceMap(resources = []) {
+  const map = new Map();
+  for (const resource of resources) {
+    if (resource?.status !== "downloaded" || !resource.data) continue;
+    const bytes = resource.data instanceof Uint8Array ? resource.data : new Uint8Array(resource.data);
+    const declaredMime = String(resource.mimeType || "").toLowerCase();
+    const inferredMime = EXTENSION_TO_MIME[inferExtension("", resource.source || resource.localPath || "", bytes)];
+    const mimeType = declaredMime.startsWith("image/") ? declaredMime : inferredMime;
+    if (!mimeType) continue;
+    const dataUrl = `data:${mimeType};base64,${bytesToBase64(bytes)}`;
+    for (const key of [resource.source, resource.normalizedSource, resource.localPath]) {
+      if (typeof key === "string" && key) map.set(key, dataUrl);
+    }
+  }
+  return map;
+}
 
 export class ExportSession {
   /**
@@ -48,6 +82,7 @@ export class ExportSession {
     this.bundleData = null;
     this.outputs = {
       markdown: null,
+      text: null,
       pdf: null,
       bundle: null,
     };
@@ -115,7 +150,7 @@ export class ExportSession {
    * Executes the end-to-end export workflow for the requested formats.
    * 
    * @param {Object} request
-   * @param {string[]} [request.formats=["markdown"]] - Any combination of "markdown", "pdf", "bundle"
+   * @param {string[]} [request.formats=["markdown"]] - Any combination of "markdown", "text", "pdf", "bundle"
    * @param {boolean} [request.packageResources=false] - Force local resource acquisition
    * @param {boolean} [request.includeInteractionState=false]
    * @param {boolean} [request.includeReviewData=false]
@@ -153,7 +188,7 @@ export class ExportSession {
     const includeInteractionState = Boolean(request.includeInteractionState ?? this.options.includeInteractionState);
     const includeReviewData = Boolean(request.includeReviewData ?? this.options.includeReviewData);
     const packageResources = Boolean(
-      request.packageResources || formats.includes("bundle") || this.options.packageResources
+      request.packageResources || formats.includes("bundle") || formats.includes("pdf") || this.options.packageResources
     );
     const forceRefresh = Boolean(request.forceRefresh);
     const autoDownload = Boolean(request.autoDownload ?? true);
@@ -294,6 +329,7 @@ export class ExportSession {
 
           this.checkAbort();
           this.resourceMap = bundleResult.resourceMap;
+          this.pdfResourceMap = createPdfDataUrlResourceMap(bundleResult.resources);
           this.bundleData = bundleResult;
         } catch (resErr) {
           if (
@@ -310,6 +346,7 @@ export class ExportSession {
         }
       } else {
         this.resourceMap = request.resourceMap || null;
+        this.pdfResourceMap = request.pdfResourceMap || null;
       }
 
       this.checkAbort();
@@ -355,6 +392,25 @@ export class ExportSession {
 
       this.checkAbort();
 
+      // 3A. Plain-text Export
+      if (formats.includes("text") || formats.includes("txt")) {
+        this.checkAbort();
+        try {
+          const text = exportAssignmentToText(this.document);
+          this.outputs.text = text;
+          if (autoDownload && typeof window !== "undefined") {
+            downloadFile(buildExportFilename(this.document.metadata || {}, "txt"), text, "text/plain;charset=utf-8");
+          }
+        } catch (textErr) {
+          if (this.abortController.signal.aborted || textErr instanceof CancellationError) {
+            throw new CancellationError("Plain-text generation cancelled.");
+          }
+          throw new TextExportError(`Plain-text export failed: ${textErr.message}`, { cause: textErr });
+        }
+      }
+
+      this.checkAbort();
+
       // 3B. PDF Export
       if (formats.includes("pdf")) {
         this.notifyProgress(ExportPhase.PREPARING_PDF, 0, 1, "Preparing PDF print document...");
@@ -363,7 +419,7 @@ export class ExportSession {
           const pdfFilename =
             request.filename || buildExportFilename(this.document.metadata || {}, "pdf");
           const pdfOptions = {
-            resourceMap: this.resourceMap,
+            resourceMap: this.pdfResourceMap || this.resourceMap,
             includeInteractionState,
             includeReviewData,
             customCss: request.customCss || "",
@@ -384,8 +440,10 @@ export class ExportSession {
             this.outputs.pdf = {
               printed: true,
               filename: pdfFilename,
-              method: printRes?.method || "print",
+              method: printRes?.method || "pdfmake",
               fallbackReason: printRes?.fallbackReason || null,
+              diagnostics: printRes?.diagnostics || null,
+              pageCount: printRes?.pageCount || null,
             };
           } else {
             // Pure HTML standalone generation (Node.js or non-download mode)

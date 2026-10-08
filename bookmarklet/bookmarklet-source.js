@@ -14,12 +14,19 @@
    * Establishes the contract for all extraction and export layers.
    */
   
+  const AssessmentFamily = Object.freeze({
+    STANDARD: "standard",
+    PROGRAMMING: "programming",
+  });
+  
   const QuestionType = Object.freeze({
     MCQ: "single_choice",
     MSQ: "multiple_choice",
     NUMERICAL: "numerical",
     TEXT: "text",
     DESCRIPTIVE: "descriptive",
+    MATCHING: "matching",
+    PROGRAMMING: "programming",
     UNKNOWN: "unknown",
   });
   
@@ -43,8 +50,12 @@
     TEXT: "text",
     CODE: "code", // Retained for backwards compatibility
     HTML_BLOCK: "html_block", // Retained for backwards compatibility
+    CALLOUT: "callout",
+    MATCHING: "matching",
+    TEST_CASE: "test_case",
+    PAGE_BREAK: "page_break",
+    SPACER: "spacer",
   });
-  
   const MathType = Object.freeze({
     INLINE: "inline",
     DISPLAY: "display",
@@ -112,6 +123,125 @@
       this.feedback = feedback;
     }
   }
+  /**
+   * Structured Test Case Node for programming assignments.
+   */
+  class TestCaseNode {
+    constructor({
+      id = "",
+      index = 1,
+      input = "",
+      expectedOutput = "",
+      actualOutput = "",
+      explanation = "",
+      raw = "",
+      description = "",
+      isSample = true,
+      isVisible = true,
+      status = null,
+    } = {}) {
+      this.id = id || `tc-${index}`;
+      this.index = index;
+      this.input = typeof input === "string" ? input : (input !== null && input !== undefined ? String(input) : "");
+      this.expectedOutput = typeof expectedOutput === "string" ? expectedOutput : (expectedOutput !== null && expectedOutput !== undefined ? String(expectedOutput) : "");
+      this.actualOutput = typeof actualOutput === "string" ? actualOutput : (actualOutput !== null && actualOutput !== undefined ? String(actualOutput) : "");
+      this.explanation = explanation || "";
+      this.raw = raw || "";
+      this.description = description || "";
+      this.isSample = Boolean(isSample);
+      this.isVisible = Boolean(isVisible);
+      this.status = status || null;
+    }
+  }
+  
+  /**
+   * Programming Assignment specific data payload.
+   */
+  class ProgrammingAssignmentData {
+    constructor({
+      language = "javascript",
+      starterCode = null,
+      currentCode = "",
+      prefixCode = null,
+      suffixCode = null,
+      hasPrefixCode = undefined,
+      hasSuffixCode = undefined,
+      prefixState = undefined,
+      suffixState = undefined,
+      returnInstructions = "",
+      testCases = [],
+      examples = [],
+      constraints = [],
+      instructions = null,
+      images = [],
+      capabilities = { canRun: true, canSubmit: true, hasSolution: false },
+      provenance = null,
+      status = null,
+      editorIdentity = null,
+      questionIdentity = null,
+      extractionStatus = "COMPLETE",
+      warnings = [],
+      testCasesState = null,
+    } = {}) {
+      this.language = (language || "javascript").toLowerCase().trim();
+      this.starterCode = starterCode !== undefined ? starterCode : null;
+      this.currentCode = typeof currentCode === "string" ? currentCode : "";
+      this.prefixCode = prefixCode !== undefined ? prefixCode : null;
+      this.suffixCode = suffixCode !== undefined ? suffixCode : null;
+      this.hasPrefixCode = hasPrefixCode !== undefined
+        ? Boolean(hasPrefixCode)
+        : (this.prefixCode !== null);
+      this.hasSuffixCode = hasSuffixCode !== undefined
+        ? Boolean(hasSuffixCode)
+        : (this.suffixCode !== null);
+      this.prefixState = prefixState || (this.hasPrefixCode ? (this.prefixCode !== null ? "AVAILABLE" : "FAILED") : "NONE");
+      this.suffixState = suffixState || (this.hasSuffixCode ? (this.suffixCode !== null ? "AVAILABLE" : "FAILED") : "NONE");
+      this.returnInstructions = typeof returnInstructions === "string" ? returnInstructions : "";
+      this.testCases = Array.isArray(testCases)
+        ? testCases.map((tc, idx) => (tc instanceof TestCaseNode ? tc : new TestCaseNode({ index: idx + 1, ...tc })))
+        : [];
+      this.examples = Array.isArray(examples) ? examples : [];
+      this.constraints = Array.isArray(constraints) ? constraints : [];
+      this.instructions = instructions || null;
+      this.images = Array.isArray(images) ? images : [];
+      this.capabilities = {
+        canRun: capabilities?.canRun ?? true,
+        canSubmit: capabilities?.canSubmit ?? true,
+        hasSolution: capabilities?.hasSolution ?? false,
+      };
+      this.provenance = provenance || null;
+      this.status = status || { isModified: false, lastVerified: null };
+      this.editorIdentity = editorIdentity || null;
+      this.questionIdentity = questionIdentity ?? null;
+      this.extractionStatus = extractionStatus || "COMPLETE";
+      this.warnings = Array.isArray(warnings) ? [...warnings] : [];
+      this.testCasesState = testCasesState || {
+        available: this.testCases.length > 0,
+        state: this.testCases.length > 0 ? "AVAILABLE" : "EMPTY",
+        cases: this.testCases,
+        raw: "",
+      };
+    }
+  
+    get editor() {
+      return {
+        language: this.language,
+        prefixCode: this.prefixCode,
+        starterCode: this.starterCode,
+        currentCode: this.currentCode,
+        suffixCode: this.suffixCode,
+      };
+    }
+  
+    get isGuarded() {
+      return Boolean(
+        this.hasPrefixCode ||
+        this.hasSuffixCode ||
+        (this.prefixCode !== null && this.prefixCode !== undefined) ||
+        (this.suffixCode !== null && this.suffixCode !== undefined)
+      );
+    }
+  }
   
   /**
    * Normalized Question Node.
@@ -122,10 +252,12 @@
       number = 1,
       label = "",
       type = QuestionType.UNKNOWN,
+      family = AssessmentFamily.STANDARD,
       marks = null,
       negativeMarks = null,
       stem = [],
       options = [],
+      programmingData = null,
       status = { answered: false, flagged: false },
       review = null,
       legacyMigrationData = null,
@@ -136,10 +268,14 @@
       this.number = number;
       this.label = label || `Question ${number}`;
       this.type = type;
+      this.family = family || (type === QuestionType.PROGRAMMING ? AssessmentFamily.PROGRAMMING : AssessmentFamily.STANDARD);
       this.marks = marks;
       this.negativeMarks = negativeMarks;
       this.stem = Array.isArray(stem) ? stem : [];
       this.options = Array.isArray(options) ? options : [];
+      this.programmingData = programmingData instanceof ProgrammingAssignmentData
+        ? programmingData
+        : (programmingData ? new ProgrammingAssignmentData(programmingData) : null);
       this.status = status;
       this.review = review;
   
@@ -151,7 +287,6 @@
       this.legacyMigrationData = legacyMigrationData || rawHtml ? { ...(legacyMigrationData || rawHtml) } : null;
       this.metadata = metadata;
     }
-  
     /**
      * @deprecated Temporary legacy access for Phase 1-2 migration. Do not use in new layers.
      */
@@ -424,9 +559,14 @@
    * DOM utility helpers.
    */
   
-  const $ = (selector, root = document) => root ? root.querySelector(selector) : null;
+  const $ = (selector, root = document) =>
+    root && typeof root.querySelector === "function" ? root.querySelector(selector) : null;
   
-  const $$ = (selector, root = document) => root ? [...root.querySelectorAll(selector)] : [];
+  const $$ = (selector, root = document) => {
+    if (!root || typeof root.querySelectorAll !== "function") return [];
+    const res = root.querySelectorAll(selector);
+    return res && typeof res[Symbol.iterator] === "function" ? [...res] : (Array.isArray(res) ? res : []);
+  };
   
   const escapeHtml = (str = "") =>
     str
@@ -666,6 +806,41 @@
       choiceText: ".choice-text.backend-html, .choice-text, .backend-html, .text",
       auxiliaryIgnore: ".clear-selection, button.clear-selection, .choice-clear, .choice-indicator, .indicator, .mat-radio-container, .mat-checkbox-inner-container",
     },
+    // Programming assignment boundaries, editors, tabs, and controls
+    programming: {
+      view: "app-programming-assignment-view, .programming-assignment-view",
+      questionRoot: "app-pa-question, .pa-question",
+      problemContent: "app-pa-question .backend-html, .pa-question .backend-html, .pa-question",
+      tabList: "app-tab-bar [role=tablist], .tab-bar-wrapper [role=tablist], [role=tablist]",
+      tabItem: "button[role=tab], .tab-item",
+      tabActive: "button[role=tab][aria-selected='true'], button.tab-item.active, button.tab-item[aria-selected='true']",
+      tabLabel: ".tab-label, .label",
+      tabsContent: ".tabs-content",
+      testCasesRoot: "app-pa-testcases, app-pa-test-cases, .pa-testcases, .pa-test-cases, .test-cases, app-test-cases, .test-case-container, .accordion-container",
+      testCaseSlider: ".test-case-slider",
+      testCasePill: ".test-case-pill, button.test-case-pill",
+      testCaseCard: ".test-case-card",
+      testCaseDetails: ".test-case-details",
+      testCaseBlock: ".test-case-block",
+      testCaseBlockTitle: ".title, .wrapper .title",
+      testCaseBlockContent: ".content",
+      testCaseItem: ".test-case-details, .test-case-block, .test-case, .test-case-item, .test-case-card, .testcase-item",
+      testCaseInput: ".test-case-input, .input-content, .test-input, pre.input, .input",
+      testCaseOutput: ".test-case-output, .output-content, .test-output, pre.output, .expected-output, .output",
+      testCaseDescription: ".test-case-description, .description, .test-description, .title, .header-title",
+      accordionHeader: ".accordion-header, button.accordion-header",
+      accordionContent: ".accordion-content, .accordion-panel .accordion-content",
+      returnInstructions: ".return-instructions, .submission-instructions, [data-section='return-instructions']",
+      editorRoot: "app-pa-code-editor, app-code-editor, .pa-code-editor, .code-editor",
+      languageValue: ".language-input .current-value, .language-selection .current-value, .current-value",
+      aceContainer: ".ace-container, .ace_editor",
+      aceTextInput: ".ace_text-input",
+      runCodeButton: "button[aria-label='Run Code'], button.btn-ghost:has(.icon-svg), .submission-actions button:first-child",
+      submitButton: "button[aria-label='Submit'], button.btn-gradient, .submission-actions button:last-child",
+      headerTitle: "app-title-bar h1.title, app-title-bar .title, .mobile-header .title, h1.title, h1",
+      breadcrumb: "nav.breadcrumb .breadcrumb-item.current, .mobile-header .parent-title, nav.breadcrumb .breadcrumb-item, .breadcrumb span",
+      timer: "app-submission-timer .due-label, app-submission-timer, .submission-timer",
+    },
   
     // Declutter layout elements
     declutter: {
@@ -685,16 +860,165 @@
   
   
   
+  /**
+   * Normalized Portal Page Types.
+   */
+  const PortalPageType = Object.freeze({
+    ASSESSMENT: "ASSESSMENT",
+    PROGRAMMING_ASSIGNMENT_INFO: "PROGRAMMING_ASSIGNMENT_INFO",
+    PROGRAMMING_ASSIGNMENT: "PROGRAMMING_ASSIGNMENT",
+    COURSE_CONTENT: "COURSE_CONTENT",
+    GRADES: "GRADES",
+    UNKNOWN: "UNKNOWN",
+  });
+  
+  /**
+   * Determines whether the FAB (and shortcut) should be enabled for a given page type.
+   * @param {string} pageType
+   * @returns {boolean}
+   */
+  function isFabEligible(pageType) {
+    return (
+      pageType === PortalPageType.ASSESSMENT ||
+      pageType === PortalPageType.PROGRAMMING_ASSIGNMENT
+    );
+  }
+  
   class IitmPortalAdapter {
     constructor(doc = typeof document !== "undefined" ? document : null) {
       this.doc = doc;
     }
   
     /**
-     * Returns true if an IITM assessment view is currently active in the DOM.
+     * Identifies the current portal page type from the DOM.
+     * First-class support for Standard Assessments and Programming Assignments.
+     * @param {Document|Element} [root]
+     * @returns {string} One of PortalPageType values
+     */
+    detectPageType(root = this.doc) {
+      if (!root || typeof root.querySelector !== "function") return PortalPageType.UNKNOWN;
+  
+      // The assignment overview and the active coding route can share metadata and
+      // sometimes the outer PA wrapper. Require a coding surface inside that wrapper;
+      // a title, deadline, resume CTA, or wrapper alone is not editor evidence.
+      const paView = $(IITM_SELECTORS.programming?.view || "app-programming-assignment-view, .programming-assignment-view", root);
+      const hasPaView = Boolean(paView);
+      const hasPaOverview = Boolean(
+        $("app-pa-start-page, .pa-start-page, app-pa-instructions, .pa-instructions", root)
+      );
+      const paRoot = paView || root;
+      const hasPaQuestion = Boolean(
+        $(IITM_SELECTORS.programming?.questionRoot || "app-pa-question, .pa-question", paRoot)
+      );
+      const paEditor = $(IITM_SELECTORS.programming?.editorRoot || "app-pa-code-editor, app-code-editor, .pa-code-editor", paRoot);
+      const hasPaEditor = Boolean(paEditor);
+      const hasAce = Boolean(
+        $(IITM_SELECTORS.programming?.aceContainer || ".ace-container, .ace_editor", paEditor || paRoot)
+      );
+      const hasRunBtn = Boolean(
+        $(IITM_SELECTORS.programming?.runCodeButton || "button[aria-label='Run Code']", paRoot)
+      );
+      const hasPaTabs = $$(IITM_SELECTORS.programming?.tabItem || "button[role=tab], .tab-item", paRoot).some(
+        (b) => /test\s*cases|question/i.test(b.textContent || "")
+      );
+      const hasCodingSurface = Boolean(
+        hasPaEditor ||
+        (hasPaQuestion && hasAce) ||
+        (hasAce && (hasRunBtn || hasPaTabs))
+      );
+      const hasResumeAction = $$("button, a, [role='button']", root).some((el) => {
+        const label = el.getAttribute?.("aria-label") || "";
+        return /^resume assignment$/i.test((el.textContent || label).trim());
+      });
+  
+      if ((hasPaOverview || hasResumeAction) && !hasCodingSurface) {
+        return PortalPageType.PROGRAMMING_ASSIGNMENT_INFO;
+      }
+      if (hasPaView && hasCodingSurface) {
+        return PortalPageType.PROGRAMMING_ASSIGNMENT;
+      }
+  
+      // 2. Standard Assessment check
+      const hasAssessmentView = Boolean($(IITM_SELECTORS.assessment.view, root));
+      const hasAssessmentRoot = Boolean($(IITM_SELECTORS.assessment.root, root));
+      const hasPaginator = Boolean($(IITM_SELECTORS.navigation.paginator, root));
+  
+      if (hasAssessmentView || (hasPaginator && hasAssessmentRoot) || hasAssessmentRoot) {
+        return PortalPageType.ASSESSMENT;
+      }
+  
+      // 3. Grades / Scores view
+      if ($("app-grades, .grades-view, app-score-card, .score-card-container", root)) {
+        return PortalPageType.GRADES;
+      }
+  
+      // 4. Course Content / Videos / Syllabus
+      if ($("app-course-content, .course-content, app-unit-view, .unit-content, app-video-player", root)) {
+        return PortalPageType.COURSE_CONTENT;
+      }
+  
+      return PortalPageType.UNKNOWN;
+    }
+  
+    /**
+     * Returns true if an IITM assessment view (Standard or Programming) is currently active in the DOM.
      */
     detectAssessment() {
-      return Boolean(this.getPaginator() && this.getCurrentQuestionElement());
+      return isFabEligible(this.detectPageType());
+    }
+  
+    isProgrammingAssignment() {
+      return this.detectPageType() === PortalPageType.PROGRAMMING_ASSIGNMENT;
+    }
+  
+    isStandardAssessment() {
+      return this.detectPageType() === PortalPageType.ASSESSMENT;
+    }
+  
+    getProgrammingView() {
+      return $(IITM_SELECTORS.programming?.view || "app-programming-assignment-view, .programming-assignment-view", this.doc);
+    }
+  
+    /**
+     * Resolves canonical capabilities supported on the current page.
+     * @returns {object}
+     */
+    getPageCapabilities() {
+      const pageType = this.detectPageType();
+      if (pageType === PortalPageType.PROGRAMMING_ASSIGNMENT) {
+        return {
+          canReadAssessment: true,
+          canReadProgrammingAssignment: true,
+          canCopyQuestion: true,
+          canCopyStarterCode: true,
+          canCopyTestCases: true,
+          canCopyCurrentCode: true,
+          canEditProgrammingCode: true,
+          canApplyAnswers: false,
+        };
+      }
+      if (pageType === PortalPageType.ASSESSMENT) {
+        return {
+          canReadAssessment: true,
+          canReadProgrammingAssignment: false,
+          canCopyQuestion: true,
+          canCopyStarterCode: false,
+          canCopyTestCases: false,
+          canCopyCurrentCode: false,
+          canEditProgrammingCode: false,
+          canApplyAnswers: true,
+        };
+      }
+      return {
+        canReadAssessment: false,
+        canReadProgrammingAssignment: false,
+        canCopyQuestion: false,
+        canCopyStarterCode: false,
+        canCopyTestCases: false,
+        canCopyCurrentCode: false,
+        canEditProgrammingCode: false,
+        canApplyAnswers: false,
+      };
     }
   
     getPaginator() {
@@ -807,10 +1131,15 @@
      * @returns {number|null}
      */
     getTotalQuestionCount() {
-      const view = this.getAssessmentView();
-      if (!view) return null;
-      const match = (view.textContent || "").match(IITM_SELECTORS.metadata.totalCountRegex);
-      return match ? parseInt(match[1], 10) : null;
+      const view = this.getAssessmentView() || this.getProgrammingView();
+      if (view) {
+        const match = (view.textContent || "").match(IITM_SELECTORS.metadata.totalCountRegex);
+        if (match) return parseInt(match[1], 10);
+      }
+      const chips = this.getQuestionChips();
+      if (chips.length > 0) return chips.length;
+      if (this.isProgrammingAssignment()) return 1;
+      return null;
     }
   
     /**
@@ -1942,8 +2271,11 @@
     }
   
     ensure() {
+      if (typeof window !== "undefined") {
+        window.__ensureStacks = window.__ensureStacks || [];
+        window.__ensureStacks.push(new Error().stack);
+      }
       if (this.host && this.shadow) return this.shadow;
-  
       // Register local @font-face declarations in host document.head if available
       if (
         typeof document !== "undefined" &&
@@ -1975,8 +2307,15 @@
           }
           @font-face {
             font-family: "JetBrainsMono Nerd Font";
-            src: local("JetBrainsMono Nerd Font"), local("JetBrains Mono"), local("JetBrainsMono-Regular");
+            src: local("JetBrainsMono Nerd Font"), local("JetBrains Mono"), local("JetBrainsMono-Regular"), url("${getFontUrl("JetBrainsMonoNerdFont-Regular.ttf")}") format("truetype");
             font-weight: 400 500;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: "JetBrainsMono Nerd Font";
+            src: local("JetBrainsMono Nerd Font Bold"), local("JetBrains Mono Bold"), local("JetBrainsMono-Bold"), url("${getFontUrl("JetBrainsMonoNerdFont-Bold.ttf")}") format("truetype");
+            font-weight: 600 700;
             font-style: normal;
             font-display: swap;
           }
@@ -2084,7 +2423,7 @@
     }
   
     setTheme(theme) {
-      this.ensure();
+      this._theme = theme;
       if (!this.host) return;
       if (theme === "light" || theme === "dark") {
         this.host.setAttribute("data-theme", theme);
@@ -2094,12 +2433,14 @@
     }
   
     getTheme() {
-      if (!this.host) return "system";
-      return this.host.getAttribute("data-theme") || "system";
+      if (this.host) {
+        return this.host.getAttribute("data-theme") || "system";
+      }
+      return this._theme || "system";
     }
   
     setTextSize(size) {
-      this.ensure();
+      this._textSize = size;
       if (!this.host) return;
       if (size === "small" || size === "large") {
         this.host.setAttribute("data-text-size", size);
@@ -2109,26 +2450,26 @@
     }
   
     getTextSize() {
-      if (!this.host) return "default";
-      return this.host.getAttribute("data-text-size") || "default";
+      if (this.host) {
+        return this.host.getAttribute("data-text-size") || "default";
+      }
+      return this._textSize || "default";
     }
   
     toggleTheme() {
-      this.ensure();
-      if (!this.host) return "light";
-      const current = this.host.getAttribute("data-theme");
+      const current = this.getTheme();
       const systemDark =
         typeof window !== "undefined" &&
         typeof window.matchMedia === "function" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const isCurrentlyDark = current ? current === "dark" : systemDark;
-      const next = isCurrentlyDark ? "light" : "dark";
-      this.host.setAttribute("data-theme", next);
+      const isDark = current === "dark" || (current === "system" && systemDark);
+      const next = isDark ? "light" : "dark";
+      this.setTheme(next);
       return next;
     }
   
     get root() {
-      return this.shadow || this.ensure();
+      return this.shadow || (this.host ? this.ensure() : null);
     }
   
     $(selector) {
@@ -2152,7 +2493,9 @@
   /**
    * Floating Launcher Button Component.
    * Mounts inside the isolated ShadowRoot.
+   * Supports standard assessment mode and dedicated Programming Assignment fast-action mode.
    */
+  
   
   
   class LauncherButton {
@@ -2160,36 +2503,205 @@
       this.shadowHost = shadowHost;
       this.element = null;
       this.clickHandler = null;
+      this.quickActionHandler = null;
+      this.isProgramming = false;
+      this.shortcutHint = "Alt+Q";
+      this._toastTimer = null;
+      this._outsideClickHandler = null;
     }
   
-    ensure(position = "bottom-center", onClick = null) {
+    ensure(position = "bottom-center", onClick = null, options = {}) {
       const root = this.shadowHost.root;
-      let btn = root.getElementById("saq-launcher");
+      const pageType = options.pageType || "";
+      const isProg =
+        pageType === "PROGRAMMING_ASSIGNMENT" ||
+        pageType === "programming" ||
+        Boolean(options.isProgramming);
+      this.isProgramming = isProg;
   
-      if (!btn) {
-        btn = document.createElement("button");
-        btn.type = "button";
-        btn.id = "saq-launcher";
-        btn.className = "saq-launcher";
-        btn.dataset.pos = position;
-        btn.setAttribute("aria-haspopup", "dialog");
-        btn.setAttribute("aria-expanded", "false");
-        btn.setAttribute("aria-label", "Open Acadrix");
-        btn.title = "Open Acadrix (Alt+Q)";
-        btn.innerHTML = `${ICONS.launch}<span>All Questions</span>`;
-        root.appendChild(btn);
+      if (options.shortcut) {
+        this.shortcutHint = options.shortcut;
+      }
+      if (options.onQuickAction) {
+        this.quickActionHandler = options.onQuickAction;
       }
   
-      if (onClick && onClick !== this.clickHandler) {
-        if (this.clickHandler) {
-          btn.removeEventListener("click", this.clickHandler);
+      let container = root.getElementById("saq-launcher");
+      const expectedTag = isProg ? "DIV" : "BUTTON";
+  
+      if (container && container.tagName !== expectedTag) {
+        container.remove();
+        container = null;
+        this.element = null;
+      }
+  
+      if (!container) {
+        if (isProg) {
+          container = document.createElement("div");
+          container.id = "saq-launcher";
+          container.className = "saq-launcher saq-launcher-pa";
+          container.dataset.pos = position;
+          container.dataset.pageType = "programming";
+          container.innerHTML = `
+            <div class="saq-launcher-split">
+              <button type="button" class="saq-launcher-main" aria-haspopup="dialog" aria-expanded="false" aria-label="Open Programming Assignment" title="Programming Assignment Tools (${this.shortcutHint})">
+                ${ICONS.launch}<span>Programming Assignment</span>
+              </button>
+              <button type="button" class="saq-launcher-toggle" aria-haspopup="menu" aria-expanded="false" aria-label="Quick Actions" title="Quick Actions">
+                ${ICONS.chevronDown}
+              </button>
+            </div>
+            <div class="saq-launcher-menu" id="saq-launcher-menu" role="menu" hidden>
+              <div class="saq-launcher-menu-hdr">Quick Actions</div>
+              <button type="button" class="saq-launcher-menu-item" data-act="copy-pa-question" role="menuitem">
+                ${ICONS.copy}<span>Copy Question</span>
+              </button>
+              <button type="button" class="saq-launcher-menu-item" data-act="copy-pa-testcases" role="menuitem">
+                ${ICONS.copy}<span>Copy Test Cases</span>
+              </button>
+              <button type="button" class="saq-launcher-menu-item" data-act="copy-pa-current" role="menuitem">
+                ${ICONS.code || ICONS.copy}<span>Copy Code</span>
+              </button>
+              <button type="button" class="saq-launcher-menu-item" data-act="copy-pa-prompt" role="menuitem">
+                ${ICONS.copy}<span>Prepare AI Prompt</span>
+              </button>
+              <div class="saq-launcher-menu-divider"></div>
+              <button type="button" class="saq-launcher-menu-item" data-act="open-pa-reader" role="menuitem">
+                ${ICONS.launch}<span>Open Reader</span>
+              </button>
+            </div>
+          `;
+        } else {
+          container = document.createElement("button");
+          container.type = "button";
+          container.id = "saq-launcher";
+          container.className = "saq-launcher";
+          container.dataset.pos = position;
+          container.dataset.pageType = "assessment";
+          container.setAttribute("aria-haspopup", "dialog");
+          container.setAttribute("aria-expanded", "false");
+          container.setAttribute("aria-label", "Open Acadrix");
+          container.title = `Open Acadrix (${this.shortcutHint})`;
+          container.innerHTML = `${ICONS.launch}<span>All Questions</span>`;
         }
-        this.clickHandler = onClick;
-        btn.addEventListener("click", this.clickHandler);
+        root.appendChild(container);
+      } else {
+        container.dataset.pos = position;
       }
   
-      this.element = btn;
-      return btn;
+      // Wire click events
+      if (isProg) {
+        const mainBtn = container.querySelector(".saq-launcher-main");
+        const toggleBtn = container.querySelector(".saq-launcher-toggle");
+        const menu = container.querySelector("#saq-launcher-menu");
+  
+        if (onClick && onClick !== this.clickHandler) {
+          if (this.clickHandler && mainBtn) {
+            mainBtn.removeEventListener("click", this.clickHandler);
+          }
+          this.clickHandler = onClick;
+          mainBtn?.addEventListener("click", this.clickHandler);
+          container.onclick = (e) => {
+            if (e.target?.closest?.(".saq-launcher-toggle, .saq-launcher-menu")) return;
+            this.clickHandler?.(e);
+          };
+        }
+  
+        if (toggleBtn && !toggleBtn._wiredToggle) {
+          toggleBtn._wiredToggle = true;
+          toggleBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+            const nextExpanded = !isExpanded;
+            toggleBtn.setAttribute("aria-expanded", String(nextExpanded));
+            if (menu) {
+              menu.hidden = !nextExpanded;
+              if (nextExpanded) {
+                menu.removeAttribute("hidden");
+                const firstItem = menu.querySelector(".saq-launcher-menu-item");
+                firstItem?.focus?.();
+              } else {
+                menu.setAttribute("hidden", "");
+              }
+            }
+          });
+        }
+  
+        if (menu && !menu._wiredActions) {
+          menu._wiredActions = true;
+          menu.addEventListener("click", (e) => {
+            const item = e.target.closest?.(".saq-launcher-menu-item");
+            if (!item) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const action = item.dataset.act;
+  
+            // Close menu
+            menu.hidden = true;
+            menu.setAttribute("hidden", "");
+            toggleBtn?.setAttribute("aria-expanded", "false");
+  
+            if (action === "open-pa-reader") {
+              if (typeof this.clickHandler === "function") this.clickHandler();
+            } else if (typeof this.quickActionHandler === "function") {
+              this.quickActionHandler(action);
+            }
+          });
+  
+          menu.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              menu.hidden = true;
+              menu.setAttribute("hidden", "");
+              toggleBtn?.setAttribute("aria-expanded", "false");
+              toggleBtn?.focus?.();
+              return;
+            }
+            const items = Array.from(menu.querySelectorAll(".saq-launcher-menu-item"));
+            const activeIndex = items.indexOf(root.activeElement);
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              const next = (activeIndex + 1) % items.length;
+              items[next]?.focus?.();
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              const prev = (activeIndex - 1 + items.length) % items.length;
+              items[prev]?.focus?.();
+            }
+          });
+        }
+  
+        // Outside click handler to close menu
+        if (!this._outsideClickHandler) {
+          this._outsideClickHandler = (e) => {
+            if (container && !container.contains(e.target)) {
+              const menuEl = container.querySelector("#saq-launcher-menu");
+              const toggleEl = container.querySelector(".saq-launcher-toggle");
+              if (menuEl && !menuEl.hidden) {
+                menuEl.hidden = true;
+                menuEl.setAttribute("hidden", "");
+                toggleEl?.setAttribute("aria-expanded", "false");
+              }
+            }
+          };
+          if (typeof window !== "undefined") {
+            window.addEventListener("click", this._outsideClickHandler, true);
+          }
+        }
+      } else {
+        if (onClick && onClick !== this.clickHandler) {
+          if (this.clickHandler) {
+            container.removeEventListener("click", this.clickHandler);
+          }
+          this.clickHandler = onClick;
+          container.addEventListener("click", this.clickHandler);
+        }
+      }
+  
+      this.element = container;
+      return container;
     }
   
     show() {
@@ -2202,27 +2714,42 @@
     hide() {
       if (this.element) {
         this.element.classList.remove("is-shown");
+        const menu = this.element.querySelector?.("#saq-launcher-menu");
+        if (menu) {
+          menu.hidden = true;
+          menu.setAttribute("hidden", "");
+        }
       }
     }
   
     setExpanded(expanded) {
       if (this.element) {
         this.element.setAttribute("aria-expanded", expanded ? "true" : "false");
+        const mainBtn = this.element.querySelector?.(".saq-launcher-main");
+        if (mainBtn) mainBtn.setAttribute("aria-expanded", expanded ? "true" : "false");
       }
     }
   
     setShortcutHint(shortcut) {
+      this.shortcutHint = shortcut;
       if (this.element && shortcut) {
-        this.element.title = `View all questions (${shortcut})`;
+        if (this.isProgramming) {
+          this.element.title = `Programming Assignment Tools (${shortcut})`;
+          const main = this.element.querySelector?.(".saq-launcher-main");
+          if (main) main.title = `Programming Assignment Tools (${shortcut})`;
+        } else {
+          this.element.title = `View all questions (${shortcut})`;
+        }
       }
     }
   
     focus() {
-      if (this.element && typeof this.element.focus === "function") {
+      const target = this.element?.querySelector?.(".saq-launcher-main") || this.element;
+      if (target && typeof target.focus === "function") {
         try {
-          this.element.focus({ preventScroll: true });
+          target.focus({ preventScroll: true });
         } catch (_e) {
-          this.element.focus();
+          target.focus();
         }
       }
     }
@@ -2233,10 +2760,62 @@
       }
     }
   
+    showToast(message, tone = "info", durationMs = 2500) {
+      const root = this.shadowHost.root;
+      if (!root) return;
+      let toast = root.getElementById("saq-launcher-toast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "saq-launcher-toast";
+        toast.className = "saq-launcher-toast";
+        toast.setAttribute("role", "status");
+        toast.setAttribute("aria-live", "polite");
+        root.appendChild(toast);
+      }
+  
+      if (this._toastTimer) {
+        clearTimeout(this._toastTimer);
+        this._toastTimer = null;
+      }
+  
+      const iconHtml =
+        tone === "success"
+          ? ICONS.check
+          : tone === "error"
+          ? ICONS.cross
+          : tone === "warn"
+          ? ICONS.warn
+          : ICONS.info;
+  
+      toast.dataset.tone = tone;
+      toast.innerHTML = `${iconHtml}<span>${escapeHtml(message)}</span>`;
+      toast.classList.add("is-visible");
+  
+      this._toastTimer = setTimeout(() => {
+        toast.classList.remove("is-visible");
+        this._toastTimer = null;
+      }, durationMs);
+    }
+  
     destroy() {
+      if (this._outsideClickHandler) {
+        if (typeof window !== "undefined") {
+          window.removeEventListener("click", this._outsideClickHandler, true);
+        }
+        this._outsideClickHandler = null;
+      }
+      if (this._toastTimer) {
+        clearTimeout(this._toastTimer);
+        this._toastTimer = null;
+      }
+      const root = this.shadowHost?.shadow;
+      root?.getElementById("saq-launcher-toast")?.remove();
+  
       if (this.element) {
         if (this.clickHandler) {
-          this.element.removeEventListener("click", this.clickHandler);
+          const main = this.element.querySelector?.(".saq-launcher-main");
+          if (main) main.removeEventListener("click", this.clickHandler);
+          else this.element.removeEventListener("click", this.clickHandler);
         }
         this.element.remove();
         this.element = null;
@@ -2510,13 +3089,13 @@
   /** Shared Reader interaction behavior. */
   
   const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
-  
   function handleReaderKeyDown(e) {
     if (!this.sheetElement || !this.isOpen()) return;
   
     if (this.runReaderFeatureHook("handleKeydown", e)) return;
   
     if (e.key === "Escape") {
+  
       if (this.isLightboxOpen?.()) {
         e.preventDefault();
         e.stopPropagation();
@@ -2561,11 +3140,13 @@
       }
     }
   
-    if (e.key !== "Tab") return;
+    if (e.defaultPrevented || e.key !== "Tab") return;
   
+    const activeDialog = this.sheetElement.querySelector(".saq-dialog-modal:not([hidden])");
+    const focusScope = activeDialog || this.sheetElement;
     const focusables = Array.from(
-      this.sheetElement.querySelectorAll(
-        "button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
+      focusScope.querySelectorAll(
+        "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
       )
     ).filter((el) => {
       if (el.hasAttribute("disabled")) return false;
@@ -2578,13 +3159,15 @@
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
     const active = this.shadowHost.root?.activeElement;
+    const activeIsInScope = focusScope.contains(active);
   
-    if (e.shiftKey) {
-      if (active === first || active === this.sheetElement || !active) {
-        e.preventDefault();
-        last.focus?.();
-      }
-    } else if (active === last) {
+    if (!activeIsInScope) {
+      e.preventDefault();
+      (e.shiftKey ? last : first).focus?.();
+    } else if (e.shiftKey && (active === first || active === this.sheetElement || !active)) {
+      e.preventDefault();
+      last.focus?.();
+    } else if (!e.shiftKey && active === last) {
       e.preventDefault();
       first.focus?.();
     }
@@ -2616,7 +3199,7 @@
       }
     }
   
-    const splitGroup = this.sheetElement?.querySelector("#saq-export-split");
+    const splitGroup = this.sheetElement?.querySelector("#saq-export-split, .saq-dropdown-wrap");
     const exportMenu = this.sheetElement?.querySelector("#saq-export-menu");
     const splitArrow = this.sheetElement?.querySelector("[data-act='toggle-export-menu']");
     if (exportMenu && !exportMenu.hasAttribute("hidden") && !exportMenu.hidden && splitGroup && !splitGroup.contains(e.target)) {
@@ -2697,7 +3280,15 @@
           exportMenu.querySelector(".saq-dropdown-item")?.focus?.();
         }
       }
+    } else if (action === "apply-programming-code") {
+      this.programmingEditor?.applyChanges?.();
     } else if (action === "refresh") {
+      if (this.programmingEditor?.isModified()) {
+        const keepChanges = typeof window !== "undefined" && window.confirm
+          ? !window.confirm("You have unsaved Reader changes. Refresh from the assignment and discard them?")
+          : true;
+        if (keepChanges) return;
+      }
       if (exportMenu) {
         exportMenu.hidden = true;
         exportMenu.setAttribute("hidden", "");
@@ -2705,14 +3296,14 @@
       }
       this.closeAiPopover?.({ restoreFocus: false });
       if (this.onRefreshCallback) this.onRefreshCallback();
-    } else if (action === "export-md") {
+    } else if (action === "export-md" || action === "export-txt") {
       if (exportMenu) {
         exportMenu.hidden = true;
         exportMenu.setAttribute("hidden", "");
         if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
       }
       this.closeAiPopover?.({ restoreFocus: false });
-      if (this.onExportCallback) this.onExportCallback("markdown");
+      if (this.onExportCallback) this.onExportCallback(action === "export-md" ? "markdown" : "text");
     } else if (action === "print") {
       if (exportMenu) {
         exportMenu.hidden = true;
@@ -2745,10 +3336,57 @@
       const next = this.shadowHost.toggleTheme?.() || "light";
       btn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
       if (this.onThemeCallback) this.onThemeCallback(next);
+    } else if (action === "copy-problem" || action === "copy-question") {
+      const text = copyQuestion(this.documentModel);
+      const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+      Promise.resolve(write).then(() => {
+        this.notify?.("Problem statement copied", "success", 2500);
+      }).catch(() => {
+        this.notify?.("Failed to copy problem", "error", 2500);
+      });
+    } else if (action === "copy-testcases") {
+      const text = copyTestCases(this.documentModel);
+      const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+      Promise.resolve(write).then(() => {
+        this.notify?.("Test cases copied", "success", 2500);
+      }).catch(() => {
+        this.notify?.("Failed to copy test cases", "error", 2500);
+      });
+    } else if (action === "copy-current-code" || action === "copy-code") {
+      const editorCode = this.programmingEditor?.getFullCode?.();
+      const pData = this.documentModel?.questions?.[0]?.programmingData || {};
+      const text = editorCode ?? [
+        pData.prefixCode,
+        pData.currentCode ?? pData.starterCode ?? copyCurrentCode(this.documentModel),
+        pData.suffixCode,
+      ].filter((part) => part !== null && part !== undefined).join("\n");
+      const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+      Promise.resolve(write).then(() => {
+        this.notify?.("Current code copied", "success", 2500);
+      }).catch(() => {
+        this.notify?.("Failed to copy current code", "error", 2500);
+      });
+    } else if (action === "copy-prompt-context" || action === "copy-prompt") {
+      const text = copyAiContext(this.documentModel);
+      const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+      Promise.resolve(write).then(() => {
+        this.notify?.("AI context prompt copied", "success", 2500);
+      }).catch(() => {
+        this.notify?.("Failed to copy AI prompt", "error", 2500);
+      });
+    } else if (action === "copy-full-assignment") {
+      const text = copyFullAssignment(this.documentModel);
+      const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
+      Promise.resolve(write).then(() => {
+        this.notify?.("Full assignment Markdown copied", "success", 2500);
+      }).catch(() => {
+        this.notify?.("Failed to copy assignment", "error", 2500);
+      });
     } else if (action === "dismiss") {
       this.dismiss();
     }
   }
+  
   
   function wireReaderDrag(grip, sheet) {
     if (!grip) return;
@@ -2794,9 +3432,11 @@
   // ── [Module: src/ui/reader.js] ──
   /**
    * Reader Drawer Component.
-   * Encapsulated bottom sheet for read-only assignment inspection and printing.
+   * Encapsulated bottom sheet for assignment inspection, editing, and printing.
    * Mounts entirely within the isolated ShadowRoot using the Acadrix Design System.
    */
+  
+  
   
   
   
@@ -2832,6 +3472,7 @@
       this.boundPointerUp = null;
       this.boundKeyDown = null;
       this.pdfDirectFallbackActive = false;
+      this.programmingEditor = null;
       this.features = readerFeatureFactories
         .map((factory) => factory(this))
         .filter(Boolean);
@@ -2919,34 +3560,75 @@
         ? `<div class="saq-warn" role="status">${ICONS.warn}<span>${warningMessage}</span></div>`
         : "";
   
-      sheet.innerHTML = `
-        <div class="saq-grip" aria-hidden="true" title="Drag down to close"></div>
-        <header class="saq-header">
-          <span class="saq-title" id="saq-reader-title">All Questions</span>
-          <span class="saq-count-pill" aria-label="${documentModel.length} questions">${documentModel.length}</span>
-          ${isReview ? '<span class="saq-tag">✓ Results</span>' : ""}
-          <div class="saq-actions">
-            <span class="saq-clock" title="Time remaining">${ICONS.clock}<span class="saq-clock-val"></span></span>
-            <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
-            <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
-            <div class="saq-split-btn-group" id="saq-export-split">
-              <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
-              <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
-              <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
-                <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
-                <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download Markdown</span></button>
-                <button type="button" class="saq-dropdown-item" data-act="export-bundle" role="menuitem" title="Download ZIP Bundle">${ICONS.bundle}<span>Download Bundle</span></button>
-              </div>
+      const isProgramming =
+        documentModel?.metadata?.family === AssessmentFamily.PROGRAMMING ||
+        documentModel?.family === AssessmentFamily.PROGRAMMING ||
+        documentModel?.metadata?.family === "programming" ||
+        documentModel?.family === "programming" ||
+        documentModel?.questions?.some((q) => q.type === QuestionType.PROGRAMMING || Boolean(q.programmingData));
+      const programmingData = isProgramming ? documentModel.questions?.[0]?.programmingData || {} : {};
+      const progLangId = normalizeProgrammingLanguage(programmingData.language) || "javascript";
+      const progLangLabel = LANGUAGE_REGISTRY[progLangId]?.canonicalName || "Code";
+  
+      if (isProgramming) {
+        sheet.classList.add("saq-programming-mode");
+        sheet.innerHTML = `
+          <div class="saq-grip" aria-hidden="true" title="Drag down to close"></div>
+          <header class="saq-header saq-programming-header">
+            <div class="saq-header-left">
+              <span class="saq-title" id="saq-reader-title">${escapeHtml(progLangLabel)}</span>
+              <span class="saq-sync-status" id="saq-program-sync-status" role="status" aria-live="polite">In Sync</span>
             </div>
-            <button type="button" class="saq-btn saq-btn-secondary" data-act="refresh" aria-label="Refresh questions from assessment" title="Re-read questions from assessment">${ICONS.refresh}<span>Refresh</span></button>
-            <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
-            <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
-            <button type="button" class="saq-btn-apply" data-act="apply-answers" hidden aria-hidden="true"><span class="saq-btn-badge" data-ready-badge hidden>0</span></button>
-          </div>
-        </header>
-        <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
-        ${warnHtml}
-        <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
+            <div class="saq-actions">
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-prompt-context" aria-label="Copy Prompt" title="Copy LLM-optimized prompt">${ICONS.copy}<span>Copy Prompt</span></button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-current-code" aria-label="Copy Code" title="Copy current solution code">${ICONS.code || ICONS.copy}<span>Copy Code</span></button>
+              <div class="saq-dropdown-wrap">
+                <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="toggle-export-menu" aria-label="Export problem statement" aria-haspopup="menu" aria-controls="saq-export-menu" aria-expanded="false"><span>Export</span>${ICONS.chevronDown}</button>
+                <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
+                  <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download as PDF</span></button>
+                  <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download as Markdown</span></button>
+                  <button type="button" class="saq-dropdown-item" data-act="export-txt" role="menuitem" title="Download as TXT File">${ICONS.code || ICONS.copy}<span>Download as TXT File</span></button>
+                </div>
+              </div>
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="refresh" aria-label="Refresh from assignment" title="Refresh from assignment">${ICONS.refresh}<span>Refresh</span></button>
+              <button type="button" class="saq-btn saq-btn-primary saq-btn-sm" data-act="apply-programming-code" id="saq-apply-programming-code" hidden disabled>Apply Changes</button>
+              <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
+              <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
+            </div>
+          </header>
+          <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
+          ${warnHtml}
+          <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
+      } else {
+        sheet.innerHTML = `
+          <div class="saq-grip" aria-hidden="true" title="Drag down to close"></div>
+          <header class="saq-header">
+            <span class="saq-title" id="saq-reader-title">All Questions</span>
+            <span class="saq-count-pill" aria-label="${documentModel.length} questions">${documentModel.length}</span>
+            ${isReview ? '<span class="saq-tag">✓ Results</span>' : ""}
+            <div class="saq-actions">
+              <span class="saq-clock" title="Time remaining">${ICONS.clock}<span class="saq-clock-val"></span></span>
+              <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
+              <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
+              <div class="saq-split-btn-group" id="saq-export-split">
+                <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
+                <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
+                <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
+                  <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
+                  <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download Markdown</span></button>
+                  <button type="button" class="saq-dropdown-item" data-act="export-bundle" role="menuitem" title="Download ZIP Bundle">${ICONS.bundle}<span>Download Bundle</span></button>
+                </div>
+              </div>
+              <button type="button" class="saq-btn saq-btn-secondary" data-act="refresh" aria-label="Refresh questions from assessment" title="Re-read questions from assessment">${ICONS.refresh}<span>Refresh</span></button>
+              <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
+              <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
+              <button type="button" class="saq-btn-apply" data-act="apply-answers" hidden aria-hidden="true"><span class="saq-btn-badge" data-ready-badge hidden>0</span></button>
+            </div>
+          </header>
+          <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
+          ${warnHtml}
+          <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
+      }
   
       this.renderBlocks(sheet.querySelector(".saq-scroll"), documentModel);
   
@@ -2963,6 +3645,8 @@
   
       root.appendChild(sheet);
       this.sheetElement = sheet;
+      if (root?.host) this.programmingEditor?.mount?.(root);
+      this.programmingEditor?.updateStateBadges?.();
       this.runReaderFeatureHook("renderHeaderActions", { sheet, documentModel });
       this.runReaderFeatureHook("documentChange", { documentModel, reason: "build" });
     }
@@ -3006,27 +3690,35 @@
   
       documentModel.questions.forEach((q, i) => {
         const b = document.createElement("div");
-        b.className = "saq-block";
+        const isProgQuestion = q.type === QuestionType.PROGRAMMING || Boolean(q.programmingData);
+        b.className = isProgQuestion ? "saq-block saq-block-programming" : "saq-block";
         b.id = `saq-q-${i}`;
         b.dataset.q = String(i);
   
         // 1. Question Header
-        const typeLabel = this.formatQuestionType(q.type);
+        const qLabelText = isProgQuestion ? "Problem Statement" : (q.label || `Question ${i + 1}`);
+        const typeLabel = isProgQuestion ? "" : this.formatQuestionType(q.type);
         const typeHtml = typeLabel ? `<span class="saq-qtype">${escapeHtml(typeLabel)}</span>` : "";
         const marksHtml = q.marks ? `<span class="saq-marks">${q.marks} Mark${q.marks > 1 ? "s" : ""}</span>` : "";
         const statusHtml = q.review?.statusText
           ? `<span class="saq-status ${q.review.isCorrect ? "correct" : "incorrect"}">${q.review.isCorrect ? "✓ " : "✕ "}${escapeHtml(q.review.statusText)}</span>`
           : "";
   
-        const headerHtml = `
+        const headerHtml = isProgQuestion ? `
+          <div class="saq-qheader saq-pa-qheader">
+            <span class="saq-qlabel">${escapeHtml(qLabelText)}</span>
+            <span class="saq-lang-badge">${escapeHtml((q.programmingData?.language || "CODE").toUpperCase())}</span>
+            ${marksHtml}
+            ${statusHtml}
+          </div>
+        ` : `
           <div class="saq-qheader">
-            <span class="saq-qlabel">${escapeHtml(q.label)}</span>
+            <span class="saq-qlabel">${escapeHtml(qLabelText)}</span>
             ${typeHtml}
             ${marksHtml}
             ${statusHtml}
           </div>
         `;
-  
         // 2. Stem rendering
         let stemHtml = "";
         if (q.stem && q.stem.length > 0) {
@@ -3078,12 +3770,214 @@
           ? `<div class="saq-feedback"><div class="saq-feedback-title">Feedback</div><div class="saq-feedback-body">${escapeHtml(q.review.feedback)}</div></div>`
           : "";
   
-        b.innerHTML = `
-          ${headerHtml}
-          <div class="saq-stem">${stemHtml}</div>
-          ${optsHtml}
-          ${feedbackHtml}
-        `;
+        if (q.type === QuestionType.PROGRAMMING || q.programmingData) {
+          const pData = q.programmingData || {};
+          const lang = pData.language || "javascript";
+  
+          // Partial extraction warning banner
+          let warningBannerHtml = "";
+          const isPartial = pData.extractionStatus === "PARTIAL" || (Array.isArray(pData.warnings) && pData.warnings.length > 0);
+          if (isPartial) {
+            const warningText = Array.isArray(pData.warnings) && pData.warnings.length > 0
+              ? pData.warnings.join(" | ")
+              : "Some assignment context could not be fully extracted.";
+            warningBannerHtml = `
+              <div class="saq-pa-warning-banner" style="margin-bottom: 12px; padding: 8px 12px; background: rgba(247, 144, 9, 0.1); border: 1px solid rgba(247, 144, 9, 0.3); border-radius: 6px; font-size: 13px; color: #f79009;">
+                <strong>Partial Extraction:</strong> ${escapeHtml(warningText)}
+              </div>
+            `;
+          }
+  
+          // Images section (if present and not embedded inline in stemHtml)
+          let imagesHtml = "";
+          if (Array.isArray(pData.images) && pData.images.length > 0) {
+            const unseenImages = pData.images.filter(
+              (img) => !stemHtml.includes(img.src) && !stemHtml.includes(img.alt)
+            );
+            if (unseenImages.length > 0) {
+              const imgCards = unseenImages.map((img) => `
+                <div class="saq-image-card" style="margin: 8px 0;">
+                  <img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || 'Question Image')}" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--saq-border, #ddd);" />
+                  ${img.caption ? `<div class="saq-image-caption" style="font-size: 12px; color: var(--saq-text-muted, #888); margin-top: 4px;">${escapeHtml(img.caption)}</div>` : ""}
+                </div>
+              `).join("");
+              imagesHtml = `
+                <div class="saq-pa-section">
+                  <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Images / Diagrams</span></div>
+                  <div>${imgCards}</div>
+                </div>
+              `;
+            }
+          }
+  
+          // Examples section
+          let examplesHtml = "";
+          if (Array.isArray(pData.examples) && pData.examples.length > 0) {
+            const exCards = pData.examples.map((ex, i) => {
+              if (typeof ex === "string") return `<div class="saq-example-card"><div class="saq-example-body">${escapeHtml(ex)}</div></div>`;
+              return `
+                <div class="saq-example-card" style="margin: 8px 0; padding: 8px 12px; background: var(--saq-surface-sunken, #f8f9fa); border-radius: 6px; border: 1px solid var(--saq-border, #eee);">
+                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">Example ${i + 1}</div>
+                  ${ex.input ? `<div><span style="font-size: 11px; font-weight: 500;">Input:</span><pre class="saq-tc-pre" tabindex="0">${escapeHtml(ex.input)}</pre></div>` : ""}
+                  ${ex.output ? `<div><span style="font-size: 11px; font-weight: 500;">Output:</span><pre class="saq-tc-pre" tabindex="0">${escapeHtml(ex.output)}</pre></div>` : ""}
+                  ${ex.explanation ? `<div style="font-size: 12px; color: var(--saq-text-muted, #666); margin-top: 4px;"><em>Explanation:</em> ${escapeHtml(ex.explanation)}</div>` : ""}
+                </div>
+              `;
+            }).join("");
+            examplesHtml = `
+              <div class="saq-pa-section">
+                <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Examples</span></div>
+                <div>${exCards}</div>
+              </div>
+            `;
+          }
+  
+          // Constraints section
+          let constraintsHtml = "";
+          if (Array.isArray(pData.constraints) && pData.constraints.length > 0) {
+            constraintsHtml = `
+              <div class="saq-pa-section">
+                <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Constraints</span></div>
+                <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 13px;">
+                  ${pData.constraints.map((c) => `<li>${escapeHtml(typeof c === "string" ? c : String(c))}</li>`).join("")}
+                </ul>
+              </div>
+            `;
+          }
+  
+          // Test Cases section
+          let tcHtml = "";
+          if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
+            const cards = pData.testCases.map((tc) => {
+              const label = tc.description ? `Case ${tc.index} (${escapeHtml(tc.description)})` : `Case ${tc.index}`;
+              if (tc.raw) {
+                return `
+                  <div class="saq-test-case-card">
+                    <div class="saq-test-case-header"><span class="saq-tc-name">${escapeHtml(label)}</span></div>
+                    <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.raw)}</pre>
+                  </div>
+                `;
+              }
+              return `
+                <div class="saq-test-case-card">
+                  <div class="saq-test-case-header">
+                    <span class="saq-tc-name">${escapeHtml(label)}</span>
+                    ${tc.isSample ? '<span class="acx-badge acx-badge-neutral">Sample</span>' : ""}
+                    ${tc.status === "passed" ? '<span class="acx-badge acx-badge-success">Passed</span>' : tc.status === "failed" ? '<span class="acx-badge acx-badge-error">Failed</span>' : ""}
+                  </div>
+                  <div class="saq-test-case-io">
+                    <div class="saq-tc-col">
+                      <span class="saq-tc-label">Input</span>
+                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input || "")}</pre>
+                    </div>
+                    <div class="saq-tc-col">
+                      <span class="saq-tc-label">Expected Output</span>
+                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput || "")}</pre>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join("");
+            tcHtml = `
+              <div class="saq-pa-section">
+                <div class="saq-pa-section-hdr">
+                  <span class="saq-pa-section-title">Test Cases</span>
+                  <button class="saq-btn saq-btn-xs saq-btn-secondary" data-act="copy-testcases" type="button" title="Copy test cases as Markdown">Copy Test Cases</button>
+                </div>
+                <div class="saq-test-cases-grid">${cards}</div>
+              </div>
+            `;
+          } else {
+            tcHtml = `
+              <div class="saq-pa-section">
+                <div class="saq-pa-section-hdr">
+                  <span class="saq-pa-section-title">Test Cases</span>
+                </div>
+                <div class="saq-empty-notice" style="color: var(--saq-text-muted, #888); font-size: 13px; font-style: italic;">No visible test cases available in this assignment.</div>
+              </div>
+            `;
+          }
+  
+          const scaffoldUnavailable =
+            (pData.hasPrefixCode && pData.prefixCode === null) ||
+            (pData.hasSuffixCode && pData.suffixCode === null);
+          const editorContextHtml = `
+            <div class="saq-pa-section saq-pa-editor-context">
+              <div class="saq-pa-section-hdr">
+                <span class="saq-pa-section-title">Code</span>
+                ${scaffoldUnavailable ? '<span class="acx-badge acx-badge-danger">Protected scaffold unavailable</span>' : ""}
+              </div>
+              <div data-programming-editor-slot></div>
+            </div>
+          `;
+  
+          // Return Instructions section
+          let returnInstructionsHtml = "";
+          if (pData.returnInstructions && pData.returnInstructions.trim()) {
+            returnInstructionsHtml = `
+              <div class="saq-pa-section">
+                <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Return Instructions</span></div>
+                <div style="font-size: 13px; line-height: 1.5; color: var(--saq-text-normal);">${escapeHtml(pData.returnInstructions)}</div>
+              </div>
+            `;
+          }
+  
+          b.innerHTML = `
+            ${headerHtml}
+            ${warningBannerHtml}
+  
+            <div class="saq-stem">${stemHtml}</div>
+            ${imagesHtml}
+            ${examplesHtml}
+            ${constraintsHtml}
+            ${tcHtml}
+            ${editorContextHtml}
+            ${returnInstructionsHtml}
+            ${feedbackHtml}
+          `;
+  
+        } else {
+          b.innerHTML = `
+            ${headerHtml}
+            <div class="saq-stem">${stemHtml}</div>
+            ${optsHtml}
+            ${feedbackHtml}
+          `;
+        }
+  
+        const editorSlot = b.querySelector("[data-programming-editor-slot]");
+        if (editorSlot) {
+          const pData = q.programmingData || {};
+          const editor = new ProgrammingCodeEditor({
+            language: pData.language || "javascript",
+            prefixCode: pData.prefixCode,
+            starterCode: pData.starterCode ?? pData.currentCode ?? "",
+            currentCode: pData.currentCode ?? pData.starterCode ?? "",
+            suffixCode: pData.suffixCode,
+            hasPrefixCode: pData.hasPrefixCode,
+            hasSuffixCode: pData.hasSuffixCode,
+            editorIdentity: pData.editorIdentity,
+            questionIdentity: pData.questionIdentity,
+            onApply: (code) => {
+              pData.currentCode = code;
+              if (pData.status) pData.status.isModified = false;
+            },
+            onStatus: (message, tone) => this.notify(message, tone),
+            onStateChange: ({ status, modified, applying }) => {
+              const statusEl = this.sheetElement?.querySelector("#saq-program-sync-status");
+              if (statusEl) statusEl.textContent = status;
+              const applyButton = this.sheetElement?.querySelector("#saq-apply-programming-code");
+              if (applyButton) {
+                applyButton.hidden = !modified;
+                applyButton.disabled = !modified || applying;
+                applyButton.textContent = applying ? "Applying…" : "Apply Changes";
+              }
+            },
+          });
+          this.programmingEditor?.destroy();
+          this.programmingEditor = editor;
+          editorSlot.appendChild(editor.render());
+        }
   
         // Prune empty feedback callouts in review mode
         b.querySelectorAll(".feedback").forEach((fb) => {
@@ -3097,8 +3991,8 @@
           pre.setAttribute("tabindex", "0");
         });
   
-        // Enforce read-only state on all inputs inside block
-        b.querySelectorAll("input, textarea, select, button").forEach((el) => {
+        // Enforce read-only state on options and inputs, but keep action buttons active
+        b.querySelectorAll(".saq-options input, .saq-options textarea, .saq-options select, .saq-options button").forEach((el) => {
           el.setAttribute("disabled", "true");
           el.setAttribute("tabindex", "-1");
         });
@@ -3422,6 +4316,7 @@
       const lb = root?.querySelector("#saq-image-lightbox");
       return Boolean(lb && !lb.hidden && !lb.hasAttribute("hidden"));
     }
+  
     notify(message, tone = "info", durationMs = 3000) {
       if (!this.sheetElement) return;
       const bar = this.sheetElement.querySelector("#saq-status-bar");
@@ -3497,6 +4392,8 @@
   
     destroy() {
       this.runReaderFeatureHook("destroy");
+      this.programmingEditor?.destroy();
+      this.programmingEditor = null;
       this.stopClock();
       this.clearStatus();
       if (this.sheetElement) {
@@ -3511,7 +4408,7 @@
         this.backdropElement.remove();
         this.backdropElement = null;
       }
-      const root = this.shadowHost?.root;
+      const root = this.shadowHost?.shadow;
       if (root) {
         root.querySelectorAll("#saq-backdrop, #saq-sheet, #saq-image-lightbox").forEach((el) => el.remove());
       }
@@ -3632,7 +4529,8 @@
       const title = this.portal?.getAssessmentTitle?.() || "";
       const total = this.portal?.getTotalQuestionCount?.() ?? "";
       const review = Boolean(this.portal?.isReviewMode?.());
-      return `${loc}::${title}::${total}::${review}`;
+      const pageType = this.portal?.detectPageType?.() || "";
+      return `${loc}::${title}::${total}::${review}::${pageType}`;
     }
   
     updateContextKey() {
@@ -3642,6 +4540,7 @@
     invalidateDocument() {
       this.activeDocument = null;
       this.activeContextKey = null;
+  
     }
   
     initialize() {
@@ -3751,9 +4650,15 @@
         return;
       }
   
-      const isAssessment = this.portal.detectAssessment();
+      if (this.lifecycle.state === LifecycleState.TRAVERSING) {
+        this.pendingDetectAfterTraversal = true;
+        return;
+      }
   
-      if (isAssessment) {
+      const pageType = this.portal.detectPageType ? this.portal.detectPageType() : (this.portal.detectAssessment() ? PortalPageType.ASSESSMENT : PortalPageType.UNKNOWN);
+      const isEligible = isFabEligible(pageType);
+  
+      if (isEligible) {
         if (
           this.activeDocument &&
           this.activeContextKey &&
@@ -3772,7 +4677,13 @@
           this.lifecycle.transition(LifecycleState.ACTIVE);
         }
         this.shadowHost.ensure();
-        this.launcher.ensure(this.config.launcherPos, () => this.open());
+        const isProg = pageType === PortalPageType.PROGRAMMING_ASSIGNMENT;
+        this.launcher.ensure(this.config.launcherPos, () => this.open(), {
+          pageType: isProg ? "PROGRAMMING_ASSIGNMENT" : "ASSESSMENT",
+          isProgramming: isProg,
+          shortcut: this.config.openShortcutEnabled && this.config.openShortcut ? this.config.openShortcut : "Shortcut disabled",
+          onQuickAction: (act) => this.handleLauncherQuickAction(act),
+        });
   
         if (this.config.autoLauncher && !this.reader.isOpen() && !isBusyOrOpen) {
           this.launcher.show();
@@ -3780,7 +4691,7 @@
       } else {
         this.orchestrator?.cancel();
         this.invalidateDocument();
-        if (this.launcher.element || this.reader.isMounted()) {
+        if (this.launcher.element || this.reader.isMounted() || this.shadowHost.host) {
           this.destroyUi();
           this.lifecycle.transition(LifecycleState.IDLE);
         }
@@ -3793,7 +4704,7 @@
       }
   
       if (!this.portal.detectAssessment()) {
-        alert("Open an IITM quiz or assessment with numbered question chips first.");
+        alert("Open an IITM quiz, assessment, or programming assignment first.");
         return;
       }
   
@@ -3843,6 +4754,7 @@
         return;
       }
   
+      const extractionContextKey = this.getContextKey();
       // Invalidate any cached document immediately when a new extraction begins
       this.invalidateDocument();
       this.lifecycle.transition(LifecycleState.TRAVERSING);
@@ -3851,31 +4763,57 @@
       this.overlay.show();
   
       try {
-        const assembler = new AssignmentAssembler({
-          title: this.portal.getAssessmentTitle?.() || "Assignment",
-          course: this.portal.getCourseName?.() || "",
-          week: this.portal.getAssessmentWeek?.() || "",
-          isReview: this.portal.isReviewMode(),
-          totalQuestions: this.portal.getTotalQuestionCount(),
-        });
+        const isProgramming = Boolean(this.portal.isProgrammingAssignment?.());
+        if (isProgramming) {
+          const ExtractorClass =
+            typeof ProgrammingAssignmentExtractor !== "undefined"
+              ? ProgrammingAssignmentExtractor
+              : null;
+          if (!ExtractorClass) {
+            throw new Error("Programming assignment extractor is unavailable.");
+          }
+          const progExtractor = new ExtractorClass(document);
+          this.activeDocument = await progExtractor.extractAssignment(document, {
+            onProgress: (done, total) => this.overlay.progress(done, total),
+          });
+        } else {
+          const assembler = new AssignmentAssembler({
+            title: this.portal.getAssessmentTitle?.() || "Assignment",
+            course: this.portal.getCourseName?.() || "",
+            week: this.portal.getAssessmentWeek?.() || "",
+            isReview: this.portal.isReviewMode(),
+            totalQuestions: this.portal.getTotalQuestionCount(),
+          });
   
-        await this.traverser.traverseAll({
-          onProgress: (done, total) => this.overlay.progress(done, total),
-          onQuestion: async (context) => {
-            const questionNode = this.extractor.captureCurrentQuestion(context.index, context.isReview);
-            assembler.addQuestion(questionNode);
-          },
-        });
+          await this.traverser.traverseAll({
+            onProgress: (done, total) => this.overlay.progress(done, total),
+            onQuestion: async (context) => {
+              const questionNode = this.extractor.captureCurrentQuestion(context.index, context.isReview);
+              assembler.addQuestion(questionNode);
+            },
+          });
   
-        this.activeDocument = assembler.build();
+          this.activeDocument = assembler.build();
+        }
+  
+        const currentPageType = this.portal.detectPageType?.() || PortalPageType.UNKNOWN;
+        if (!isFabEligible(currentPageType) || this.getContextKey() !== extractionContextKey) {
+          this.invalidateDocument();
+          await this.overlay.hide();
+          this.reader.destroy();
+          this.lifecycle.transition(LifecycleState.IDLE);
+          this.detect();
+          return;
+        }
+  
         this.updateContextKey();
         await this.overlay.hide();
   
-        // Check if question count matches paginator
+        // Check if question count matches expected
         const totalExpected = this.portal.getTotalQuestionCount();
         const warningMessage =
           totalExpected && totalExpected !== this.activeDocument.length
-            ? `Captured ${this.activeDocument.length} of ${totalExpected} questions — some questions may be paginated. Verify on the original quiz.`
+            ? `Captured ${this.activeDocument.length} of ${totalExpected} questions — verify on the original assessment.`
             : "";
   
         this.reader.build(this.activeDocument, {
@@ -3898,8 +4836,13 @@
         this.lifecycle.transition(LifecycleState.OPEN);
       } catch (err) {
         this.invalidateDocument();
-        console.error("[Acadrix Runtime] Error capturing assessment:", err);
+        console.error("[Acadrix Runtime] Error capturing assessment (programming assignments pipeline):", err);
         await this.overlay.hide();
+        if (!isFabEligible(this.portal.detectPageType?.() || PortalPageType.UNKNOWN)) {
+          this.destroyUi();
+          this.lifecycle.transition(LifecycleState.IDLE);
+          return;
+        }
         this.launcher.setExpanded?.(false);
         if (this.config.autoLauncher) {
           this.launcher.show();
@@ -3918,6 +4861,8 @@
           return "Could not resolve one or more assignment diagrams or images. Please check your connection and try again.";
         case "MarkdownExportError":
           return "Could not generate the Markdown document for this assignment.";
+        case "TextExportError":
+          return "Could not generate the plain-text document for this assignment.";
         case "PdfExportError":
           return "Could not prepare the PDF print view. Please try again.";
         case "PackagingError":
@@ -3963,7 +4908,7 @@
         if (format === "pdf") {
           this.printWithIntelligentTitle(exportOptions.document || this.activeDocument);
         } else {
-          const msg = "Markdown and Bundle export are available in the Acadrix Chrome Extension.";
+          const msg = "Markdown and Bundle export are available in the Acadrix Chrome Extension. Plain-text export is available there too.";
           this.reader.notify?.(msg, "warn", 4200);
           alert(msg);
         }
@@ -3980,11 +4925,111 @@
       return this.orchestrator.export(request);
     }
   
+    async writeClipboardText(text) {
+      if (!text) return false;
+      if (this.reader && typeof this.reader.writeClipboardText === "function") {
+        return this.reader.writeClipboardText(text);
+      }
+      try {
+        if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch {}
+      return false;
+    }
+  
+    async ensureProgrammingDocument() {
+      if (this.portal.detectPageType?.() !== PortalPageType.PROGRAMMING_ASSIGNMENT) {
+        return null;
+      }
+      if (
+        this.activeDocument &&
+        (this.activeDocument.family === "programming" ||
+          this.activeDocument.metadata?.family === "programming" ||
+          this.activeDocument.questions?.[0]?.programmingData)
+      ) {
+        return this.activeDocument;
+      }
+      const ExtractorClass =
+        typeof ProgrammingAssignmentExtractor !== "undefined"
+          ? ProgrammingAssignmentExtractor
+          : null;
+      if (ExtractorClass) {
+        const progExtractor = new ExtractorClass(document);
+        this.activeDocument = await progExtractor.extractAssignment(document);
+        this.updateContextKey();
+        return this.activeDocument;
+      }
+      return null;
+    }
+  
+    async handleLauncherQuickAction(action) {
+      if (action === "open-pa-reader") {
+        this.open();
+        return;
+      }
+  
+      try {
+        const doc = await this.ensureProgrammingDocument();
+        if (!doc) {
+          this.launcher.showToast?.("Unable to extract programming assignment.", "error");
+          return;
+        }
+  
+        if (action === "copy-pa-question") {
+          const copyFn = typeof copyQuestion === "function" ? copyQuestion : null;
+          const text = copyFn ? copyFn(doc) : "";
+          if (text) {
+            await this.writeClipboardText(text);
+            this.launcher.showToast?.("Question copied to clipboard!", "success");
+          } else {
+            this.launcher.showToast?.("No question content found to copy.", "warn");
+          }
+        } else if (action === "copy-pa-prompt") {
+          const copyFn = typeof copyAiContext === "function" ? copyAiContext : null;
+          const text = copyFn ? copyFn(doc) : "";
+          if (text) {
+            await this.writeClipboardText(text);
+            this.launcher.showToast?.("AI prompt copied to clipboard!", "success");
+          } else {
+            this.launcher.showToast?.("Failed to generate AI prompt.", "error");
+          }
+        } else if (action === "copy-pa-testcases") {
+          const copyFn = typeof copyTestCases === "function" ? copyTestCases : null;
+          const text = copyFn ? copyFn(doc) : "";
+          if (text) {
+            await this.writeClipboardText(text);
+            this.launcher.showToast?.("Test cases copied to clipboard!", "success");
+          } else {
+            this.launcher.showToast?.("No test cases found.", "warn");
+          }
+        } else if (action === "copy-pa-current") {
+          const pData = doc.questions?.[0]?.programmingData || {};
+          const text = [pData.prefixCode, pData.currentCode ?? pData.starterCode ?? "", pData.suffixCode]
+            .filter((part) => part !== null && part !== undefined)
+            .join("\n");
+          if (text) {
+            await this.writeClipboardText(text);
+            this.launcher.showToast?.("Code copied to clipboard!", "success");
+          } else {
+            this.launcher.showToast?.("No code available to copy.", "warn");
+          }
+        }
+      } catch (err) {
+        console.error("[Acadrix Runtime] Launcher quick action error:", err);
+        this.launcher.showToast?.("Action failed: " + (err.message || "Unknown error"), "error");
+      }
+    }
+  
     destroyUi() {
       this.launcher.destroy();
       this.overlay.destroy();
       this.reader.destroy();
       this.shadowHost.destroy();
+      if (typeof document !== "undefined") {
+        document.getElementById("unfold-root")?.remove();
+      }
     }
   
     destroy() {
@@ -4041,15 +5086,10 @@
     runtime.initialize();
   
     // If invoked via bookmarklet in the page execution world, auto-open if quiz is present
-    const inExtension = (() => {
-      try {
-        return Boolean(typeof chrome !== "undefined" && chrome?.runtime?.id);
-      } catch {
-        return false;
-      }
-    })();
+    let isExtensionBundle = false;
+    
   
-    if (!inExtension && runtime.portal.detectAssessment()) {
+    if (!isExtensionBundle && runtime.portal.detectAssessment()) {
       runtime.open();
     }
   })();

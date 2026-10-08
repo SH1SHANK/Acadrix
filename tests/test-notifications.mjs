@@ -242,49 +242,10 @@ test("Missing portal evidence falls back to UNKNOWN and STATUS_UNKNOWN", () => {
   assert.equal(evalRes.actionStatus, ActionStatus.STATUS_UNKNOWN);
 });
 
-await asyncTest("captureStartPage extracts submissionStatus accurately from DOM", async () => {
-  // 1. Mock document with active countdown timer -> NOT_SUBMITTED
-  const mockDocActive = {
-    querySelector: (sel) => {
-      if (sel.includes("start-page")) return { textContent: "Start Assessment Programming Assignment 1" };
-      if (sel.includes("top-bar")) return { textContent: "Sep 2026 - MAD II" };
-      if (sel.includes("title")) return { textContent: "Week 1 - Assignment 1" };
-      if (sel.includes("breadcrumb")) return { textContent: "Week 1" };
-      if (sel.includes("timer") || sel === "app-submission-timer") return { textContent: "Time Remaining: 02:45:00" };
-      return null;
-    },
-    querySelectorAll: () => [],
-  };
-
-  const capturedActive = [];
-  const mockStore = {
-    capture: (ck, key, data) => {
-      capturedActive.push({ ck, key, data });
-      return data;
-    },
-  };
-
-  const resActive = await captureStartPage(mockDocActive, mockStore);
-  assert(resActive !== null);
-  assert.equal(resActive.submissionStatus, SubmissionStatus.NOT_SUBMITTED);
-  assert.equal(resActive.submissionStatusSource, "start");
-
-  // 2. Mock document with submission confirmation -> SUBMITTED
-  const mockDocSubmitted = {
-    querySelector: (sel) => {
-      if (sel.includes("start-page")) return { textContent: "Submission recorded" };
-      if (sel.includes("top-bar")) return { textContent: "Sep 2026 - MAD II" };
-      if (sel.includes("title")) return { textContent: "Week 1 - Assignment 1" };
-      if (sel.includes("breadcrumb")) return { textContent: "Week 1" };
-      if (sel.includes("timer") || sel === "app-submission-timer") return { textContent: "Submitted on Oct 14, 2026" };
-      return null;
-    },
-    querySelectorAll: () => [],
-  };
-
-  const resSubmitted = await captureStartPage(mockDocSubmitted, mockStore);
-  assert(resSubmitted !== null);
-  assert.equal(resSubmitted.submissionStatus, SubmissionStatus.SUBMITTED);
+await asyncTest("captureStartPage is deprecated no-op; submission status is strictly UNKNOWN (§11, §13)", async () => {
+  const res = await captureStartPage({}, {});
+  assert.equal(res, null, "captureStartPage must return null and never scrape DOM");
+  assert.equal(SubmissionStatus.UNKNOWN, "UNKNOWN");
 });
 
 // ── 3. Notification Suppression Rules ───────────────────────────────────────
@@ -695,86 +656,27 @@ await asyncTest("recordNotificationSent prunes entries older than 60 days", asyn
 // ── 8. Hardening: Deadline Source Hierarchy & Precedence ─────────────────────
 console.log("\n8. Hardening: Deadline Source Hierarchy & Precedence Tests:");
 
-test("Precedence: Portal deadline strictly overrides existing Local cache", () => {
-  const portalAssessment = {
+test("Precedence: Canonical academic_events deadline is authoritative", () => {
+  const event = {
     termId: "2026-09",
     courseCode: "CS2006",
-    externalAssignmentId: "ga1",
-    dueDate: "2026-10-12T18:29:00.000Z",
-    source: "grades",
+    id: "ga1",
+    deadlineIso: "2026-10-12T18:29:00.000Z",
+    source: "SUPABASE",
   };
-  const localAssessment = {
-    dueDate: "2026-10-11T18:29:00.000Z",
-    deadlineSource: DeadlineSource.LOCAL,
-  };
-  const res = resolveDeadline(portalAssessment, { localAssessment });
-  assert.equal(res.source, DeadlineSource.PORTAL);
+  const res = resolveDeadline(event);
+  assert.equal(res.source, DeadlineSource.SUPABASE);
   assert.equal(res.deadlineIso, "2026-10-12T18:29:00.000Z");
 });
 
-test("Precedence: Portal deadline strictly overrides Supabase fallback data", () => {
-  const portalAssessment = {
+test("Precedence: Canonical deadline resolves from endTime or eventDate", () => {
+  const event = {
     termId: "2026-09",
     courseCode: "CS2006",
-    externalAssignmentId: "ga1",
-    dueDate: "2026-10-12T18:29:00.000Z",
-    source: "grades",
+    id: "ga1",
+    end_time: "2026-10-11T18:29:00.000Z",
   };
-  const supabaseRecords = [
-    {
-      termId: "2026-09",
-      courseCode: "CS2006",
-      externalAssignmentId: "ga1",
-      dueDate: "2026-10-11T18:29:00.000Z",
-    },
-  ];
-  const res = resolveDeadline(portalAssessment, { supabaseRecords });
-  assert.equal(res.source, DeadlineSource.PORTAL);
-  assert.equal(res.deadlineIso, "2026-10-12T18:29:00.000Z");
-});
-
-test("Precedence: Existing Local cache overrides Supabase when Portal is missing", () => {
-  const portalAssessment = {
-    termId: "2026-09",
-    courseCode: "CS2006",
-    externalAssignmentId: "ga1",
-    dueDate: null, // Scrape omitted deadline
-    source: "grades",
-  };
-  const localAssessment = {
-    dueDate: "2026-10-11T18:29:00.000Z",
-    deadlineSource: DeadlineSource.LOCAL,
-  };
-  const supabaseRecords = [
-    {
-      termId: "2026-09",
-      courseCode: "CS2006",
-      externalAssignmentId: "ga1",
-      dueDate: "2026-10-14T18:29:00.000Z",
-    },
-  ];
-  const res = resolveDeadline(portalAssessment, { localAssessment, supabaseRecords });
-  assert.equal(res.source, DeadlineSource.LOCAL);
-  assert.equal(res.deadlineIso, "2026-10-11T18:29:00.000Z");
-});
-
-test("Precedence: Supabase fallback resolves when both Portal and Local are missing", () => {
-  const portalAssessment = {
-    termId: "2026-09",
-    courseCode: "CS2006",
-    externalAssignmentId: "ga1",
-    dueDate: null,
-    source: "grades",
-  };
-  const supabaseRecords = [
-    {
-      termId: "2026-09",
-      courseCode: "CS2006",
-      externalAssignmentId: "ga1",
-      dueDate: "2026-10-11T18:29:00.000Z",
-    },
-  ];
-  const res = resolveDeadline(portalAssessment, { localAssessment: null, supabaseRecords });
+  const res = resolveDeadline(event);
   assert.equal(res.source, DeadlineSource.SUPABASE);
   assert.equal(res.deadlineIso, "2026-10-11T18:29:00.000Z");
 });

@@ -2,6 +2,13 @@
 
 import { QuestionType } from "../model/types.js";
 import { assignmentFingerprint } from "./protocol.js";
+import {
+  escapeAnswerRecord,
+  unescapeAnswerRecord,
+  serializeAssignmentAnswers,
+  parseAssignmentAnswers,
+} from "./answer-stream.js";
+
 
 const TYPE_NAMES = Object.freeze({
   [QuestionType.MCQ]: "MCQ",
@@ -209,6 +216,7 @@ function existingEntries(existing) {
 
 /**
  * Parses and strictly validates an AI answer key against a canonical document.
+ * Supports both the canonical Answer Stream format and legacy JSON payloads.
  * `existing` may be the prior return value, enabling in-memory append/replace.
  */
 export function parseAnswerKey(rawText, documentModel, { existing = null } = {}) {
@@ -217,6 +225,47 @@ export function parseAnswerKey(rawText, documentModel, { existing = null } = {})
   const priorFp = existing?.fp || existing?.fingerprint || null;
   if (priorFp && priorFp !== fp) {
     return { ok: false, fatal: "This answer key is for a different assignment. Copy the prompt again.", entries: prior, replaced: [], issues: [] };
+  }
+
+  const questions = questionMap(documentModel);
+  const trimmed = typeof rawText === "string" ? rawText.trim() : "";
+
+  // Check if input is in Canonical Indexed Stream or Semicolon format
+  const isIndexedStream = /(?:^|\n)\s*\d+\s*:/.test(trimmed);
+  const isSemicolonStream = !trimmed.startsWith("{") && !trimmed.includes('"acadrix"') && trimmed.includes(";");
+
+  if (isIndexedStream || isSemicolonStream) {
+    const streamResult = parseAssignmentAnswers(rawText, {
+      expectedCount: documentModel?.questions?.length,
+      documentModel,
+    });
+    if (!streamResult.ok && streamResult.error) {
+      return { ok: false, fatal: streamResult.error, entries: prior, replaced: [], issues: [] };
+    }
+
+    const fresh = new Map();
+    for (const entry of streamResult.entries || []) {
+      fresh.set(entry.number, entry);
+    }
+
+    const replaced = [];
+    const merged = new Map(prior.map((entry) => [entry.number, entry]));
+    for (const [number, entry] of fresh) {
+      if (merged.has(number)) replaced.push(number);
+      merged.set(number, entry);
+    }
+    const entries = [...questions.keys()].map((number) => {
+      if (merged.has(number)) return merged.get(number);
+      const question = questions.get(number);
+      const type = TYPE_NAMES[question.type] || String(question.type || "UNKNOWN");
+      return missing(number, type);
+    });
+
+    for (const [number, entry] of merged) {
+      if (!questions.has(number)) entries.push(entry);
+    }
+
+    return { ok: true, fatal: null, entries, replaced, issues: streamResult.issues || [] };
   }
 
   const parsed = parseJson(rawText);
@@ -229,7 +278,6 @@ export function parseAnswerKey(rawText, documentModel, { existing = null } = {})
     return { ok: false, fatal: "This answer key is for a different assignment. Copy the prompt again.", entries: prior, replaced: [], issues: [] };
   }
 
-  const questions = questionMap(documentModel);
   const byNumber = new Map();
   const duplicateNumbers = new Set();
   for (const item of payload.answers) {
@@ -288,4 +336,13 @@ export function parseAnswerKey(rawText, documentModel, { existing = null } = {})
   return { ok: true, fatal: null, entries, replaced, issues };
 }
 
-export { canonicalNumerical, extractPayloadText };
+export {
+  canonicalNumerical,
+  extractPayloadText,
+  escapeAnswerRecord,
+  unescapeAnswerRecord,
+  serializeAssignmentAnswers,
+  serializeAssignmentAnswers as serializeAnswerStream,
+  parseAssignmentAnswers,
+  parseAssignmentAnswers as parseAnswerStream,
+};

@@ -87,6 +87,7 @@ function makeAiBadge(entry) {
 export function createReaderImportFeature(reader) {
   let currentFingerprint = null;
   let importedEntries = [];
+  let lastImportedText = null;
   let portalActivityHandler = null;
   let isSyncingToPortal = false;
   let activeQuestionIndex = 0;
@@ -718,6 +719,15 @@ export function createReaderImportFeature(reader) {
     const sheet = reader.sheetElement;
     if (!sheet || !reader.documentModel) return;
 
+    const isProg =
+      reader.documentModel?.metadata?.family === "programming" ||
+      reader.documentModel?.family === "programming" ||
+      reader.documentModel?.questions?.some((q) => q.type === QuestionType.PROGRAMMING || Boolean(q.programmingData));
+
+    if (isProg) {
+      return;
+    }
+
     sheet.querySelectorAll(".saq-block").forEach((block) => {
       const index = Number(block.dataset.q);
       const question = reader.documentModel.questions?.[index];
@@ -739,6 +749,7 @@ export function createReaderImportFeature(reader) {
     const clear = node.querySelector("[data-act='import-clear']");
     if (!results || !issues || !replaced) return;
 
+    results.hidden = false;
     if (result.fatal) {
       results.textContent = result.fatal;
       results.dataset.tone = "error";
@@ -759,17 +770,37 @@ export function createReaderImportFeature(reader) {
     replaced.textContent = result.replaced?.length
       ? `Updated existing: ${result.replaced.map((n) => `Q${n}`).join(", ")}`
       : "";
-    if (clear) clear.hidden = !importedEntries.length;
+    if (clear) clear.hidden = !(node.querySelector("#saq-import-text")?.value || "").trim();
+  };
+
+  const updateImportInputState = (node) => {
+    const textarea = node?.querySelector("#saq-import-text");
+    const countBadge = node?.querySelector("#saq-answers-counter-badge");
+    const clear = node?.querySelector("[data-act='import-clear']");
+    if (!textarea || !countBadge) return;
+
+    const text = String(textarea.value || "").trim();
+    const numberedAnswers = text.match(/^\s*\d+\s*:/gm);
+    const count = text
+      ? numberedAnswers?.length || text.split(/\r?\n/).filter((line) => line.trim()).length
+      : 0;
+    countBadge.textContent = `Questions: ${reader.documentModel?.questions?.length || 0} · Answers: ${count}`;
+    if (clear) clear.hidden = !text;
   };
 
   const clearAnswers = (message = "") => {
     importedEntries = [];
+    lastImportedText = null;
     enhanceAllQuestionBlocks();
     const node = importPanel();
     if (node) {
+      const textarea = node.querySelector("#saq-import-text");
+      if (textarea) textarea.value = "";
+      updateImportInputState(node);
       const resEl = node.querySelector("[data-import-results]");
       if (resEl) {
         resEl.textContent = message;
+        resEl.hidden = !message;
         resEl.removeAttribute("data-tone");
       }
       node.querySelector("[data-import-issues]")?.replaceChildren();
@@ -953,18 +984,16 @@ export function createReaderImportFeature(reader) {
     }
   };
 
-  const importAnswersFromText = (text, { autoClose = false } = {}) => {
+  const importAnswersFromText = (text) => {
     const result = parseAnswerKey(text, reader.documentModel, {
       existing: importedEntries.length ? { fp: currentFingerprint, entries: importedEntries } : null,
     });
     if (result.ok) {
       importedEntries = result.entries;
+      lastImportedText = text;
       currentFingerprint = assignmentFingerprint(reader.documentModel);
       enhanceAllQuestionBlocks();
       reader.notify?.("Imported and validated AI answers.", "success", 3000);
-      if (autoClose) {
-        closeImport({ restoreFocus: true });
-      }
     }
     renderImportIssues(result);
   };
@@ -976,15 +1005,19 @@ export function createReaderImportFeature(reader) {
     importAnswersFromText(textarea.value);
   };
 
-  const pasteAndImportFromClipboard = async () => {
+  const pasteClipboardAnswers = async () => {
     try {
       if (typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.readText === "function") {
         const text = await navigator.clipboard.readText();
         if (text && text.trim()) {
           const node = importPanel();
           const textarea = node?.querySelector("textarea");
-          if (textarea) textarea.value = text;
-          importAnswersFromText(text, { autoClose: true });
+          if (textarea) {
+            textarea.value = text;
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus?.({ preventScroll: true });
+            textarea.setSelectionRange?.(textarea.value.length, textarea.value.length);
+          }
           return;
         }
       }
@@ -1041,6 +1074,15 @@ export function createReaderImportFeature(reader) {
 
   return {
     renderHeaderActions({ sheet, documentModel }) {
+      const isProgramming =
+        documentModel?.metadata?.family === "programming" ||
+        documentModel?.family === "programming" ||
+        documentModel?.questions?.some((q) => q.type === QuestionType.PROGRAMMING || Boolean(q.programmingData));
+
+      if (isProgramming) {
+        return;
+      }
+
       initSelectionsFromDocument(documentModel);
 
       // 1. Construct the exact top-bar actions with pristine visual hierarchy
@@ -1153,6 +1195,7 @@ export function createReaderImportFeature(reader) {
       // 3. Mount Import Response Modal Dialog
       let panelEl = sheet.querySelector("#saq-import-panel");
       if (!panelEl) {
+        const totalQCount = (documentModel?.questions || []).length;
         const container = document.createElement("div");
         container.innerHTML = `
           <aside id="saq-import-panel" class="saq-dialog-modal saq-import-dialog" role="dialog" aria-modal="true" aria-labelledby="saq-import-title" hidden>
@@ -1161,24 +1204,28 @@ export function createReaderImportFeature(reader) {
               <header class="saq-dialog-head">
                 <div class="saq-dialog-head-title">
                   <span class="saq-dialog-step-tag">Step 3</span>
-                  <span id="saq-import-title" class="saq-dialog-title">Import AI Response</span>
+                  <span id="saq-import-title" class="saq-dialog-title">Paste Answers</span>
                 </div>
                 <button type="button" class="saq-btn saq-icon saq-dialog-close" data-act="import-close" aria-label="Close" title="Close (Esc)">${ICONS.close}</button>
               </header>
               <section class="saq-import-body">
                 <div class="saq-import-clipboard-row">
-                  <button type="button" class="saq-btn saq-btn-primary saq-btn-paste-clipboard" data-act="import-paste-clipboard" title="Read clipboard and import immediately">
-                    ${IMPORT_ICONS.clipboard}<span>Paste from Clipboard & Validate</span>
+                  <button type="button" class="saq-btn saq-btn-secondary saq-btn-paste-clipboard" data-act="import-paste-clipboard" title="Paste clipboard text into the answer field">
+                    ${IMPORT_ICONS.clipboard}<span>Paste from clipboard</span>
                   </button>
-                  <span class="saq-import-or-divider">or paste response manually:</span>
                 </div>
-                <label class="saq-import-label sr-only" for="saq-import-text">AI JSON Response</label>
-                <textarea id="saq-import-text" class="saq-import-textarea" spellcheck="false" autocomplete="off" placeholder='Paste AI JSON response here...'></textarea>
+                <div class="saq-import-field-heading">
+                  <label class="saq-import-field-label" for="saq-import-text">Answers</label>
+                  <span class="saq-answers-counter-badge" id="saq-answers-counter-badge">Questions: ${totalQCount} · Answers: 0</span>
+                </div>
+                <p class="saq-import-format-hint" id="saq-import-help">Use one answer per line. For example:</p>
+                <code class="saq-import-format-example">1: A\n2: B,C\n3: 1000</code>
+                <textarea id="saq-import-text" class="saq-import-textarea saq-answers-textarea" spellcheck="false" autocomplete="off" aria-describedby="saq-import-help saq-import-format-example" placeholder="Paste or type answers here…"></textarea>
                 <div class="saq-import-actions">
+                  <button type="button" class="saq-btn saq-btn-secondary" data-act="import-clear" hidden>Clear answers</button>
                   <button type="button" class="saq-btn saq-btn-primary" data-act="import-submit">Validate & Review</button>
-                  <button type="button" class="saq-btn saq-btn-secondary" data-act="import-clear" hidden>Clear</button>
                 </div>
-                <output class="saq-import-results" data-import-results role="status" aria-live="polite" aria-atomic="true"></output>
+                <output class="saq-import-results" data-import-results role="status" aria-live="polite" aria-atomic="true" hidden></output>
                 <ul class="saq-import-issues" data-import-issues></ul>
                 <p class="saq-import-replaced" data-import-replaced></p>
               </section>
@@ -1186,6 +1233,30 @@ export function createReaderImportFeature(reader) {
           </aside>`;
         panelEl = container.firstElementChild || container.children?.[0];
         if (panelEl) sheet.appendChild(panelEl);
+
+        // Add real-time counter update on textarea typing
+        const txtArea = panelEl.querySelector("#saq-import-text");
+        const countBadge = panelEl.querySelector("#saq-answers-counter-badge");
+        if (txtArea && countBadge) {
+          txtArea.addEventListener("input", () => {
+            if (lastImportedText !== null && txtArea.value !== lastImportedText) {
+              importedEntries = [];
+              lastImportedText = null;
+              currentFingerprint = null;
+              enhanceAllQuestionBlocks();
+            }
+            updateImportInputState(panelEl);
+            const results = panelEl.querySelector("[data-import-results]");
+            if (results) {
+              results.hidden = true;
+              results.textContent = "";
+              results.removeAttribute("data-tone");
+            }
+            panelEl.querySelector("[data-import-issues]")?.replaceChildren();
+            panelEl.querySelector("[data-import-replaced]")?.replaceChildren();
+          });
+          updateImportInputState(panelEl);
+        }
       }
 
       // 4. Mount Apply Answers Confirmation Dialog
@@ -1521,6 +1592,7 @@ export function createReaderImportFeature(reader) {
 
       const action = btn.dataset.act;
 
+
       // Jump to Question in Viewport
       if (action === "jump-to-q") {
         e.preventDefault();
@@ -1698,7 +1770,7 @@ export function createReaderImportFeature(reader) {
       }
       if (action === "import-paste-clipboard") {
         e.preventDefault();
-        pasteAndImportFromClipboard();
+        pasteClipboardAnswers();
         return true;
       }
       if (action === "import-clear") {
@@ -1944,6 +2016,10 @@ export function createReaderImportFeature(reader) {
 
     destroy({ preserveFeatureState = false } = {}) {
       if (reader._readerRebuilding) return;
+      if (scrollObserver) {
+        scrollObserver.disconnect();
+        scrollObserver = null;
+      }
       for (const timer of inputSyncDebounceTimers.values()) {
         clearTimeout(timer);
       }

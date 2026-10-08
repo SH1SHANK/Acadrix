@@ -6,7 +6,7 @@
 import { debounce } from "../utils/timing.js";
 import { shortcutFromEvent, isTypingTarget } from "../utils/shortcut.js";
 import { Lifecycle, LifecycleState } from "./lifecycle.js";
-import { portalAdapter } from "../portal/adapter.js";
+import { portalAdapter, PortalPageType, isFabEligible } from "../portal/adapter.js";
 import { AssessmentExtractor } from "../extraction/extractor.js";
 import { QuestionTraverser } from "../traversal/traverser.js";
 import { AssignmentAssembler } from "../model/assembler.js";
@@ -65,6 +65,11 @@ export class AcadrixRuntime {
         readerOpen: Boolean(this.reader?.isOpen?.()),
       });
     }
+    this.ProgrammingEditorAdapter = typeof ProgrammingEditorAdapter !== "undefined" ? ProgrammingEditorAdapter : null;
+    this.generateAiPrompt = typeof generateAiPrompt !== "undefined" ? generateAiPrompt : null;
+    this.serializeProgrammingPrompt = typeof serializeProgrammingPrompt !== "undefined" ? serializeProgrammingPrompt : null;
+    this.copyAiContext = typeof copyAiContext !== "undefined" ? copyAiContext : null;
+
 /* @extension-only-end */  }
 
   getContextKey() {
@@ -75,7 +80,8 @@ export class AcadrixRuntime {
     const title = this.portal?.getAssessmentTitle?.() || "";
     const total = this.portal?.getTotalQuestionCount?.() ?? "";
     const review = Boolean(this.portal?.isReviewMode?.());
-    return `${loc}::${title}::${total}::${review}`;
+    const pageType = this.portal?.detectPageType?.() || "";
+    return `${loc}::${title}::${total}::${review}::${pageType}`;
   }
 
   updateContextKey() {
@@ -85,6 +91,7 @@ export class AcadrixRuntime {
   invalidateDocument() {
     this.activeDocument = null;
     this.activeContextKey = null;
+
   }
 
   initialize() {
@@ -213,9 +220,15 @@ export class AcadrixRuntime {
       return;
     }
 
-    const isAssessment = this.portal.detectAssessment();
+    if (this.lifecycle.state === LifecycleState.TRAVERSING) {
+      this.pendingDetectAfterTraversal = true;
+      return;
+    }
 
-    if (isAssessment) {
+    const pageType = this.portal.detectPageType ? this.portal.detectPageType() : (this.portal.detectAssessment() ? PortalPageType.ASSESSMENT : PortalPageType.UNKNOWN);
+    const isEligible = isFabEligible(pageType);
+
+    if (isEligible) {
       if (
         this.activeDocument &&
         this.activeContextKey &&
@@ -234,7 +247,13 @@ export class AcadrixRuntime {
         this.lifecycle.transition(LifecycleState.ACTIVE);
       }
       this.shadowHost.ensure();
-      this.launcher.ensure(this.config.launcherPos, () => this.open());
+      const isProg = pageType === PortalPageType.PROGRAMMING_ASSIGNMENT;
+      this.launcher.ensure(this.config.launcherPos, () => this.open(), {
+        pageType: isProg ? "PROGRAMMING_ASSIGNMENT" : "ASSESSMENT",
+        isProgramming: isProg,
+        shortcut: this.config.openShortcutEnabled && this.config.openShortcut ? this.config.openShortcut : "Shortcut disabled",
+        onQuickAction: (act) => this.handleLauncherQuickAction(act),
+      });
 
       if (this.config.autoLauncher && !this.reader.isOpen() && !isBusyOrOpen) {
         this.launcher.show();
@@ -242,7 +261,7 @@ export class AcadrixRuntime {
     } else {
       this.orchestrator?.cancel();
       this.invalidateDocument();
-      if (this.launcher.element || this.reader.isMounted()) {
+      if (this.launcher.element || this.reader.isMounted() || this.shadowHost.host) {
         this.destroyUi();
         this.lifecycle.transition(LifecycleState.IDLE);
       }
@@ -255,7 +274,7 @@ export class AcadrixRuntime {
     }
 
     if (!this.portal.detectAssessment()) {
-      alert("Open an IITM quiz or assessment with numbered question chips first.");
+      alert("Open an IITM quiz, assessment, or programming assignment first.");
       return;
     }
 
@@ -305,6 +324,7 @@ export class AcadrixRuntime {
       return;
     }
 
+    const extractionContextKey = this.getContextKey();
     // Invalidate any cached document immediately when a new extraction begins
     this.invalidateDocument();
     this.lifecycle.transition(LifecycleState.TRAVERSING);
@@ -313,31 +333,57 @@ export class AcadrixRuntime {
     this.overlay.show();
 
     try {
-      const assembler = new AssignmentAssembler({
-        title: this.portal.getAssessmentTitle?.() || "Assignment",
-        course: this.portal.getCourseName?.() || "",
-        week: this.portal.getAssessmentWeek?.() || "",
-        isReview: this.portal.isReviewMode(),
-        totalQuestions: this.portal.getTotalQuestionCount(),
-      });
+      const isProgramming = Boolean(this.portal.isProgrammingAssignment?.());
+      if (isProgramming) {
+        const ExtractorClass =
+          typeof ProgrammingAssignmentExtractor !== "undefined"
+            ? ProgrammingAssignmentExtractor
+            : null;
+        if (!ExtractorClass) {
+          throw new Error("Programming assignment extractor is unavailable.");
+        }
+        const progExtractor = new ExtractorClass(document);
+        this.activeDocument = await progExtractor.extractAssignment(document, {
+          onProgress: (done, total) => this.overlay.progress(done, total),
+        });
+      } else {
+        const assembler = new AssignmentAssembler({
+          title: this.portal.getAssessmentTitle?.() || "Assignment",
+          course: this.portal.getCourseName?.() || "",
+          week: this.portal.getAssessmentWeek?.() || "",
+          isReview: this.portal.isReviewMode(),
+          totalQuestions: this.portal.getTotalQuestionCount(),
+        });
 
-      await this.traverser.traverseAll({
-        onProgress: (done, total) => this.overlay.progress(done, total),
-        onQuestion: async (context) => {
-          const questionNode = this.extractor.captureCurrentQuestion(context.index, context.isReview);
-          assembler.addQuestion(questionNode);
-        },
-      });
+        await this.traverser.traverseAll({
+          onProgress: (done, total) => this.overlay.progress(done, total),
+          onQuestion: async (context) => {
+            const questionNode = this.extractor.captureCurrentQuestion(context.index, context.isReview);
+            assembler.addQuestion(questionNode);
+          },
+        });
 
-      this.activeDocument = assembler.build();
+        this.activeDocument = assembler.build();
+      }
+
+      const currentPageType = this.portal.detectPageType?.() || PortalPageType.UNKNOWN;
+      if (!isFabEligible(currentPageType) || this.getContextKey() !== extractionContextKey) {
+        this.invalidateDocument();
+        await this.overlay.hide();
+        this.reader.destroy();
+        this.lifecycle.transition(LifecycleState.IDLE);
+        this.detect();
+        return;
+      }
+
       this.updateContextKey();
       await this.overlay.hide();
 
-      // Check if question count matches paginator
+      // Check if question count matches expected
       const totalExpected = this.portal.getTotalQuestionCount();
       const warningMessage =
         totalExpected && totalExpected !== this.activeDocument.length
-          ? `Captured ${this.activeDocument.length} of ${totalExpected} questions — some questions may be paginated. Verify on the original quiz.`
+          ? `Captured ${this.activeDocument.length} of ${totalExpected} questions — verify on the original assessment.`
           : "";
 
       this.reader.build(this.activeDocument, {
@@ -360,8 +406,13 @@ export class AcadrixRuntime {
       this.lifecycle.transition(LifecycleState.OPEN);
     } catch (err) {
       this.invalidateDocument();
-      console.error("[Acadrix Runtime] Error capturing assessment:", err);
+      console.error("[Acadrix Runtime] Error capturing assessment (programming assignments pipeline):", err);
       await this.overlay.hide();
+      if (!isFabEligible(this.portal.detectPageType?.() || PortalPageType.UNKNOWN)) {
+        this.destroyUi();
+        this.lifecycle.transition(LifecycleState.IDLE);
+        return;
+      }
       this.launcher.setExpanded?.(false);
       if (this.config.autoLauncher) {
         this.launcher.show();
@@ -380,6 +431,8 @@ export class AcadrixRuntime {
         return "Could not resolve one or more assignment diagrams or images. Please check your connection and try again.";
       case "MarkdownExportError":
         return "Could not generate the Markdown document for this assignment.";
+      case "TextExportError":
+        return "Could not generate the plain-text document for this assignment.";
       case "PdfExportError":
         return "Could not prepare the PDF print view. Please try again.";
       case "PackagingError":
@@ -425,7 +478,7 @@ export class AcadrixRuntime {
       if (format === "pdf") {
         this.printWithIntelligentTitle(exportOptions.document || this.activeDocument);
       } else {
-        const msg = "Markdown and Bundle export are available in the Acadrix Chrome Extension.";
+        const msg = "Markdown and Bundle export are available in the Acadrix Chrome Extension. Plain-text export is available there too.";
         this.reader.notify?.(msg, "warn", 4200);
         alert(msg);
       }
@@ -443,6 +496,8 @@ export class AcadrixRuntime {
       let result = null;
       if (format === "markdown") {
         result = await this.exportAssignment({ formats: ["markdown"], autoDownload: true, ...exportOptions });
+      } else if (format === "text") {
+        result = await this.exportAssignment({ formats: ["text"], autoDownload: true, ...exportOptions });
       } else if (format === "pdf") {
         result = await this.exportAssignment({
           formats: ["pdf"],
@@ -495,7 +550,11 @@ export class AcadrixRuntime {
             this.reader.notify?.("PDF ready · Questions copied", "success", 3500);
           }
         } else {
-          const doneLabel = format === "markdown" ? "Markdown exported" : "Bundle downloaded";
+          const doneLabel = format === "markdown"
+            ? "Markdown exported"
+            : format === "text"
+              ? "TXT file downloaded"
+              : "Bundle downloaded";
           this.reader.notify?.(doneLabel, "success", 3200);
         }
       }
@@ -527,11 +586,111 @@ export class AcadrixRuntime {
     return this.orchestrator.export(request);
   }
 
+  async writeClipboardText(text) {
+    if (!text) return false;
+    if (this.reader && typeof this.reader.writeClipboardText === "function") {
+      return this.reader.writeClipboardText(text);
+    }
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {}
+    return false;
+  }
+
+  async ensureProgrammingDocument() {
+    if (this.portal.detectPageType?.() !== PortalPageType.PROGRAMMING_ASSIGNMENT) {
+      return null;
+    }
+    if (
+      this.activeDocument &&
+      (this.activeDocument.family === "programming" ||
+        this.activeDocument.metadata?.family === "programming" ||
+        this.activeDocument.questions?.[0]?.programmingData)
+    ) {
+      return this.activeDocument;
+    }
+    const ExtractorClass =
+      typeof ProgrammingAssignmentExtractor !== "undefined"
+        ? ProgrammingAssignmentExtractor
+        : null;
+    if (ExtractorClass) {
+      const progExtractor = new ExtractorClass(document);
+      this.activeDocument = await progExtractor.extractAssignment(document);
+      this.updateContextKey();
+      return this.activeDocument;
+    }
+    return null;
+  }
+
+  async handleLauncherQuickAction(action) {
+    if (action === "open-pa-reader") {
+      this.open();
+      return;
+    }
+
+    try {
+      const doc = await this.ensureProgrammingDocument();
+      if (!doc) {
+        this.launcher.showToast?.("Unable to extract programming assignment.", "error");
+        return;
+      }
+
+      if (action === "copy-pa-question") {
+        const copyFn = typeof copyQuestion === "function" ? copyQuestion : null;
+        const text = copyFn ? copyFn(doc) : "";
+        if (text) {
+          await this.writeClipboardText(text);
+          this.launcher.showToast?.("Question copied to clipboard!", "success");
+        } else {
+          this.launcher.showToast?.("No question content found to copy.", "warn");
+        }
+      } else if (action === "copy-pa-prompt") {
+        const copyFn = typeof copyAiContext === "function" ? copyAiContext : null;
+        const text = copyFn ? copyFn(doc) : "";
+        if (text) {
+          await this.writeClipboardText(text);
+          this.launcher.showToast?.("AI prompt copied to clipboard!", "success");
+        } else {
+          this.launcher.showToast?.("Failed to generate AI prompt.", "error");
+        }
+      } else if (action === "copy-pa-testcases") {
+        const copyFn = typeof copyTestCases === "function" ? copyTestCases : null;
+        const text = copyFn ? copyFn(doc) : "";
+        if (text) {
+          await this.writeClipboardText(text);
+          this.launcher.showToast?.("Test cases copied to clipboard!", "success");
+        } else {
+          this.launcher.showToast?.("No test cases found.", "warn");
+        }
+      } else if (action === "copy-pa-current") {
+        const pData = doc.questions?.[0]?.programmingData || {};
+        const text = [pData.prefixCode, pData.currentCode ?? pData.starterCode ?? "", pData.suffixCode]
+          .filter((part) => part !== null && part !== undefined)
+          .join("\n");
+        if (text) {
+          await this.writeClipboardText(text);
+          this.launcher.showToast?.("Code copied to clipboard!", "success");
+        } else {
+          this.launcher.showToast?.("No code available to copy.", "warn");
+        }
+      }
+    } catch (err) {
+      console.error("[Acadrix Runtime] Launcher quick action error:", err);
+      this.launcher.showToast?.("Action failed: " + (err.message || "Unknown error"), "error");
+    }
+  }
+
   destroyUi() {
     this.launcher.destroy();
     this.overlay.destroy();
     this.reader.destroy();
     this.shadowHost.destroy();
+    if (typeof document !== "undefined") {
+      document.getElementById("unfold-root")?.remove();
+    }
   }
 
   destroy() {
@@ -615,53 +774,5 @@ export class AcadrixRuntime {
     }
   }
 
-  detect() {
-    if (!this.config.enabled) {
-      this.orchestrator?.cancel();
-      this.invalidateDocument();
-      this.destroyUi();
-      return;
-    }
-
-    if (this.lifecycle.state === LifecycleState.TRAVERSING) {
-      this.pendingDetectAfterTraversal = true;
-      return;
-    }
-
-    const isAssessment = this.portal.detectAssessment();
-
-    if (isAssessment) {
-      if (
-        this.activeDocument &&
-        this.activeContextKey &&
-        this.getContextKey() !== this.activeContextKey
-      ) {
-        this.orchestrator?.cancel();
-        this.invalidateDocument();
-        this.reader.destroy();
-      }
-
-      const isBusyOrOpen =
-        this.lifecycle.state === LifecycleState.TRAVERSING ||
-        this.lifecycle.state === LifecycleState.OPEN;
-
-      if (!isBusyOrOpen) {
-        this.lifecycle.transition(LifecycleState.ACTIVE);
-      }
-      this.shadowHost.ensure();
-      this.launcher.ensure(this.config.launcherPos, () => this.open());
-
-      if (this.config.autoLauncher && !this.reader.isOpen() && !isBusyOrOpen) {
-        this.launcher.show();
-      }
-    } else {
-      this.orchestrator?.cancel();
-      this.invalidateDocument();
-      if (this.launcher.element || this.reader.isMounted()) {
-        this.destroyUi();
-        this.lifecycle.transition(LifecycleState.IDLE);
-      }
-    }
-  }
 /* @extension-only-end */}
 export const UnfoldRuntime = AcadrixRuntime;

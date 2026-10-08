@@ -20,8 +20,12 @@ import { AssignmentAssembler } from "../src/model/assembler.js";
 import { IitmPortalAdapter } from "../src/portal/adapter.js";
 import { SemanticExtractor } from "../src/extraction/semantic.js";
 import { exportAssignmentToMarkdown, MarkdownExporter } from "../src/exporters/markdown.js";
-import { generateAiPrompt, exportAssignmentToPrompt } from "../src/bridge/prompt.js";
+import { generateAiPrompt as generateAiPromptBase, exportAssignmentToPrompt } from "../src/bridge/prompt.js";
 import { assignmentFingerprint } from "../src/bridge/protocol.js";
+
+function generateAiPrompt(doc, options = {}) {
+  return generateAiPromptBase(doc, { responseFormat: "json", ...options });
+}
 
 let passed = true;
 
@@ -519,6 +523,8 @@ check("Test 4: Prompt enforces plain-text JSON (no backslashes), attached-image 
     throw new Error("Missing updated TEXT hint line");
   }
 });
+
+
 
 // ── Deterministic Builders for Synthetic Golden Cases ────────────────────────
 

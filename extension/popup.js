@@ -1,7 +1,11 @@
 // Toolbar popup: manage extension settings and trigger assessment Reader / sync operations.
 const QUIZ_HOST = /(^|\.)(study\.iitm\.ac\.in|onlinedegree\.iitm\.ac\.in|iitm\.ac\.in)$/i;
 const DEFAULT_SHORTCUT = "Alt+Q";
+const ACADEMIC_EVENTS_CACHE_KEY = "acx:events:v2";
+const DEFAULT_TERM_ID = "2026-09";
 const DEFAULT_SUPABASE_URL = "https://aocrcrdmwmdtthrwypii.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvY3JjcmRtd21kdHRocnd5cGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0ODg5OTYsImV4cCI6MjEwNjA2NDk5Nn0.LTTbBscGie1nfUTnjAjvuuJ2tjW0F4znDl9C5C8bAp8";
 const DEFAULT_GRADE_SYNC_SECRET = "acx_grade_sync_secret_7f8e9d0c1b2a3b4c5d6e7f8a9b0c1d2e";
 const DEFAULT_SYNC_ENDPOINT = "/functions/v1/grade-sync";
 
@@ -163,8 +167,8 @@ function migrateSettings(store, callback) {
       updates.portalFont = "default";
     }
 
-    // 2. Remove legacy hide toggles
-    for (const key of ["hideBreadcrumb", "hideBanner", "hideSidebar"]) {
+    // 2. Remove legacy hide toggles & deprecated grade keys
+    for (const key of ["hideBreadcrumb", "hideBanner", "hideSidebar", "acx:grades:v1", "acx:pending-sync:v1"]) {
       if (key in items) {
         keysToRemove.push(key);
       }
@@ -399,7 +403,7 @@ function renderOperationalUI() {
 }
 
 // ── Upcoming Deadlines Component ──────────────────────────────────────────────
-function renderUpcomingDeadlines(grades = {}, deadlines = {}) {
+function renderUpcomingDeadlines(events = []) {
   const upcomingList = document.getElementById("upcomingList");
   const upcomingEmpty = document.getElementById("upcomingEmpty");
   if (!upcomingList || !upcomingEmpty) return;
@@ -407,6 +411,23 @@ function renderUpcomingDeadlines(grades = {}, deadlines = {}) {
   const assignmentsMap = new Map();
   const now = new Date();
   const nowMs = now.getTime();
+
+  // 0. Primary Canonical Path: Supabase public.academic_events
+  if (Array.isArray(events) && events.length > 0) {
+    for (const ev of events) {
+      if (!ev || (!ev.deadlineIso && !ev.dueDate)) continue;
+      const key = ev.identity || `${ev.termId}:${ev.id}`;
+      assignmentsMap.set(key, {
+        title: ev.title || "Academic Event",
+        courseCode: ev.courseCode || "",
+        dueDate: ev.deadlineIso || ev.dueDate,
+        deadlineSource: "SUPABASE",
+        deadlineVerifiedAt: ev.deadlineVerifiedAt || ev.fetchedAt || null,
+        submissionStatus: "UNKNOWN",
+        submissionCheckedAt: null,
+      });
+    }
+  }
 
   const getKolkataParts = (d) => {
     try {
@@ -431,50 +452,7 @@ function renderUpcomingDeadlines(grades = {}, deadlines = {}) {
 
   const nowParts = getKolkataParts(now);
 
-  // 1. Gather from authoritative grades store
-  for (const [termId, courseObj] of Object.entries(grades)) {
-    if (!courseObj || typeof courseObj !== "object") continue;
-    for (const [courseCode, assignObj] of Object.entries(courseObj)) {
-      if (!assignObj || typeof assignObj !== "object") continue;
-      for (const [extId, record] of Object.entries(assignObj)) {
-        if (!record || !record.dueDate) continue;
-        const key = `${termId}:${courseCode}:${extId}`;
-        const source = record.deadlineSource || (record.source === "supabase_deadlines" ? "SUPABASE" : (record.source === "grades" || record.source === "start" ? "PORTAL" : "LOCAL"));
-        assignmentsMap.set(key, {
-          title: record.title || "Assignment",
-          courseCode: courseCode || "",
-          dueDate: record.dueDate,
-          deadlineSource: source,
-          deadlineVerifiedAt: record.deadlineVerifiedAt || record.submissionCheckedAt || record.capturedAt || null,
-          submissionStatus: record.submissionStatus || "UNKNOWN",
-          submissionCheckedAt: record.submissionCheckedAt || record.capturedAt || null,
-        });
-      }
-    }
-  }
-  // 2. Gather from legacy/sidebar deadlines store if not already present
-  for (const [courseKey, assignMap] of Object.entries(deadlines)) {
-    if (!assignMap || typeof assignMap !== "object") continue;
-    for (const [decorKey, record] of Object.entries(assignMap)) {
-      if (!record || (!record.dueDate && !record.deadlineIso)) continue;
-      const key = `${courseKey}:${decorKey}`;
-      const exists = Array.from(assignmentsMap.values()).some(
-        (a) => a.title.toLowerCase() === (record.title || decorKey).toLowerCase()
-      );
-      if (!exists) {
-        const source = record.deadlineSource || (record.source === "supabase_deadlines" ? "SUPABASE" : (record.source === "grades" || record.source === "start" ? "PORTAL" : "LOCAL"));
-        assignmentsMap.set(key, {
-          title: record.title || decorKey,
-          courseCode: record.courseCode || "",
-          dueDate: record.dueDate || record.deadlineIso,
-          deadlineSource: source,
-          deadlineVerifiedAt: record.deadlineVerifiedAt || record.submissionCheckedAt || (record.capturedAt ? new Date(record.capturedAt).toISOString() : null),
-          submissionStatus: record.submissionStatus || "UNKNOWN",
-          submissionCheckedAt: record.submissionCheckedAt || (record.capturedAt ? new Date(record.capturedAt).toISOString() : null),
-        });
-      }
-    }
-  }
+
   const items = Array.from(assignmentsMap.values());
   if (items.length === 0) {
     upcomingEmpty.hidden = false;
@@ -602,43 +580,33 @@ async function refreshStorageData() {
 
   return new Promise((resolve) => {
     store.get(
-      ["acx:grades:v1", "acx:deadlines:v1", "acx:pending-sync:v1", "acx:sync-status:v1"],
+      [ACADEMIC_EVENTS_CACHE_KEY, "acx:pending-sync:v1", "acx:sync-status:v1"],
       (items = {}) => {
-        const grades = items["acx:grades:v1"] || {};
-        const deadlines = items["acx:deadlines:v1"] || {};
+        const eventsCache = items[ACADEMIC_EVENTS_CACHE_KEY] || {};
+        const events = Array.isArray(eventsCache.events) ? eventsCache.events : [];
         const pending = items["acx:pending-sync:v1"] || {};
         const syncStatus = items["acx:sync-status:v1"] || {};
-        let totalRecords = 0;
-        const courses = new Set();
 
-        for (const [termId, courseObj] of Object.entries(grades)) {
-          if (courseObj && typeof courseObj === "object") {
-            for (const [courseCode, assignObj] of Object.entries(courseObj)) {
-              if (assignObj && typeof assignObj === "object") {
-                courses.add(`${termId}:${courseCode}`);
-                totalRecords += Object.keys(assignObj).length;
-              }
-            }
-          }
-        }
+        const totalRecords = events.length;
+        const courseCount = 0;
 
         const pendingCount = Object.keys(pending).length;
 
         operationalState.local = {
           totalRecords,
-          courseCount: courses.size,
+          courseCount,
           pendingCount,
         };
 
         operationalState.sync = {
-          lastSuccessfulSync: syncStatus.lastSuccessfulSync || null,
+          lastSuccessfulSync: eventsCache.fetchedAt || syncStatus.lastSuccessfulSync || null,
           lastSyncAttempt: syncStatus.lastSyncAttempt || null,
-          lastSyncStatus: syncStatus.lastSyncStatus || "NEVER_SYNCED",
+          lastSyncStatus: events.length > 0 ? "SYNCED" : (syncStatus.lastSyncStatus || "NEVER_SYNCED"),
           lastSyncError: syncStatus.lastSyncError || null,
-          lastSyncedCount: syncStatus.lastSyncedCount || 0,
+          lastSyncedCount: totalRecords,
         };
 
-        renderUpcomingDeadlines(grades, deadlines);
+        renderUpcomingDeadlines(events);
         renderOperationalUI();
         resolve();
       }
@@ -658,195 +626,84 @@ async function executeGradeSync() {
   renderOperationalUI();
 
   try {
-    const items = await new Promise((resolve) => {
-      store.get(
-        ["acx:grades:v1", "acx:pending-sync:v1", "acx:sync-status:v1", "supabaseUrl", "gradeSyncSecret"],
-        (res) => resolve(res || {})
-      );
+    const queryParams = new URLSearchParams({
+      select: "*",
+      order: "event_date.asc,start_time.asc",
+      term_id: `eq.${DEFAULT_TERM_ID}`,
+      course_code: "is.null",
+      event_type: "eq.assignment",
+      id: "like.assignment_weekly_%",
     });
-
-    const grades = items["acx:grades:v1"] || {};
-    const pending = items["acx:pending-sync:v1"] || {};
-    const pendingItems = Object.values(pending);
-    const existingSyncStatus = items["acx:sync-status:v1"] || {};
-
-    const supabaseUrl = (items.supabaseUrl || DEFAULT_SUPABASE_URL).replace(/\/+$/, "");
-    const syncSecret = items.gradeSyncSecret || DEFAULT_GRADE_SYNC_SECRET;
-
-    if (pendingItems.length === 0) {
-      operationalState.sync.lastSyncStatus = existingSyncStatus.lastSuccessfulSync ? "SYNCED" : "NEVER_SYNCED";
-      operationalState.sync.lastSyncError = null;
-      store.set({
-        "acx:sync-status:v1": {
-          ...existingSyncStatus,
-          lastSyncStatus: operationalState.sync.lastSyncStatus,
-          lastSyncError: null,
+    const resp = await fetch(
+      `${DEFAULT_SUPABASE_URL}/rest/v1/academic_events?${queryParams.toString()}`,
+      {
+        headers: {
+          apikey: DEFAULT_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${DEFAULT_SUPABASE_ANON_KEY}`,
+          Accept: "application/json",
         },
-      });
-      return;
-    }
-
-    if (!syncSecret) {
-      const err = "GRADE_SYNC_SECRET is not configured";
-      const nextStatus = {
-        ...existingSyncStatus,
-        lastSyncAttempt: new Date().toISOString(),
-        lastSyncStatus: "AUTH_ERROR",
-        lastSyncError: err,
-      };
-      await new Promise((r) => store.set({ "acx:sync-status:v1": nextStatus }, r));
-      return;
-    }
-
-    // Group pending items by termId & courseCode
-    const groups = new Map();
-    const orphanKeys = [];
-
-    for (const item of pendingItems) {
-      const termId = item?.termId;
-      const courseCode = item?.courseCode;
-      const externalAssignmentId = item?.externalAssignmentId;
-      const queueKey = item?.key || `${termId}:${courseCode}:${externalAssignmentId}`;
-
-      if (!termId || !courseCode || !externalAssignmentId) {
-        if (queueKey) orphanKeys.push(queueKey);
-        continue;
       }
+    );
 
-      const liveRecord = grades?.[termId]?.[courseCode]?.[externalAssignmentId];
-      if (!liveRecord) {
-        orphanKeys.push(queueKey);
-        continue;
-      }
+    if (resp.ok) {
+      const rows = await resp.json();
+      const nowIso = new Date().toISOString();
+      const events = Array.isArray(rows)
+        ? rows
+            .filter((r) => r && r.course_code == null && String(r.event_type || "").toLowerCase() === "assignment" && String(r.id || "").startsWith("assignment_weekly_"))
+            .map((r) => ({
+            identity: `${r.term_id}:${r.id}`,
+            id: r.id,
+            termId: r.term_id,
+            courseCode: r.course_code || null,
+            title: r.title,
+            eventType: r.event_type,
+            subType: r.sub_type,
+            deadlineIso: r.end_time || (r.event_date ? `${r.event_date}T18:29:00.000Z` : null),
+            isHardCutoff: Boolean(r.is_hard_cutoff),
+            cutoffType: r.cutoff_type,
+            importance: r.importance,
+            source: "SUPABASE",
+            submissionStatus: "UNKNOWN",
+          }))
+        : [];
 
-      const groupKey = `${termId}:${courseCode}`;
-      if (!groups.has(groupKey)) {
-        groups.set(groupKey, { termId, courseCode, keys: [], records: [] });
-      }
-      const grp = groups.get(groupKey);
-      grp.keys.push(queueKey);
-      grp.records.push(liveRecord);
-    }
-
-    // Remove orphan queue items safely
-    if (orphanKeys.length > 0) {
-      for (const k of orphanKeys) delete pending[k];
-      await new Promise((r) => store.set({ "acx:pending-sync:v1": pending }, r));
-    }
-
-    if (groups.size === 0) {
-      const nextStatus = {
-        ...existingSyncStatus,
-        lastSyncStatus: existingSyncStatus.lastSuccessfulSync ? "SYNCED" : "NEVER_SYNCED",
-        lastSyncError: null,
-      };
-      await new Promise((r) => store.set({ "acx:sync-status:v1": nextStatus }, r));
-      return;
-    }
-
-    let totalSynced = 0;
-    let totalFailed = 0;
-    let firstErrorMessage = null;
-    let isAuthError = false;
-
-    const endpoint = `${supabaseUrl}${DEFAULT_SYNC_ENDPOINT}`;
-
-    for (const [, group] of groups.entries()) {
-      const formattedRecords = group.records.map((r) => ({
-        externalAssignmentId: String(r.externalAssignmentId || "").trim(),
-        canonicalAssessmentId: r.canonicalAssessmentId ? String(r.canonicalAssessmentId).trim() : null,
-        module: String(r.module || "").trim(),
-        title: String(r.title || "").trim(),
-        assignmentType: r.assignmentType ? String(r.assignmentType).trim() : "Assignment",
-        yourScore: typeof r.yourScore === "number" && Number.isFinite(r.yourScore) ? r.yourScore : null,
-        yourScoreRaw: r.yourScoreRaw !== undefined && r.yourScoreRaw !== null ? String(r.yourScoreRaw).trim() : null,
-        peerAverage: typeof r.peerAverage === "number" && Number.isFinite(r.peerAverage) ? r.peerAverage : null,
-        medianScore: typeof r.medianScore === "number" && Number.isFinite(r.medianScore) ? r.medianScore : null,
-        scoreStatus: r.scoreStatus ? String(r.scoreStatus).trim() : "UNRELEASED",
-        evaluationStatus: r.evaluationStatus ? String(r.evaluationStatus).trim() : "normal",
-        dueDate: r.dueDate || r.dueDateIso || null,
-        dueDateText: r.dueDateText || r.dueDateRaw || null,
-        source: r.source ? String(r.source).trim() : "grades",
-        capturedAt: r.capturedAt || null,
-      }));
-
-      const payload = {
-        termId: group.termId,
-        courseCode: group.courseCode,
-        records: formattedRecords,
-      };
-
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-sync-secret": syncSecret,
+      await new Promise((r) =>
+        store.set(
+          {
+            [ACADEMIC_EVENTS_CACHE_KEY]: {
+              fetchedAt: nowIso,
+              termId: DEFAULT_TERM_ID,
+              events,
+              source: "SUPABASE",
+            },
+            "acx:sync-status:v1": {
+              lastSuccessfulSync: nowIso,
+              lastSyncAttempt: nowIso,
+              lastSyncStatus: "SUCCESS",
+              lastSyncError: null,
+            },
           },
-          body: JSON.stringify(payload),
-        });
+          r
+        )
+      );
 
-        let responseBody = null;
-        try { responseBody = await response.json(); } catch {}
-
-        if (response.ok && responseBody?.ok) {
-          // Dequeue synchronized keys
-          for (const k of group.keys) delete pending[k];
-          totalSynced += formattedRecords.length;
-        } else {
-          totalFailed += formattedRecords.length;
-          const errMsg = responseBody?.error || `HTTP ${response.status}`;
-          if (!firstErrorMessage) firstErrorMessage = errMsg;
-          if (response.status === 401 || response.status === 403) isAuthError = true;
+      // Trigger background alarm reconciliation
+      try {
+        if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+          chrome.runtime.sendMessage({ type: "RECONCILE_NOTIFICATIONS" }, () => {});
         }
-      } catch (netErr) {
-        totalFailed += formattedRecords.length;
-        const errMsg = netErr?.message || "Network request failed";
-        if (!firstErrorMessage) firstErrorMessage = errMsg;
-      }
+      } catch {}
     }
-
-    const nowIso = new Date().toISOString();
-    let updatedSyncStatus;
-
-    if (totalFailed === 0 && totalSynced > 0) {
-      updatedSyncStatus = {
-        ...existingSyncStatus,
-        lastSuccessfulSync: nowIso,
-        lastSyncAttempt: nowIso,
-        lastSyncStatus: "SYNCED",
-        lastSyncError: null,
-        lastSyncedCount: totalSynced,
-      };
-    } else if (totalFailed > 0) {
-      updatedSyncStatus = {
-        ...existingSyncStatus,
-        lastSyncAttempt: nowIso,
-        lastSyncStatus: isAuthError ? "AUTH_ERROR" : "FAILED",
-        lastSyncError: firstErrorMessage || "Synchronization failed",
-      };
-    } else {
-      updatedSyncStatus = {
-        ...existingSyncStatus,
-        lastSyncStatus: existingSyncStatus.lastSuccessfulSync ? "SYNCED" : "NEVER_SYNCED",
-        lastSyncError: null,
-      };
-    }
-
-    await new Promise((r) => {
-      store.set({
-        "acx:pending-sync:v1": pending,
-        "acx:sync-status:v1": updatedSyncStatus,
-      }, r);
-    });
   } catch (err) {
-    console.warn("[Acadrix] Sync execution error:", err);
+    console.warn("[popup] Schedule refresh error:", err);
   } finally {
     operationalState.isSyncing = false;
     syncExecutionLock = false;
     await refreshStorageData();
   }
 }
+const executeScheduleSync = executeGradeSync;
 
 manualSyncBtn?.addEventListener("click", () => {
   executeGradeSync();
@@ -928,13 +785,14 @@ if (store) {
   }
 
   clearDeadlinesBtn?.addEventListener("click", () => {
-    store.remove("acx:deadlines:v1", () => {
+    store.remove([ACADEMIC_EVENTS_CACHE_KEY, "acx:events:v1", "acx:deadlines:v1"], () => {
       if (clearDeadlinesBtn) {
         clearDeadlinesBtn.textContent = "Cleared";
         setTimeout(() => {
           clearDeadlinesBtn.textContent = "Clear";
         }, 1200);
       }
+      refreshStorageData();
     });
   });
 
@@ -983,7 +841,7 @@ if (store) {
     if (changes.notificationsEnabled && notificationsToggle) {
       notificationsToggle.checked = Boolean(changes.notificationsEnabled.newValue);
     }
-    if (changes["acx:grades:v1"] || changes["acx:deadlines:v1"] || changes["acx:pending-sync:v1"] || changes["acx:sync-status:v1"]) {
+    if (changes[ACADEMIC_EVENTS_CACHE_KEY] || changes["acx:grades:v1"] || changes["acx:deadlines:v1"] || changes["acx:pending-sync:v1"] || changes["acx:sync-status:v1"]) {
       refreshStorageData();
     }
   });

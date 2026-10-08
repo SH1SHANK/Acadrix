@@ -40,15 +40,12 @@ const CSS = typeof __CSS__ !== "undefined" ? __CSS__ : "";
   runtime.initialize();
 
   // If invoked via bookmarklet in the page execution world, auto-open if quiz is present
-  const inExtension = (() => {
-    try {
-      return Boolean(typeof chrome !== "undefined" && chrome?.runtime?.id);
-    } catch {
-      return false;
-    }
-  })();
+  let isExtensionBundle = false;
+  /* @extension-only-start */
+  isExtensionBundle = true;
+  /* @extension-only-end */
 
-  if (!inExtension && runtime.portal.detectAssessment()) {
+  if (!isExtensionBundle && runtime.portal.detectAssessment()) {
     runtime.open();
   }
 })();

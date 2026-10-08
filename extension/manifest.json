@@ -30,6 +30,19 @@
         "*://*.iitm.ac.in/*"
       ],
       "js": [
+        "page-bridge.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.study.iitm.ac.in/*",
+        "*://*.onlinedegree.iitm.ac.in/*",
+        "*://onlinedegree.iitm.ac.in/*",
+        "*://*.iitm.ac.in/*"
+      ],
+      "js": [
         "customize.js",
         "katex.min.js",
         "run.js"
@@ -41,7 +54,9 @@
     {
       "resources": [
         "fonts/*",
-        "katex.min.css"
+        "katex.min.css",
+        "vendor/*",
+        "page-bridge.js"
       ],
       "matches": [
         "*://*.study.iitm.ac.in/*",

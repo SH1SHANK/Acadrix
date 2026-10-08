@@ -1,13 +1,15 @@
 /**
  * Reader Drawer Component.
- * Encapsulated bottom sheet for read-only assignment inspection and printing.
+ * Encapsulated bottom sheet for assignment inspection, editing, and printing.
  * Mounts entirely within the isolated ShadowRoot using the Acadrix Design System.
  */
 
 import { ICONS } from "./icons.js";
 import { escapeHtml } from "../utils/dom.js";
-import { ContentType } from "../model/types.js";
+import { ContentType, QuestionType, AssessmentFamily } from "../model/types.js";
 import { buildExportFilename } from "../model/document.js";
+import { ProgrammingCodeEditor } from "./code-editor.js";
+import { LANGUAGE_REGISTRY, normalizeProgrammingLanguage } from "../bridge/languages.js";
 import { renderVisualMath } from "../utils/math.js";
 import { renderContentNodes } from "./reader-content.js";
 import {
@@ -44,6 +46,7 @@ export class ReaderDrawer {
     this.boundPointerUp = null;
     this.boundKeyDown = null;
     this.pdfDirectFallbackActive = false;
+    this.programmingEditor = null;
     this.features = readerFeatureFactories
       .map((factory) => factory(this))
       .filter(Boolean);
@@ -131,34 +134,75 @@ export class ReaderDrawer {
       ? `<div class="saq-warn" role="status">${ICONS.warn}<span>${warningMessage}</span></div>`
       : "";
 
-    sheet.innerHTML = `
-      <div class="saq-grip" aria-hidden="true" title="Drag down to close"></div>
-      <header class="saq-header">
-        <span class="saq-title" id="saq-reader-title">All Questions</span>
-        <span class="saq-count-pill" aria-label="${documentModel.length} questions">${documentModel.length}</span>
-        ${isReview ? '<span class="saq-tag">✓ Results</span>' : ""}
-        <div class="saq-actions">
-          <span class="saq-clock" title="Time remaining">${ICONS.clock}<span class="saq-clock-val"></span></span>
-          <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
-          <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
-          <div class="saq-split-btn-group" id="saq-export-split">
-            <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
-            <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
-            <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
-              <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
-              <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download Markdown</span></button>
-              <button type="button" class="saq-dropdown-item" data-act="export-bundle" role="menuitem" title="Download ZIP Bundle">${ICONS.bundle}<span>Download Bundle</span></button>
-            </div>
+    const isProgramming =
+      documentModel?.metadata?.family === AssessmentFamily.PROGRAMMING ||
+      documentModel?.family === AssessmentFamily.PROGRAMMING ||
+      documentModel?.metadata?.family === "programming" ||
+      documentModel?.family === "programming" ||
+      documentModel?.questions?.some((q) => q.type === QuestionType.PROGRAMMING || Boolean(q.programmingData));
+    const programmingData = isProgramming ? documentModel.questions?.[0]?.programmingData || {} : {};
+    const progLangId = normalizeProgrammingLanguage(programmingData.language) || "javascript";
+    const progLangLabel = LANGUAGE_REGISTRY[progLangId]?.canonicalName || "Code";
+
+    if (isProgramming) {
+      sheet.classList.add("saq-programming-mode");
+      sheet.innerHTML = `
+        <div class="saq-grip" aria-hidden="true" title="Drag down to close"></div>
+        <header class="saq-header saq-programming-header">
+          <div class="saq-header-left">
+            <span class="saq-title" id="saq-reader-title">${escapeHtml(progLangLabel)}</span>
+            <span class="saq-sync-status" id="saq-program-sync-status" role="status" aria-live="polite">In Sync</span>
           </div>
-          <button type="button" class="saq-btn saq-btn-secondary" data-act="refresh" aria-label="Refresh questions from assessment" title="Re-read questions from assessment">${ICONS.refresh}<span>Refresh</span></button>
-          <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
-          <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
-          <button type="button" class="saq-btn-apply" data-act="apply-answers" hidden aria-hidden="true"><span class="saq-btn-badge" data-ready-badge hidden>0</span></button>
-        </div>
-      </header>
-      <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
-      ${warnHtml}
-      <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
+          <div class="saq-actions">
+            <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-prompt-context" aria-label="Copy Prompt" title="Copy LLM-optimized prompt">${ICONS.copy}<span>Copy Prompt</span></button>
+            <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-current-code" aria-label="Copy Code" title="Copy current solution code">${ICONS.code || ICONS.copy}<span>Copy Code</span></button>
+            <div class="saq-dropdown-wrap">
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="toggle-export-menu" aria-label="Export problem statement" aria-haspopup="menu" aria-controls="saq-export-menu" aria-expanded="false"><span>Export</span>${ICONS.chevronDown}</button>
+              <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
+                <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download as PDF</span></button>
+                <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download as Markdown</span></button>
+                <button type="button" class="saq-dropdown-item" data-act="export-txt" role="menuitem" title="Download as TXT File">${ICONS.code || ICONS.copy}<span>Download as TXT File</span></button>
+              </div>
+            </div>
+            <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="refresh" aria-label="Refresh from assignment" title="Refresh from assignment">${ICONS.refresh}<span>Refresh</span></button>
+            <button type="button" class="saq-btn saq-btn-primary saq-btn-sm" data-act="apply-programming-code" id="saq-apply-programming-code" hidden disabled>Apply Changes</button>
+            <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
+            <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
+          </div>
+        </header>
+        <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
+        ${warnHtml}
+        <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
+    } else {
+      sheet.innerHTML = `
+        <div class="saq-grip" aria-hidden="true" title="Drag down to close"></div>
+        <header class="saq-header">
+          <span class="saq-title" id="saq-reader-title">All Questions</span>
+          <span class="saq-count-pill" aria-label="${documentModel.length} questions">${documentModel.length}</span>
+          ${isReview ? '<span class="saq-tag">✓ Results</span>' : ""}
+          <div class="saq-actions">
+            <span class="saq-clock" title="Time remaining">${ICONS.clock}<span class="saq-clock-val"></span></span>
+            <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
+            <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
+            <div class="saq-split-btn-group" id="saq-export-split">
+              <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
+              <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
+                <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
+                <button type="button" class="saq-dropdown-item" data-act="export-md" role="menuitem" title="Download as Markdown">${ICONS.markdown}<span>Download Markdown</span></button>
+                <button type="button" class="saq-dropdown-item" data-act="export-bundle" role="menuitem" title="Download ZIP Bundle">${ICONS.bundle}<span>Download Bundle</span></button>
+              </div>
+            </div>
+            <button type="button" class="saq-btn saq-btn-secondary" data-act="refresh" aria-label="Refresh questions from assessment" title="Re-read questions from assessment">${ICONS.refresh}<span>Refresh</span></button>
+            <button type="button" class="saq-btn saq-icon" data-act="theme" aria-label="Toggle dark theme" aria-pressed="${isDark ? "true" : "false"}" title="Toggle light/dark theme">${ICONS.theme}</button>
+            <button type="button" class="saq-btn saq-icon saq-btn-close" data-act="dismiss" aria-label="Close reader" title="Close reader (Esc)">${ICONS.close}</button>
+            <button type="button" class="saq-btn-apply" data-act="apply-answers" hidden aria-hidden="true"><span class="saq-btn-badge" data-ready-badge hidden>0</span></button>
+          </div>
+        </header>
+        <output class="saq-status-bar" id="saq-status-bar" role="status" aria-live="polite" aria-atomic="true"></output>
+        ${warnHtml}
+        <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
+    }
 
     this.renderBlocks(sheet.querySelector(".saq-scroll"), documentModel);
 
@@ -175,6 +219,8 @@ export class ReaderDrawer {
 
     root.appendChild(sheet);
     this.sheetElement = sheet;
+    if (root?.host) this.programmingEditor?.mount?.(root);
+    this.programmingEditor?.updateStateBadges?.();
     this.runReaderFeatureHook("renderHeaderActions", { sheet, documentModel });
     this.runReaderFeatureHook("documentChange", { documentModel, reason: "build" });
   }
@@ -218,27 +264,35 @@ export class ReaderDrawer {
 
     documentModel.questions.forEach((q, i) => {
       const b = document.createElement("div");
-      b.className = "saq-block";
+      const isProgQuestion = q.type === QuestionType.PROGRAMMING || Boolean(q.programmingData);
+      b.className = isProgQuestion ? "saq-block saq-block-programming" : "saq-block";
       b.id = `saq-q-${i}`;
       b.dataset.q = String(i);
 
       // 1. Question Header
-      const typeLabel = this.formatQuestionType(q.type);
+      const qLabelText = isProgQuestion ? "Problem Statement" : (q.label || `Question ${i + 1}`);
+      const typeLabel = isProgQuestion ? "" : this.formatQuestionType(q.type);
       const typeHtml = typeLabel ? `<span class="saq-qtype">${escapeHtml(typeLabel)}</span>` : "";
       const marksHtml = q.marks ? `<span class="saq-marks">${q.marks} Mark${q.marks > 1 ? "s" : ""}</span>` : "";
       const statusHtml = q.review?.statusText
         ? `<span class="saq-status ${q.review.isCorrect ? "correct" : "incorrect"}">${q.review.isCorrect ? "✓ " : "✕ "}${escapeHtml(q.review.statusText)}</span>`
         : "";
 
-      const headerHtml = `
+      const headerHtml = isProgQuestion ? `
+        <div class="saq-qheader saq-pa-qheader">
+          <span class="saq-qlabel">${escapeHtml(qLabelText)}</span>
+          <span class="saq-lang-badge">${escapeHtml((q.programmingData?.language || "CODE").toUpperCase())}</span>
+          ${marksHtml}
+          ${statusHtml}
+        </div>
+      ` : `
         <div class="saq-qheader">
-          <span class="saq-qlabel">${escapeHtml(q.label)}</span>
+          <span class="saq-qlabel">${escapeHtml(qLabelText)}</span>
           ${typeHtml}
           ${marksHtml}
           ${statusHtml}
         </div>
       `;
-
       // 2. Stem rendering
       let stemHtml = "";
       if (q.stem && q.stem.length > 0) {
@@ -290,12 +344,214 @@ export class ReaderDrawer {
         ? `<div class="saq-feedback"><div class="saq-feedback-title">Feedback</div><div class="saq-feedback-body">${escapeHtml(q.review.feedback)}</div></div>`
         : "";
 
-      b.innerHTML = `
-        ${headerHtml}
-        <div class="saq-stem">${stemHtml}</div>
-        ${optsHtml}
-        ${feedbackHtml}
-      `;
+      if (q.type === QuestionType.PROGRAMMING || q.programmingData) {
+        const pData = q.programmingData || {};
+        const lang = pData.language || "javascript";
+
+        // Partial extraction warning banner
+        let warningBannerHtml = "";
+        const isPartial = pData.extractionStatus === "PARTIAL" || (Array.isArray(pData.warnings) && pData.warnings.length > 0);
+        if (isPartial) {
+          const warningText = Array.isArray(pData.warnings) && pData.warnings.length > 0
+            ? pData.warnings.join(" | ")
+            : "Some assignment context could not be fully extracted.";
+          warningBannerHtml = `
+            <div class="saq-pa-warning-banner" style="margin-bottom: 12px; padding: 8px 12px; background: rgba(247, 144, 9, 0.1); border: 1px solid rgba(247, 144, 9, 0.3); border-radius: 6px; font-size: 13px; color: #f79009;">
+              <strong>Partial Extraction:</strong> ${escapeHtml(warningText)}
+            </div>
+          `;
+        }
+
+        // Images section (if present and not embedded inline in stemHtml)
+        let imagesHtml = "";
+        if (Array.isArray(pData.images) && pData.images.length > 0) {
+          const unseenImages = pData.images.filter(
+            (img) => !stemHtml.includes(img.src) && !stemHtml.includes(img.alt)
+          );
+          if (unseenImages.length > 0) {
+            const imgCards = unseenImages.map((img) => `
+              <div class="saq-image-card" style="margin: 8px 0;">
+                <img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || 'Question Image')}" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--saq-border, #ddd);" />
+                ${img.caption ? `<div class="saq-image-caption" style="font-size: 12px; color: var(--saq-text-muted, #888); margin-top: 4px;">${escapeHtml(img.caption)}</div>` : ""}
+              </div>
+            `).join("");
+            imagesHtml = `
+              <div class="saq-pa-section">
+                <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Images / Diagrams</span></div>
+                <div>${imgCards}</div>
+              </div>
+            `;
+          }
+        }
+
+        // Examples section
+        let examplesHtml = "";
+        if (Array.isArray(pData.examples) && pData.examples.length > 0) {
+          const exCards = pData.examples.map((ex, i) => {
+            if (typeof ex === "string") return `<div class="saq-example-card"><div class="saq-example-body">${escapeHtml(ex)}</div></div>`;
+            return `
+              <div class="saq-example-card" style="margin: 8px 0; padding: 8px 12px; background: var(--saq-surface-sunken, #f8f9fa); border-radius: 6px; border: 1px solid var(--saq-border, #eee);">
+                <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">Example ${i + 1}</div>
+                ${ex.input ? `<div><span style="font-size: 11px; font-weight: 500;">Input:</span><pre class="saq-tc-pre" tabindex="0">${escapeHtml(ex.input)}</pre></div>` : ""}
+                ${ex.output ? `<div><span style="font-size: 11px; font-weight: 500;">Output:</span><pre class="saq-tc-pre" tabindex="0">${escapeHtml(ex.output)}</pre></div>` : ""}
+                ${ex.explanation ? `<div style="font-size: 12px; color: var(--saq-text-muted, #666); margin-top: 4px;"><em>Explanation:</em> ${escapeHtml(ex.explanation)}</div>` : ""}
+              </div>
+            `;
+          }).join("");
+          examplesHtml = `
+            <div class="saq-pa-section">
+              <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Examples</span></div>
+              <div>${exCards}</div>
+            </div>
+          `;
+        }
+
+        // Constraints section
+        let constraintsHtml = "";
+        if (Array.isArray(pData.constraints) && pData.constraints.length > 0) {
+          constraintsHtml = `
+            <div class="saq-pa-section">
+              <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Constraints</span></div>
+              <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 13px;">
+                ${pData.constraints.map((c) => `<li>${escapeHtml(typeof c === "string" ? c : String(c))}</li>`).join("")}
+              </ul>
+            </div>
+          `;
+        }
+
+        // Test Cases section
+        let tcHtml = "";
+        if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
+          const cards = pData.testCases.map((tc) => {
+            const label = tc.description ? `Case ${tc.index} (${escapeHtml(tc.description)})` : `Case ${tc.index}`;
+            if (tc.raw) {
+              return `
+                <div class="saq-test-case-card">
+                  <div class="saq-test-case-header"><span class="saq-tc-name">${escapeHtml(label)}</span></div>
+                  <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.raw)}</pre>
+                </div>
+              `;
+            }
+            return `
+              <div class="saq-test-case-card">
+                <div class="saq-test-case-header">
+                  <span class="saq-tc-name">${escapeHtml(label)}</span>
+                  ${tc.isSample ? '<span class="acx-badge acx-badge-neutral">Sample</span>' : ""}
+                  ${tc.status === "passed" ? '<span class="acx-badge acx-badge-success">Passed</span>' : tc.status === "failed" ? '<span class="acx-badge acx-badge-error">Failed</span>' : ""}
+                </div>
+                <div class="saq-test-case-io">
+                  <div class="saq-tc-col">
+                    <span class="saq-tc-label">Input</span>
+                    <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input || "")}</pre>
+                  </div>
+                  <div class="saq-tc-col">
+                    <span class="saq-tc-label">Expected Output</span>
+                    <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput || "")}</pre>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("");
+          tcHtml = `
+            <div class="saq-pa-section">
+              <div class="saq-pa-section-hdr">
+                <span class="saq-pa-section-title">Test Cases</span>
+                <button class="saq-btn saq-btn-xs saq-btn-secondary" data-act="copy-testcases" type="button" title="Copy test cases as Markdown">Copy Test Cases</button>
+              </div>
+              <div class="saq-test-cases-grid">${cards}</div>
+            </div>
+          `;
+        } else {
+          tcHtml = `
+            <div class="saq-pa-section">
+              <div class="saq-pa-section-hdr">
+                <span class="saq-pa-section-title">Test Cases</span>
+              </div>
+              <div class="saq-empty-notice" style="color: var(--saq-text-muted, #888); font-size: 13px; font-style: italic;">No visible test cases available in this assignment.</div>
+            </div>
+          `;
+        }
+
+        const scaffoldUnavailable =
+          (pData.hasPrefixCode && pData.prefixCode === null) ||
+          (pData.hasSuffixCode && pData.suffixCode === null);
+        const editorContextHtml = `
+          <div class="saq-pa-section saq-pa-editor-context">
+            <div class="saq-pa-section-hdr">
+              <span class="saq-pa-section-title">Code</span>
+              ${scaffoldUnavailable ? '<span class="acx-badge acx-badge-danger">Protected scaffold unavailable</span>' : ""}
+            </div>
+            <div data-programming-editor-slot></div>
+          </div>
+        `;
+
+        // Return Instructions section
+        let returnInstructionsHtml = "";
+        if (pData.returnInstructions && pData.returnInstructions.trim()) {
+          returnInstructionsHtml = `
+            <div class="saq-pa-section">
+              <div class="saq-pa-section-hdr"><span class="saq-pa-section-title">Return Instructions</span></div>
+              <div style="font-size: 13px; line-height: 1.5; color: var(--saq-text-normal);">${escapeHtml(pData.returnInstructions)}</div>
+            </div>
+          `;
+        }
+
+        b.innerHTML = `
+          ${headerHtml}
+          ${warningBannerHtml}
+
+          <div class="saq-stem">${stemHtml}</div>
+          ${imagesHtml}
+          ${examplesHtml}
+          ${constraintsHtml}
+          ${tcHtml}
+          ${editorContextHtml}
+          ${returnInstructionsHtml}
+          ${feedbackHtml}
+        `;
+
+      } else {
+        b.innerHTML = `
+          ${headerHtml}
+          <div class="saq-stem">${stemHtml}</div>
+          ${optsHtml}
+          ${feedbackHtml}
+        `;
+      }
+
+      const editorSlot = b.querySelector("[data-programming-editor-slot]");
+      if (editorSlot) {
+        const pData = q.programmingData || {};
+        const editor = new ProgrammingCodeEditor({
+          language: pData.language || "javascript",
+          prefixCode: pData.prefixCode,
+          starterCode: pData.starterCode ?? pData.currentCode ?? "",
+          currentCode: pData.currentCode ?? pData.starterCode ?? "",
+          suffixCode: pData.suffixCode,
+          hasPrefixCode: pData.hasPrefixCode,
+          hasSuffixCode: pData.hasSuffixCode,
+          editorIdentity: pData.editorIdentity,
+          questionIdentity: pData.questionIdentity,
+          onApply: (code) => {
+            pData.currentCode = code;
+            if (pData.status) pData.status.isModified = false;
+          },
+          onStatus: (message, tone) => this.notify(message, tone),
+          onStateChange: ({ status, modified, applying }) => {
+            const statusEl = this.sheetElement?.querySelector("#saq-program-sync-status");
+            if (statusEl) statusEl.textContent = status;
+            const applyButton = this.sheetElement?.querySelector("#saq-apply-programming-code");
+            if (applyButton) {
+              applyButton.hidden = !modified;
+              applyButton.disabled = !modified || applying;
+              applyButton.textContent = applying ? "Applying…" : "Apply Changes";
+            }
+          },
+        });
+        this.programmingEditor?.destroy();
+        this.programmingEditor = editor;
+        editorSlot.appendChild(editor.render());
+      }
 
       // Prune empty feedback callouts in review mode
       b.querySelectorAll(".feedback").forEach((fb) => {
@@ -309,8 +565,8 @@ export class ReaderDrawer {
         pre.setAttribute("tabindex", "0");
       });
 
-      // Enforce read-only state on all inputs inside block
-      b.querySelectorAll("input, textarea, select, button").forEach((el) => {
+      // Enforce read-only state on options and inputs, but keep action buttons active
+      b.querySelectorAll(".saq-options input, .saq-options textarea, .saq-options select, .saq-options button").forEach((el) => {
         el.setAttribute("disabled", "true");
         el.setAttribute("tabindex", "-1");
       });
@@ -634,6 +890,7 @@ export class ReaderDrawer {
     const lb = root?.querySelector("#saq-image-lightbox");
     return Boolean(lb && !lb.hidden && !lb.hasAttribute("hidden"));
   }
+
   notify(message, tone = "info", durationMs = 3000) {
     if (!this.sheetElement) return;
     const bar = this.sheetElement.querySelector("#saq-status-bar");
@@ -709,6 +966,8 @@ export class ReaderDrawer {
 
   destroy() {
     this.runReaderFeatureHook("destroy");
+    this.programmingEditor?.destroy();
+    this.programmingEditor = null;
     this.stopClock();
     this.clearStatus();
     if (this.sheetElement) {
@@ -723,7 +982,7 @@ export class ReaderDrawer {
       this.backdropElement.remove();
       this.backdropElement = null;
     }
-    const root = this.shadowHost?.root;
+    const root = this.shadowHost?.shadow;
     if (root) {
       root.querySelectorAll("#saq-backdrop, #saq-sheet, #saq-image-lightbox").forEach((el) => el.remove());
     }

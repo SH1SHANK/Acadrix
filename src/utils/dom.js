@@ -2,9 +2,14 @@
  * DOM utility helpers.
  */
 
-export const $ = (selector, root = document) => root ? root.querySelector(selector) : null;
+export const $ = (selector, root = document) =>
+  root && typeof root.querySelector === "function" ? root.querySelector(selector) : null;
 
-export const $$ = (selector, root = document) => root ? [...root.querySelectorAll(selector)] : [];
+export const $$ = (selector, root = document) => {
+  if (!root || typeof root.querySelectorAll !== "function") return [];
+  const res = root.querySelectorAll(selector);
+  return res && typeof res[Symbol.iterator] === "function" ? [...res] : (Array.isArray(res) ? res : []);
+};
 
 export const escapeHtml = (str = "") =>
   str

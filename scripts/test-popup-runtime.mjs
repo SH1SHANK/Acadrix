@@ -208,6 +208,7 @@ async function setupPopupEnvironment({
   probeResult = null,
   tabVersion = "0.2.0",
   initialStorage = {},
+  fetchFn = async () => ({ ok: true, json: async () => [] }),
 } = {}) {
   const elements = new Map([
     ["open", makeElement("button", { textContent: "Open Reader", disabled: true })],
@@ -279,6 +280,8 @@ async function setupPopupEnvironment({
   const context = {
     console,
     URL,
+    URLSearchParams,
+    fetch: fetchFn,
     setTimeout,
     clearTimeout,
     window: pageWindow,
@@ -458,13 +461,44 @@ await check("Handshake: mismatched runtime version is destroyed and reinjected",
 });
 
 // ── UI Interaction & Storage Event Tests ─────────────────────────────────────
-await check("UI Interactions: clear deadlines button triggers store.remove for acx:deadlines:v1", async () => {
+await check("Schedule refresh: persists only unscoped weekly assignment deadlines", async () => {
+  let requestedUrl;
+  const env = await setupPopupEnvironment({
+    fetchFn: async (url) => {
+      requestedUrl = new URL(url);
+      return {
+        ok: true,
+        json: async () => [
+          { term_id: "2026-09", id: "assignment_weekly_w01", course_code: null, title: "Week 1", event_type: "assignment", event_date: "2026-10-11" },
+          { term_id: "2026-09", id: "course_assignment_due", course_code: "CS2005", title: "Course deadline", event_type: "assignment", event_date: "2026-10-12" },
+          { term_id: "2026-09", id: "exam_end_term", course_code: null, title: "Exam", event_type: "exam", event_date: "2027-01-10" },
+        ],
+      };
+    },
+  });
+
+  env.elements.get("manualSyncBtn").click();
+  await new Promise((resolve) => setImmediate(resolve));
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert(requestedUrl.searchParams.get("course_code") === "is.null", "Refresh must filter out course-specific rows");
+  assert(requestedUrl.searchParams.get("event_type") === "eq.assignment", "Refresh must request assignment deadlines only");
+  assert(requestedUrl.searchParams.get("id") === "like.assignment_weekly_%", "Refresh must request weekly assignment records only");
+  const events = env.store.data["acx:events:v2"]?.events || [];
+  assert(events.length === 1, "Only the weekly deadline should be cached");
+  assert(events[0].id === "assignment_weekly_w01", "The weekly deadline should be retained");
+  assert(events[0].courseCode === null, "The cached deadline should not be associated with a course");
+});
+
+await check("UI Interactions: clear deadlines button removes current and legacy schedule caches", async () => {
   const env = await setupPopupEnvironment({});
   const clearBtn = env.elements.get("clearDeadlines");
   clearBtn.click();
   const stats = env.store.getStats();
   assert(stats.removeCalls === 1, "Must call store.remove on Clear click");
   assert(stats.removeLog[0].includes("acx:deadlines:v1"), "Must remove acx:deadlines:v1 key");
+  assert(stats.removeLog[0].includes("acx:events:v2"), "Must remove the current weekly schedule cache");
+  assert(stats.removeLog[0].includes("acx:events:v1"), "Must remove the old all-events cache");
 });
 
 await check("UI Interactions: storage.onChanged event dynamically updates popup controls", async () => {
@@ -615,4 +649,3 @@ if (!passed) {
 } else {
   console.log("\nAll Popup Runtime, Migration & Probe tests passed successfully!\n");
 }
-
