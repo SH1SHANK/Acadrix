@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Graded Assignment Navigation",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1180, 600]
+  },
+  "participants": [
+    { "id": "student", "type": "external", "label": "Student" },
+    { "id": "portal", "type": "frontend", "label": "IITM portal" },
+    { "id": "runtime", "type": "backend", "label": "Acadrix runtime" },
+    { "id": "navigation", "type": "frontend", "label": "Assignment navigation" },
+    { "id": "adapter", "type": "backend", "label": "Portal adapter" }
+  ],
+
+  "messages": [
+    { "from": "student", "to": "portal", "y": 160, "label": "selects a graded assignment" },
+    { "from": "portal", "to": "runtime", "y": 180, "label": "selection DOM mutation" },
+    { "from": "runtime", "to": "navigation", "y": 204, "label": "update()" },
+    { "from": "navigation", "to": "adapter", "y": 228, "label": "getGradedAssignmentNavigation()" },
+    { "from": "adapter", "to": "portal", "y": 256, "label": "read selected and graded rows" },
+    { "from": "portal", "to": "adapter", "y": 284, "label": "current, previous, next rows", "variant": "return" },
+    { "from": "navigation", "to": "adapter", "y": 312, "label": "getAssignmentNavigationMount()" },
+    { "from": "adapter", "to": "navigation", "y": 340, "label": "view + native secondary button", "variant": "return" },
+    { "from": "navigation", "to": "portal", "y": 364, "label": "clone buttons; insert above assignment view" },
+    { "from": "student", "to": "portal", "y": 388, "label": "clicks Previous or Next" },
+    { "from": "portal", "to": "navigation", "y": 412, "label": "button click event" },
+    { "from": "navigation", "to": "adapter", "y": 434, "label": "navigateGradedAssignment(direction)" },
+    { "from": "adapter", "to": "portal", "y": 462, "label": "click the real adjacent outline row" },
+    { "from": "portal", "to": "runtime", "y": 490, "label": "selected assignment changes" },
+    { "from": "runtime", "to": "navigation", "y": 516, "label": "update() with the new selection" }
+  ]
+}

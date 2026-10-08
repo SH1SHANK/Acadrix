@@ -40,6 +40,7 @@ This page summarizes behavior present in the current extension. The [architectur
 - On a graded assignment, adds **Previous** and **Next** buttons above the assignment view; unavailable directions are disabled.
 - Uses the course-outline order and opens the selected item through IITM’s existing course-outline control. Practice work and course content are not navigation targets.
 - The controls use IITM’s secondary-button styling and do not appear on non-graded items.
+- See the [graded assignment navigation sequence](diagrams/graded-assignment-navigation.html) for the interaction flow.
 
 ## Browser extension surfaces
 
