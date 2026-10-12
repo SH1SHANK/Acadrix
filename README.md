@@ -28,7 +28,6 @@ Acadrix does not provide an integrated AI service. Prompts are prepared for the 
 ## Preview
 
 <p align="center"><img src=".github/assets/acadrix-demo.gif" alt="Acadrix opening the assessment Reader" width="85%" /></p>
-<p align="center"><img src=".github/assets/hero.png" alt="Acadrix Reader showing assessment content" width="85%" /></p>
 
 ## Programming assignments
 
