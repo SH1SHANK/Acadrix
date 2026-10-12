@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Acadrix is a Chrome extension for reviewing IIT Madras Online Degree assessments and programming assignments." />
+    <meta name="theme-color" content="#f5f4ef" />
+    <meta property="og:title" content="Acadrix — make the assessment page yours" />
+    <meta property="og:description" content="A focused Reader, answer review workflow, programming workspace, and document exports for the IIT Madras Online Degree portal." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sh1shank.github.io/acadrix/" />
+    <title>Acadrix — the assessment workspace for IITM</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <nav class="nav shell" aria-label="Primary navigation">
+        <a class="brand" href="./" aria-label="Acadrix home"><img src="./assets/acadrix-logo-light.svg" alt="Acadrix" /></a>
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#docs">Documentation</a>
+          <a href="#releases">Releases</a>
+          <a class="nav-github" href="https://github.com/SH1SHANK/Acadrix">GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero shell">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> Built for the IIT Madras Online Degree portal</p>
+          <h1>Make the assessment page <em>yours.</em></h1>
+          <p class="hero-lede">Acadrix turns a scattered assessment workflow into a focused workspace for reading, reviewing, editing, and exporting.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#install">Install from source <span aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="https://github.com/SH1SHANK/Acadrix">View repository <span aria-hidden="true">↗</span></a>
+          </div>
+          <p class="hero-note">Open source · MIT licensed · Manifest V3</p>
+        </div>
+        <div class="hero-art" aria-label="A stylized preview of the Acadrix assessment Reader" role="img">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="reader-card">
+            <div class="card-top"><span class="mini-logo">A</span><span>Assessment Reader</span><span class="card-dots">•••</span></div>
+            <div class="card-body"><div class="fake-sidebar"><span class="active-line"></span><span></span><span></span><span></span></div><div class="fake-content"><span class="fake-kicker">QUESTION 04</span><strong>Explore the problem<br />in one clear view.</strong><span class="fake-line wide"></span><span class="fake-line"></span><span class="fake-line short"></span><div class="fake-answer"><i></i><span>Answer review ready</span></div></div></div>
+          </div>
+          <div class="floating-chip chip-top">⌁ &nbsp; indexed answers</div><div class="floating-chip chip-bottom">⌘ &nbsp; local code workspace</div>
+        </div>
+      </section>
+
+      <section class="feature-section shell" id="features">
+        <div class="section-intro"><p class="eyebrow">One surface, less friction</p><h2>The tools stay close to the work.</h2><p>Acadrix adds a deliberate layer around the portal without taking ownership away from the student.</p></div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card-large"><span class="feature-number">01</span><h3>Assessment Reader</h3><p>Traverse supported assessment pages and bring question content, rich text, mathematics, images, and navigation into one extension-owned Reader.</p><a href="https://github.com/SH1SHANK/Acadrix/blob/main/docs/FEATURES.md">Explore the feature notes <span aria-hidden="true">↗</span></a></article>
+          <article class="feature-card"><span class="feature-number">02</span><h3>Review before apply</h3><p>Prepare prompts for an external AI service, validate indexed answer suggestions, and apply confirmed answers only after a student action.</p></article>
+          <article class="feature-card"><span class="feature-number">03</span><h3>Programming workspace</h3><p>Edit a local CodeMirror working buffer while IITM’s editor remains authoritative. Apply changes only to the editable code region.</p></article>
+          <article class="feature-card"><span class="feature-number">04</span><h3>Take the work with you</h3><p>Produce Markdown and PDF/print output, or package assessment-linked resources into a portable bundle.</p></article>
+        </div>
+      </section>
+
+      <section class="install-section shell" id="install">
+        <div class="install-copy"><p class="eyebrow">Start locally</p><h2>Install the extension in a few deliberate steps.</h2><p>Acadrix currently supports an unpacked Chromium extension workflow. There is no Chrome Web Store listing to install from.</p><a class="text-link" href="https://github.com/SH1SHANK/Acadrix/releases">Check published releases <span aria-hidden="true">↗</span></a></div>
+        <ol class="steps"><li><span>01</span><div><h3>Get the source</h3><p>Clone the repository and install its locked dependencies.</p><code>git clone https://github.com/SH1SHANK/Acadrix.git<br />cd Acadrix && npm ci</code></div></li><li><span>02</span><div><h3>Build the extension</h3><p>Generate the unpacked extension bundle.</p><code>node build.mjs</code></div></li><li><span>03</span><div><h3>Load it in Chrome</h3><p>Open <code>chrome://extensions</code>, enable Developer mode, choose <strong>Load unpacked</strong>, and select <code>build/</code>.</p></div></li></ol>
+      </section>
+
+      <section class="docs-section shell" id="docs"><div><p class="eyebrow">Read the boundaries</p><h2>Useful documentation, without the guesswork.</h2></div><div class="docs-links"><a href="https://github.com/SH1SHANK/Acadrix/blob/main/docs/FEATURES.md"><span>Feature map</span><b>↗</b></a><a href="https://github.com/SH1SHANK/Acadrix/blob/main/docs/PROGRAMMING_ASSIGNMENTS.md"><span>Programming assignments</span><b>↗</b></a><a href="https://github.com/SH1SHANK/Acadrix/blob/main/docs/SECURITY.md"><span>Security and permissions</span><b>↗</b></a><a href="https://github.com/SH1SHANK/Acadrix/blob/main/README.md"><span>README</span><b>↗</b></a></div></section>
+      <section class="release-banner shell" id="releases"><div><p class="eyebrow">Keep an eye on the work</p><h2>Versions and release notes live on GitHub.</h2></div><a class="button button-light" href="https://github.com/SH1SHANK/Acadrix/releases">See releases <span aria-hidden="true">↗</span></a></section>
+    </main>
+
+    <footer class="site-footer"><div class="shell footer-inner"><a class="brand" href="./"><img src="./assets/acadrix-logo-dark.svg" alt="Acadrix" /></a><p>Open source tooling for a more legible study workflow.</p><div class="footer-links"><a href="https://github.com/SH1SHANK/Acadrix">GitHub</a><a href="https://github.com/SH1SHANK/Acadrix/issues">Issues</a><a href="https://github.com/SH1SHANK/Acadrix/blob/main/LICENSE">MIT License</a></div><small>Copyright © 2026 civiks</small></div></footer>
+  </body>
+</html>
