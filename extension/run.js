@@ -6,7 +6,7 @@
 (() => {
   "use strict";
 
-  const __CSS__ = ":host, :root {\n  all: initial;\n  display: block;\n  color-scheme: light;\n\n  /* ── 1. Brand Tokens (Identity; Tier 1) ─────────────────────────────────── */\n  --acx-brand-accent-500: #2F4BDB;\n  --acx-brand-accent-600: #2540C2;\n  --acx-brand-accent-700: #1D33A3;\n  --acx-brand-accent-300: #8EA2FF;\n  --acx-brand-accent-200: #A9B8FF;\n  --acx-brand-accent-400: #7089F5;\n\n  --acx-brand-paper-0:   #FFFFFF;\n  --acx-brand-paper-50:  #FAFAF8;\n  --acx-brand-paper-100: #F3F3F0;\n  --acx-brand-paper-200: #E4E4DF;\n  --acx-brand-paper-300: #CFCFC8;\n  --acx-brand-ink-900:   #16181D;\n  --acx-brand-ink-600:   #5B606B;\n  --acx-brand-ink-500:   #6B707B;\n\n  --acx-brand-night-950: #0E1013;\n  --acx-brand-night-900: #15181D;\n  --acx-brand-night-800: #1C2026;\n  --acx-brand-night-700: #2A2F37;\n  --acx-brand-night-600: #3A404A;\n  --acx-brand-fog-100:   #ECEDEF;\n  --acx-brand-fog-300:   #A3A8B2;\n  --acx-brand-fog-400:   #868B95;\n\n  --acx-brand-scrim-light:         rgb(22 24 29 / 0.40);\n  --acx-brand-scrim-dark:          rgb(0 0 0 / 0.60);\n  --acx-brand-accent-subtle-light: rgb(47 75 219 / 0.08);\n  --acx-brand-accent-subtle-dark:  rgb(142 162 255 / 0.14);\n\n  --acx-brand-success-light:        #1A7F4B;\n  --acx-brand-success-dark:         #5FD08A;\n  --acx-brand-success-bg-light:     rgb(26 127 75 / 0.10);\n  --acx-brand-success-bg-dark:      rgb(95 208 138 / 0.14);\n  --acx-brand-success-border-light: rgb(26 127 75 / 0.30);\n  --acx-brand-success-border-dark:  rgb(95 208 138 / 0.30);\n\n  --acx-brand-warning-light:        #9A6700;\n  --acx-brand-warning-dark:         #E3B341;\n  --acx-brand-warning-bg-light:     rgb(154 103 0 / 0.10);\n  --acx-brand-warning-bg-dark:      rgb(227 179 65 / 0.14);\n  --acx-brand-warning-border-light: rgb(154 103 0 / 0.30);\n  --acx-brand-warning-border-dark:  rgb(227 179 65 / 0.30);\n\n  --acx-brand-error-light:          #C62828;\n  --acx-brand-error-dark:           #FF7B72;\n  --acx-brand-error-bg-light:       rgb(198 40 40 / 0.08);\n  --acx-brand-error-bg-dark:        rgb(255 123 114 / 0.14);\n  --acx-brand-error-border-light:   rgb(198 40 40 / 0.30);\n  --acx-brand-error-border-dark:    rgb(255 123 114 / 0.30);\n\n  --acx-brand-info-light:           #0B6FB8;\n  --acx-brand-info-dark:            #62B0F0;\n  --acx-brand-info-bg-light:        rgb(11 111 184 / 0.08);\n  --acx-brand-info-bg-dark:         rgb(98 176 240 / 0.14);\n  --acx-brand-info-border-light:    rgb(11 111 184 / 0.30);\n  --acx-brand-info-border-dark:     rgb(98 176 240 / 0.30);\n\n  /* ── 2. Semantic UI Tokens — Light Theme Default (Tier 2) ───────────────── */\n  --acx-bg:              var(--acx-brand-paper-50);\n  --acx-surface:         var(--acx-brand-paper-0);\n  --acx-surface-raised:  var(--acx-brand-paper-0);\n  --acx-surface-sunken:  var(--acx-brand-paper-100);\n  --acx-overlay-scrim:   var(--acx-brand-scrim-light);\n\n  --acx-text:            var(--acx-brand-ink-900);\n  --acx-text-muted:      var(--acx-brand-ink-600);\n  --acx-text-subtle:     var(--acx-brand-ink-500);\n  --acx-text-on-accent:  var(--acx-brand-paper-0);\n  --acx-text-disabled:   var(--acx-brand-paper-300);\n\n  --acx-border:          var(--acx-brand-paper-200);\n  --acx-border-strong:   var(--acx-brand-paper-300);\n\n  --acx-accent:          var(--acx-brand-accent-500);\n  --acx-accent-hover:    var(--acx-brand-accent-600);\n  --acx-accent-active:   var(--acx-brand-accent-700);\n  --acx-accent-subtle:   var(--acx-brand-accent-subtle-light);\n  --acx-focus-ring:      var(--acx-brand-accent-500);\n\n  --acx-success:         var(--acx-brand-success-light);\n  --acx-success-bg:      var(--acx-brand-success-bg-light);\n  --acx-success-border:  var(--acx-brand-success-border-light);\n  --acx-warning:         var(--acx-brand-warning-light);\n  --acx-warning-bg:      var(--acx-brand-warning-bg-light);\n  --acx-warning-border:  var(--acx-brand-warning-border-light);\n  --acx-error:           var(--acx-brand-error-light);\n  --acx-error-bg:        var(--acx-brand-error-bg-light);\n  --acx-error-border:    var(--acx-brand-error-border-light);\n  --acx-info:            var(--acx-brand-info-light);\n  --acx-info-bg:         var(--acx-brand-info-bg-light);\n  --acx-info-border:     var(--acx-brand-info-border-light);\n\n  /* ── 3. Typography Tokens (§2) ──────────────────────────────────────────── */\n  --acx-font-ui:      \"Satoshi Variable\", \"Satoshi\", system-ui, -apple-system, \"Segoe UI\", sans-serif;\n  --acx-font-display: \"Outfit\", \"Satoshi Variable\", system-ui, sans-serif;\n  --acx-font-mono:    \"JetBrainsMono Nerd Font\", \"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, Consolas, monospace;\n\n  --acx-text-display:      600 32px/40px var(--acx-font-display);\n  --acx-text-h1:           600 26px/34px var(--acx-font-display);\n  --acx-text-h2:           600 20px/28px var(--acx-font-display);\n  --acx-text-wordmark:     600 18px/24px var(--acx-font-display);\n  --acx-text-h3:           700 17px/24px var(--acx-font-ui);\n  --acx-text-body:         400 16px/26px var(--acx-font-ui);\n  --acx-text-body-medium:  500 16px/26px var(--acx-font-ui);\n  --acx-text-ui:           500 14px/20px var(--acx-font-ui);\n  --acx-text-ui-regular:   400 14px/20px var(--acx-font-ui);\n  --acx-text-small:        400 13px/18px var(--acx-font-ui);\n  --acx-text-caption:      500 12px/16px var(--acx-font-ui);\n  --acx-text-mono:         400 13px/20px var(--acx-font-mono);\n  --acx-text-mono-caption: 500 12px/16px var(--acx-font-mono);\n\n  --acx-tracking-tight:    -0.01em;\n  --acx-tracking-normal:   0;\n  --acx-tracking-overline: 0.04em;\n\n  /* ── 4. Spacing, Shape, Depth, Motion, Layer & Sizing Tokens (§3.3) ─────── */\n  --acx-space-0:  0px;\n  --acx-space-1:  4px;\n  --acx-space-2:  8px;\n  --acx-space-3:  12px;\n  --acx-space-4:  16px;\n  --acx-space-5:  20px;\n  --acx-space-6:  24px;\n  --acx-space-8:  32px;\n  --acx-space-10: 40px;\n  --acx-space-12: 48px;\n  --acx-space-16: 64px;\n\n  --acx-radius-none: 0px;\n  --acx-radius-sm:   4px;\n  --acx-radius-md:   8px;\n  --acx-radius-lg:   12px;\n  --acx-radius-xl:   16px;\n  --acx-radius-full: 999px;\n\n  --acx-border-width:        1px;\n  --acx-border-width-strong: 2px;\n  --acx-focus-offset:        2px;\n  --acx-focus-offset-inset:  -2px;\n\n  --acx-shadow-none: none;\n  --acx-shadow-1:    0 1px 2px rgb(22 24 29 / 0.06);\n  --acx-shadow-2:    0 4px 12px rgb(22 24 29 / 0.10);\n  --acx-shadow-3:    0 12px 32px rgb(22 24 29 / 0.16), 0 2px 6px rgb(22 24 29 / 0.08);\n\n  --acx-duration-fast: 120ms;\n  --acx-duration-base: 200ms;\n  --acx-duration-slow: 280ms;\n  --acx-duration-spin: 800ms;\n  --acx-ease-standard: cubic-bezier(0.2, 0, 0, 1);\n  --acx-ease-exit:     cubic-bezier(0.4, 0, 1, 1);\n\n  --acx-z-launcher: 1;\n  --acx-z-reader:   2;\n  --acx-z-popover:  3;\n  --acx-z-dialog:   4;\n  --acx-z-toast:    5;\n\n  --acx-control-h-sm:   28px;\n  --acx-control-h-md:   36px;\n  --acx-control-h-lg:   44px;\n  --acx-target-min:     32px;\n  --acx-reader-measure: 68ch;\n  --acx-editor-min-height: 320px;\n  --acx-editor-max-height: 480px;\n  --acx-editor-font-size: 13px;\n  --acx-editor-font-size-min: 12px;\n  --acx-editor-font-size-max: 20px;\n  --acx-editor-line-height: 20px;\n  --acx-editor-tab-size: 4;\n  --acx-editor-padding-block: 12px;\n  --acx-editor-padding-inline: 16px;\n  --acx-editor-gutter-width: 48px;\n  --acx-editor-autocomplete-min-width: 180px;\n\n  /* ── 5. Component Layout Tokens ─────────────────────────────────────────── */\n  --acx-header-h:           56px;\n  --acx-handle-w:           36px;\n  --acx-handle-h:           4px;\n  --acx-icon-sm:            12px;\n  --acx-icon-md:            16px;\n  --acx-icon-lg:            18px;\n  --acx-icon-mark:          20px;\n  --acx-opt-marker-size:    24px;\n  --acx-qnum-col:           32px;\n  --acx-anchor-offset:      72px;\n  --acx-textarea-min-h:     192px;\n  --acx-dialog-w:           min(480px, calc(100vw - 32px));\n  --acx-dialog-max-h-vh:    calc(100vh - 64px);\n  --acx-dialog-max-h:       calc(100dvh - 64px);\n  --acx-sheet-w-narrow:     100vw;\n  --acx-sheet-w-tablet:     min(720px, calc(100vw - 32px));\n  --acx-sheet-w-desktop:    min(880px, calc(100vw - 48px));\n  --acx-sheet-h-narrow-vh:  88vh;\n  --acx-sheet-h-narrow:     88dvh;\n  --acx-sheet-h-tablet-vh:  80vh;\n  --acx-sheet-h-tablet:     80dvh;\n  --acx-sheet-h-desktop-vh: 72vh;\n  --acx-sheet-h-desktop:    72dvh;\n  --acx-sheet-h-min:        360px;\n  --acx-sheet-h-max-vh:     90vh;\n  --acx-sheet-h-max:        90dvh;\n\n  font-family: var(--acx-font-ui);\n  color: var(--acx-text);\n}\n\n/* ── Theme Strategy (§3.4): Dark Mode via system preference or explicit attribute ── */\n@media (prefers-color-scheme: dark) {\n  :host(:not([data-theme=\"light\"])) {\n    color-scheme: dark;\n    --acx-bg:              var(--acx-brand-night-950);\n    --acx-surface:         var(--acx-brand-night-900);\n    --acx-surface-raised:  var(--acx-brand-night-800);\n    --acx-surface-sunken:  var(--acx-brand-night-950);\n    --acx-overlay-scrim:   var(--acx-brand-scrim-dark);\n    --acx-text:            var(--acx-brand-fog-100);\n    --acx-text-muted:      var(--acx-brand-fog-300);\n    --acx-text-subtle:     var(--acx-brand-fog-400);\n    --acx-text-on-accent:  var(--acx-brand-night-950);\n    --acx-text-disabled:   var(--acx-brand-night-600);\n    --acx-border:          var(--acx-brand-night-700);\n    --acx-border-strong:   var(--acx-brand-night-600);\n    --acx-accent:          var(--acx-brand-accent-300);\n    --acx-accent-hover:    var(--acx-brand-accent-200);\n    --acx-accent-active:   var(--acx-brand-accent-400);\n    --acx-accent-subtle:   var(--acx-brand-accent-subtle-dark);\n    --acx-focus-ring:      var(--acx-brand-accent-300);\n    --acx-success:         var(--acx-brand-success-dark);\n    --acx-success-bg:      var(--acx-brand-success-bg-dark);\n    --acx-success-border:  var(--acx-brand-success-border-dark);\n    --acx-warning:         var(--acx-brand-warning-dark);\n    --acx-warning-bg:      var(--acx-brand-warning-bg-dark);\n    --acx-warning-border:  var(--acx-brand-warning-border-dark);\n    --acx-error:           var(--acx-brand-error-dark);\n    --acx-error-bg:        var(--acx-brand-error-bg-dark);\n    --acx-error-border:    var(--acx-brand-error-border-dark);\n    --acx-info:            var(--acx-brand-info-dark);\n    --acx-info-bg:         var(--acx-brand-info-bg-dark);\n    --acx-info-border:     var(--acx-brand-info-border-dark);\n    --acx-shadow-1:        0 1px 2px rgb(0 0 0 / 0.15);\n    --acx-shadow-2:        0 4px 12px rgb(0 0 0 / 0.25);\n    --acx-shadow-3:        0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);\n  }\n}\n\n:host([data-theme=\"dark\"]) {\n  color-scheme: dark;\n  --acx-bg:              var(--acx-brand-night-950);\n  --acx-surface:         var(--acx-brand-night-900);\n  --acx-surface-raised:  var(--acx-brand-night-800);\n  --acx-surface-sunken:  var(--acx-brand-night-950);\n  --acx-overlay-scrim:   var(--acx-brand-scrim-dark);\n  --acx-text:            var(--acx-brand-fog-100);\n  --acx-text-muted:      var(--acx-brand-fog-300);\n  --acx-text-subtle:     var(--acx-brand-fog-400);\n  --acx-text-on-accent:  var(--acx-brand-night-950);\n  --acx-text-disabled:   var(--acx-brand-night-600);\n  --acx-border:          var(--acx-brand-night-700);\n  --acx-border-strong:   var(--acx-brand-night-600);\n  --acx-accent:          var(--acx-brand-accent-300);\n  --acx-accent-hover:    var(--acx-brand-accent-200);\n  --acx-accent-active:   var(--acx-brand-accent-400);\n  --acx-accent-subtle:   var(--acx-brand-accent-subtle-dark);\n  --acx-focus-ring:      var(--acx-brand-accent-300);\n  --acx-success:         var(--acx-brand-success-dark);\n  --acx-success-bg:      var(--acx-brand-success-bg-dark);\n  --acx-success-border:  var(--acx-brand-success-border-dark);\n  --acx-warning:         var(--acx-brand-warning-dark);\n  --acx-warning-bg:      var(--acx-brand-warning-bg-dark);\n  --acx-warning-border:  var(--acx-brand-warning-border-dark);\n  --acx-error:           var(--acx-brand-error-dark);\n  --acx-error-bg:        var(--acx-brand-error-bg-dark);\n  --acx-error-border:    var(--acx-brand-error-border-dark);\n  --acx-info:            var(--acx-brand-info-dark);\n  --acx-info-bg:         var(--acx-brand-info-bg-dark);\n  --acx-info-border:     var(--acx-brand-info-border-dark);\n  --acx-shadow-1:        0 1px 2px rgb(0 0 0 / 0.15);\n  --acx-shadow-2:        0 4px 12px rgb(0 0 0 / 0.25);\n  --acx-shadow-3:        0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);\n}\n\n/* ── Coarse Pointer Target Sizing (§9) ──────────────────────────────────── */\n@media (pointer: coarse) {\n  :host, :root {\n    --acx-target-min: 44px;\n    --acx-control-h-md: 44px;\n  }\n}\n\n/* ── Dialog / Progress Overlay (§6) ─────────────────────────────────────── */\n#saq-overlay {\n  position: fixed;\n  inset: var(--acx-space-0);\n  z-index: var(--acx-z-dialog);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: var(--acx-overlay-scrim);\n  opacity: 1;\n  transition: opacity var(--acx-duration-base) var(--acx-ease-standard);\n}\n#saq-overlay[data-leaving] {\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity var(--acx-duration-base) var(--acx-ease-exit);\n}\n.saq-card {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-4);\n  width: var(--acx-dialog-w);\n  max-height: var(--acx-dialog-max-h-vh);\n  max-height: var(--acx-dialog-max-h);\n  padding: var(--acx-space-6);\n  border-radius: var(--acx-radius-lg);\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border);\n  box-shadow: var(--acx-shadow-3);\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n  animation: acx-dialog-enter var(--acx-duration-base) var(--acx-ease-standard) both;\n}\n.saq-card-row {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-3);\n}\n.saq-spinner {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n  border-radius: var(--acx-radius-full);\n  border: var(--acx-border-width-strong) solid var(--acx-border);\n  border-top-color: var(--acx-accent);\n  animation: acx-spin var(--acx-duration-spin) linear infinite;\n}\n.saq-spinner-sm {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n}\n.saq-count {\n  margin-left: auto;\n  color: var(--acx-text-muted);\n  font: var(--acx-text-mono);\n  font-variant-numeric: tabular-nums;\n}\n.saq-track {\n  height: var(--acx-space-1);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-surface-sunken);\n  overflow: hidden;\n}\n.saq-bar {\n  height: 100%;\n  width: 100%;\n  background: var(--acx-accent);\n  border-radius: var(--acx-radius-full);\n  transform: scaleX(0);\n  transform-origin: left;\n  transition: transform var(--acx-duration-base) var(--acx-ease-standard);\n}\n\n/* ── Bottom-Sheet Reader & Scrim (§6, §9) ───────────────────────────────── */\n#saq-backdrop {\n  position: fixed;\n  inset: var(--acx-space-0);\n  z-index: var(--acx-z-reader);\n  background: var(--acx-overlay-scrim);\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity var(--acx-duration-slow) var(--acx-ease-standard);\n}\n#saq-backdrop.is-open {\n  opacity: 1;\n  pointer-events: auto;\n}\n\n#saq-sheet {\n  position: fixed;\n  left: var(--acx-space-0);\n  right: var(--acx-space-0);\n  bottom: var(--acx-space-0);\n  margin-inline: auto;\n  z-index: var(--acx-z-reader);\n  width: var(--acx-sheet-w-desktop);\n  height: var(--acx-sheet-h-desktop-vh);\n  height: var(--acx-sheet-h-desktop);\n  min-height: var(--acx-sheet-h-min);\n  max-height: var(--acx-sheet-h-max-vh);\n  max-height: var(--acx-sheet-h-max);\n  display: flex;\n  flex-direction: column;\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  border-radius: var(--acx-radius-xl) var(--acx-radius-xl) var(--acx-radius-none) var(--acx-radius-none);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n  border-left: var(--acx-border-width) solid var(--acx-border);\n  border-right: var(--acx-border-width) solid var(--acx-border);\n  box-shadow: var(--acx-shadow-3);\n  font-family: var(--acx-font-ui);\n  transform: translateY(100%);\n  will-change: transform;\n  pointer-events: none;\n  overflow-x: hidden;\n  transition: transform var(--acx-duration-slow) var(--acx-ease-standard);\n}\n#saq-sheet:focus {\n  outline: none;\n}\n#saq-sheet:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset-inset);\n}\n#saq-sheet.is-open {\n  transform: translateY(0);\n  pointer-events: auto;\n}\n#saq-sheet.is-dragging {\n  transition: none;\n}\n\n/* Sheet Handle (§6) */\n.saq-grip {\n  flex: none;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100%;\n  padding: var(--acx-space-2) var(--acx-space-0) var(--acx-space-1);\n  background: transparent;\n  border: var(--acx-space-0);\n  cursor: grab;\n  touch-action: none;\n}\n.saq-grip::before {\n  content: \"\";\n  width: var(--acx-handle-w);\n  height: var(--acx-handle-h);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-border-strong);\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n/* Reader Header (§6) */\n.saq-header {\n  position: relative;\n  z-index: 50;\n  flex: none;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  height: var(--acx-header-h);\n  padding-inline: var(--acx-space-4);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n}\n.saq-title {\n  font: var(--acx-text-wordmark);\n  color: var(--acx-text);\n  letter-spacing: var(--acx-tracking-tight);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.saq-count-pill {\n  font: var(--acx-text-mono-caption);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  font-variant-numeric: tabular-nums;\n}\n.saq-tag {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  color: var(--acx-success);\n  background: var(--acx-success-bg);\n  border: var(--acx-border-width) solid var(--acx-success-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n}\n.saq-actions {\n  margin-left: auto;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-export-group {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  background: var(--acx-surface-sunken);\n  padding: var(--acx-space-0) var(--acx-space-1);\n  min-height: var(--acx-control-h-md);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n/* Primitives: Button & IconButton (§6) */\n.saq-btn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: var(--acx-space-2);\n  height: var(--acx-control-h-md);\n  min-width: var(--acx-target-min);\n  box-sizing: border-box;\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  padding: var(--acx-space-0) var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  cursor: pointer;\n  white-space: nowrap;\n  flex-shrink: 0;\n  transition:\n    color var(--acx-duration-fast) var(--acx-ease-standard),\n    background-color var(--acx-duration-fast) var(--acx-ease-standard),\n    border-color var(--acx-duration-fast) var(--acx-ease-standard),\n    box-shadow var(--acx-duration-fast) var(--acx-ease-standard),\n    opacity var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-btn-primary {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n}\n.saq-btn-export {\n  height: var(--acx-target-min);\n  min-width: var(--acx-target-min);\n  padding: var(--acx-space-0) var(--acx-space-3);\n  border-radius: var(--acx-radius-sm);\n  background: transparent;\n  border-color: transparent;\n  color: var(--acx-text-muted);\n}\n.saq-btn-export.is-active-export {\n  background: var(--acx-surface);\n  border-color: var(--acx-border-strong);\n  color: var(--acx-text);\n  box-shadow: var(--acx-shadow-1);\n}\n.saq-btn-secondary {\n  background: var(--acx-surface);\n  border-color: var(--acx-border-strong);\n  color: var(--acx-text);\n}\n.saq-btn:active {\n  background: var(--acx-accent-subtle);\n  border-color: var(--acx-border-strong);\n}\n.saq-btn-primary:active {\n  background: var(--acx-accent-active);\n  border-color: var(--acx-accent-active);\n}\n.saq-btn:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-btn:disabled,\n.saq-btn.is-busy {\n  color: var(--acx-text-disabled);\n  background: var(--acx-surface-sunken);\n  border-color: var(--acx-border);\n  cursor: not-allowed;\n  pointer-events: none;\n}\n.saq-btn svg {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n}\n.saq-icon {\n  width: var(--acx-control-h-md);\n  height: var(--acx-control-h-md);\n  min-width: var(--acx-target-min);\n  padding: var(--acx-space-0);\n  gap: var(--acx-space-0);\n  justify-content: center;\n  border-radius: var(--acx-radius-md);\n  color: var(--acx-text-muted);\n  background: transparent;\n  border-color: transparent;\n}\n.saq-icon svg {\n  width: var(--acx-icon-lg);\n  height: var(--acx-icon-lg);\n}\n.saq-icon[aria-pressed=\"true\"] {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-clock {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-mono-caption);\n  font-variant-numeric: tabular-nums;\n  color: var(--acx-text-muted);\n  white-space: nowrap;\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n}\n.saq-clock svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n}\n\n/* @extension-only-start */\n/* ── Dropdown Wrap & Export Dropdown Menu ───────────────────────────────── */\n.saq-dropdown-wrap,\n.saq-split-btn-group {\n  position: relative;\n  display: inline-flex;\n  align-items: stretch;\n  z-index: 51;\n}\n.saq-split-btn-group .saq-split-main {\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n  border-right: none;\n  padding-right: var(--acx-space-3);\n}\n.saq-split-btn-group .saq-split-arrow {\n  padding: 0 var(--acx-space-2);\n  min-width: 28px;\n  width: 28px;\n  height: var(--acx-control-h-md);\n  border-top-left-radius: 0;\n  border-bottom-left-radius: 0;\n  border-left: var(--acx-border-width) solid var(--acx-border-strong);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n}\n.saq-split-btn-group .saq-split-arrow svg {\n  width: 14px;\n  height: 14px;\n  flex: none;\n  pointer-events: none;\n  transition: transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-split-btn-group .saq-split-arrow[aria-expanded=\"true\"] svg {\n  transform: rotate(180deg);\n}\n.saq-split-btn-group .saq-split-arrow[aria-expanded=\"true\"],\n.saq-split-btn-group .saq-split-arrow:hover {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n  z-index: 1;\n}\n.saq-split-btn-group .saq-split-main:hover {\n  z-index: 1;\n}\n.saq-split-btn-group .saq-split-main:focus-visible,\n.saq-split-btn-group .saq-split-arrow:focus-visible {\n  z-index: 2;\n}\n\n.saq-dropdown-menu {\n  position: absolute;\n  top: calc(100% + var(--acx-space-1));\n  right: 0;\n  z-index: 100;\n  min-width: 190px;\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  box-shadow: var(--acx-shadow-3);\n  padding: var(--acx-space-1);\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n  pointer-events: auto !important;\n}\n.saq-dropdown-menu[hidden] {\n  display: none !important;\n}\n.saq-dropdown-item {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  width: 100%;\n  height: 32px;\n  padding: 0 var(--acx-space-3);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-ui);\n  font-size: 13px;\n  color: var(--acx-text);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  text-align: left;\n  user-select: none;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-dropdown-item * {\n  pointer-events: none;\n}\n.saq-dropdown-item:hover,\n.saq-dropdown-item:focus-visible {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  outline: none;\n}\n.saq-dropdown-item svg {\n  width: 16px;\n  height: 16px;\n  flex: none;\n  color: var(--acx-text-muted);\n}\n.saq-dropdown-item:hover svg,\n.saq-dropdown-item:focus-visible svg {\n  color: var(--acx-accent);\n}\n\n/* ── Intelligent Question Navigation Rail (§5, §6) ───────────────────────── */\n.saq-qrail {\n  flex: none;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-4);\n  padding: var(--acx-space-2) var(--acx-space-6);\n  background: var(--acx-surface-raised);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  box-shadow: var(--acx-shadow-1);\n}\n\n.saq-qrail-stats {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  white-space: nowrap;\n  flex: none;\n}\n.saq-stat-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font-weight: 500;\n}\n.saq-stat-badge strong {\n  font-variant-numeric: tabular-nums;\n  font-weight: 700;\n  color: var(--acx-text);\n}\n.saq-stat-dot {\n  width: 8px;\n  height: 8px;\n  border-radius: var(--acx-radius-full);\n}\n.saq-stat-badge.is-attempted .saq-stat-dot {\n  background: var(--acx-success);\n}\n.saq-stat-badge.is-pending .saq-stat-dot {\n  background: var(--acx-border-strong);\n}\n.saq-stat-divider {\n  color: var(--acx-border-strong);\n}\n\n.saq-qrail-scroll {\n  flex: 1;\n  overflow-x: auto;\n  scrollbar-width: none;\n  -webkit-overflow-scrolling: touch;\n}\n.saq-qrail-scroll::-webkit-scrollbar {\n  display: none;\n}\n\n.saq-qrail-track {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  padding: 2px 0;\n}\n\n.saq-qrail-pill {\n  position: relative;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  height: 26px;\n  min-width: 38px;\n  padding: 0 var(--acx-space-2);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  font-weight: 600;\n  color: var(--acx-text-muted);\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-qrail-pill:hover {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  border-color: var(--acx-border-strong);\n}\n.saq-qrail-pill:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: 1px;\n}\n\n/* Attempted state: filled green/accent indicator */\n.saq-qrail-pill.is-attempted {\n  background: var(--acx-success-bg);\n  border-color: var(--acx-success);\n  color: var(--acx-success);\n}\n.saq-qrail-pill.is-attempted .saq-qrail-dot {\n  background: var(--acx-success);\n}\n\n/* Pending state: subtle outline */\n.saq-qrail-pill.is-pending {\n  background: var(--acx-surface);\n  color: var(--acx-text-muted);\n}\n.saq-qrail-pill.is-pending .saq-qrail-dot {\n  background: var(--acx-border-strong);\n}\n\n/* Active in viewport state */\n.saq-qrail-pill.is-active {\n  background: var(--acx-surface-raised);\n  border-color: var(--acx-accent);\n  color: var(--acx-accent);\n  box-shadow: 0 0 0 1px var(--acx-accent);\n  font-weight: 700;\n}\n.saq-qrail-pill.is-active.is-attempted {\n  border-color: var(--acx-success);\n  box-shadow: 0 0 0 1px var(--acx-success);\n}\n\n.saq-qrail-dot {\n  width: 5px;\n  height: 5px;\n  border-radius: var(--acx-radius-full);\n  flex: none;\n}\n\n/* ── Question Navigation Rail Actions (Zoom & Bulk Selection) ─────────────── */\n.saq-qrail-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  margin-left: auto;\n  flex: none;\n}\n.saq-rail-group {\n  display: inline-flex;\n  align-items: center;\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  padding: 1px;\n  gap: 1px;\n}\n.saq-rail-btn {\n  height: 24px;\n  min-width: 24px;\n  padding: 0 var(--acx-space-2);\n  background: transparent;\n  border: none;\n  border-radius: calc(var(--acx-radius-sm) - 1px);\n  font: var(--acx-text-caption);\n  font-size: 11px;\n  font-weight: 600;\n  color: var(--acx-text-muted);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n  user-select: none;\n}\n.saq-rail-btn:hover {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n}\n.saq-rail-btn:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: 1px;\n  color: var(--acx-text);\n}\n.saq-rail-zoom-val {\n  min-width: 38px;\n  font-variant-numeric: tabular-nums;\n  font-family: var(--acx-font-mono);\n  font-size: 10.5px;\n}\n/* ── Card Header Question Selection Checkbox ─────────────────────────────── */\n.saq-qselect-wrap {\n  display: inline-flex;\n  align-items: center;\n  margin-right: var(--acx-space-1);\n}\n.saq-qselect-cb {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width-strong) solid var(--acx-border-strong);\n  background: var(--acx-surface);\n  color: var(--acx-text-on-accent);\n  cursor: pointer;\n  padding: 0;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-qselect-cb:hover {\n  border-color: var(--acx-accent);\n}\n.saq-qselect-cb:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-qselect-cb.is-checked {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-qselect-cb svg {\n  width: 12px;\n  height: 12px;\n}\n\n/* ── Import AI Answer Modal Dialog (§11) ─────────────────────────────────── */\n.saq-import-dialog .saq-dialog-content {\n  max-width: min(var(--acx-dialog-w), 100%);\n  max-height: var(--acx-dialog-max-h);\n  display: flex;\n  flex-direction: column;\n}\n.saq-import-dialog .saq-dialog-head {\n  flex: none;\n  align-items: flex-start;\n}\n.saq-dialog-head-title {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--acx-space-2);\n  min-width: 0;\n}\n.saq-dialog-step-tag {\n  font: var(--acx-text-mono-caption);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n}\n.saq-import-dialog .saq-dialog-title {\n  font: var(--acx-text-h3);\n}\n.saq-import-body {\n  display: flex;\n  flex: 1 1 auto;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n  min-height: 0;\n  padding: var(--acx-space-4);\n  overflow-y: auto;\n  overscroll-behavior: contain;\n}\n.saq-import-clipboard-row {\n  display: flex;\n  align-items: center;\n  justify-content: flex-start;\n  gap: var(--acx-space-2);\n}\n.saq-btn-paste-clipboard {\n  width: auto;\n  height: var(--acx-control-h-md);\n  font-weight: 500;\n  gap: var(--acx-space-2);\n}\n.saq-import-field-heading {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-2);\n}\n.saq-import-field-label {\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n}\n.saq-answers-counter-badge {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  white-space: nowrap;\n}\n.saq-import-format-hint {\n  margin: calc(var(--acx-space-2) * -1) 0 0;\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n.saq-import-format-example {\n  display: block;\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  font: var(--acx-text-mono);\n  white-space: pre-wrap;\n}\n.saq-import-textarea {\n  width: 100%;\n  min-height: var(--acx-textarea-min-h);\n  box-sizing: border-box;\n  color: var(--acx-text);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  font: var(--acx-text-mono);\n  padding: var(--acx-space-3);\n  overflow-wrap: anywhere;\n  resize: vertical;\n}\n.saq-import-textarea:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n  border-color: var(--acx-accent);\n}\n.saq-import-actions {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  gap: var(--acx-space-2);\n  padding-top: var(--acx-space-2);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-import-results {\n  display: block;\n  font: var(--acx-text-small);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  color: var(--acx-text);\n  overflow-wrap: anywhere;\n}\n.saq-import-results[hidden] {\n  display: none;\n}\n.saq-import-results[data-tone=\"success\"] {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-import-results[data-tone=\"warn\"] {\n  background: var(--acx-warning-bg);\n  color: var(--acx-warning);\n  border-color: var(--acx-warning-border);\n}\n.saq-import-results[data-tone=\"error\"] {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n.saq-import-issues {\n  margin: var(--acx-space-0);\n  padding-inline-start: var(--acx-space-5);\n  color: var(--acx-error);\n  font: var(--acx-text-small);\n  overflow-wrap: anywhere;\n}\n.saq-import-replaced {\n  margin: var(--acx-space-0);\n  color: var(--acx-text-muted);\n  font: var(--acx-text-caption);\n}\n\n.saq-ai-answer-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  max-width: 100%;\n  padding: var(--acx-space-1) var(--acx-space-2);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-mono-caption);\n  overflow-wrap: anywhere;\n}\n.saq-ai-answer-badge.is-invalid {\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n.saq-ai-answer-icon {\n  display: inline-grid;\n  place-items: center;\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n  border: var(--acx-border-width) solid currentColor;\n  border-radius: var(--acx-radius-full);\n  font: var(--acx-text-caption);\n}\n\n/* ── Action Groups & Workflow (§6) ───────────────────────────────────────── */\n.saq-action-group {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n}\n.saq-action-group-workflow,\n.saq-workflow-group {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-action-group-export {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  background: var(--acx-surface-sunken);\n  padding: var(--acx-space-0) var(--acx-space-1);\n  min-height: var(--acx-control-h-md);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-action-group-utility {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n}\n.saq-btn-workflow {\n  font-weight: 500;\n  border-color: var(--acx-border-strong);\n}\n.saq-btn-apply {\n  background: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n  border-color: var(--acx-accent);\n  position: relative;\n}\n.saq-btn-apply:hover:not(:disabled) {\n  background: var(--acx-accent-hover);\n  border-color: var(--acx-accent-hover);\n}\n.saq-ready-badge {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 18px;\n  height: 18px;\n  padding: 0 5px;\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-surface);\n  color: var(--acx-accent);\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  line-height: 1;\n  font-weight: 700;\n}\n.saq-btn-apply .saq-btn-badge {\n  background: var(--acx-surface);\n  color: var(--acx-accent);\n}\n\n/* ── Card Header Status Badges ───────────────────────────────────────────── */\n.saq-status-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  padding: 2px 8px;\n  border-radius: var(--acx-radius-full);\n  font-weight: 500;\n  margin-left: auto;\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-status-badge.is-ai-matched {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-status-badge.is-overridden {\n  background: var(--acx-warning-bg);\n  color: var(--acx-warning);\n  border-color: var(--acx-warning-border);\n}\n.saq-status-badge.is-ai-suggested {\n  background: var(--acx-info-bg);\n  color: var(--acx-info);\n  border-color: var(--acx-info-border);\n}\n.saq-status-badge.is-user-selected {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-status-badge.is-unanswered {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text-muted);\n  border-color: var(--acx-border);\n}\n.saq-status-badge.is-invalid {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n\n/* ── AI Suggestion Sub-Bar ───────────────────────────────────────────────── */\n.saq-ai-suggestion-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  margin-bottom: var(--acx-space-3);\n}\n.saq-ai-suggestion-info {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--acx-space-2);\n}\n.saq-ai-suggestion-label {\n  font: var(--acx-text-caption);\n  text-transform: uppercase;\n  letter-spacing: var(--acx-tracking-overline);\n  color: var(--acx-text-muted);\n  font-weight: 500;\n}\n.saq-ai-suggestion-val {\n  font: var(--acx-text-ui);\n  font-family: var(--acx-font-mono);\n  font-weight: 600;\n  color: var(--acx-text);\n}\n.saq-ai-suggestion-val.is-invalid {\n  color: var(--acx-error);\n}\n.saq-models-breakdown {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n}\n.saq-model-pill {\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  padding: 1px 6px;\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  color: var(--acx-text-muted);\n}\n.saq-btn-apply-ai {\n  height: var(--acx-control-h-sm);\n  padding: 0 var(--acx-space-2);\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  background: var(--acx-surface);\n  border-color: var(--acx-border-strong);\n  color: var(--acx-text);\n  pointer-events: auto !important;\n}\n.saq-btn-apply-ai:hover {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-btn-apply-ai svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n}\n\n/* ── Interactive Option Controls (Radio & Checkbox) ───────────────────────── */\n.saq-options-interactive button.saq-option,\nbutton.saq-option,\ndiv.saq-option {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-3);\n  min-height: var(--acx-control-h-md);\n  width: 100%;\n  box-sizing: border-box;\n  text-align: left;\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  font: var(--acx-text-body);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  margin: 0;\n  transition:\n    color var(--acx-duration-fast) var(--acx-ease-standard),\n    background-color var(--acx-duration-fast) var(--acx-ease-standard),\n    border-color var(--acx-duration-fast) var(--acx-ease-standard);\n  pointer-events: auto !important;\n  cursor: pointer !important;\n  user-select: text;\n}\n.saq-options-interactive button.saq-option:hover,\nbutton.saq-option:hover {\n  background: var(--acx-surface-sunken);\n  border-color: var(--acx-border-strong);\n}\n.saq-options-interactive button.saq-option:focus-visible,\nbutton.saq-option:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-options-interactive button.saq-option.is-selected,\n.saq-options-interactive button.saq-option.selected,\nbutton.saq-option.is-selected,\nbutton.saq-option.selected,\ndiv.saq-option.selected {\n  background: var(--acx-accent-subtle);\n  border-color: var(--acx-accent);\n}\n.saq-options-interactive button.saq-option.is-ai-suggested:not(.is-selected):not(.selected),\nbutton.saq-option.is-ai-suggested:not(.is-selected):not(.selected) {\n  border-inline-start-width: 3px;\n  border-inline-start-color: var(--acx-info);\n}\n.saq-option.is-selected .saq-opt-letter,\n.saq-option.selected .saq-opt-letter {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n}\n.saq-opt-ai-tag {\n  align-self: center;\n  font: var(--acx-text-caption);\n  padding: 1px 6px;\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-info-bg);\n  color: var(--acx-info);\n  border: var(--acx-border-width) solid var(--acx-info-border);\n  font-weight: 500;\n  margin-left: auto;\n  white-space: nowrap;\n}\n\n/* ── Numerical & Text Answer Inputs ───────────────────────────────────────── */\n.saq-answer-input-wrap {\n  margin-top: var(--acx-space-3);\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n}\n.saq-input-label {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  font-weight: 500;\n}\n.saq-input-row {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-num-input,\n.saq-text-input {\n  max-width: 320px;\n  width: 100%;\n  padding: var(--acx-space-2) var(--acx-space-3);\n  font: var(--acx-text-ui);\n  font-family: var(--acx-font-mono);\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  pointer-events: auto !important;\n  cursor: text !important;\n}\n.saq-num-input:focus-visible,\n.saq-text-input:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n  border-color: var(--acx-accent);\n}\n.saq-num-input.is-invalid {\n  border-color: var(--acx-error);\n  background: var(--acx-error-bg);\n}\n.saq-input-error {\n  font: var(--acx-text-caption);\n  color: var(--acx-error);\n}\n.saq-btn-clear {\n  height: var(--acx-control-h-md);\n  pointer-events: auto !important;\n}\n.saq-unsupported-notice {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n  margin-top: var(--acx-space-3);\n}\n.saq-unsupported-notice svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n\n/* ── Apply Answers Confirmation Modal Dialog ────────────────────────────── */\n.saq-dialog-modal {\n  position: fixed;\n  inset: 0;\n  z-index: var(--acx-z-dialog);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: var(--acx-space-4);\n}\n.saq-dialog-modal[hidden] {\n  display: none !important;\n}\n.saq-dialog-backdrop {\n  position: absolute;\n  inset: 0;\n  background: var(--acx-overlay-scrim);\n  animation: acx-fade-enter var(--acx-duration-fast) var(--acx-ease-standard) both;\n}\n.saq-dialog-content {\n  position: relative;\n  width: 100%;\n  max-width: 520px;\n  background: var(--acx-surface-raised);\n  color: var(--acx-text);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-lg);\n  box-shadow: var(--acx-shadow-3);\n  overflow: hidden;\n  animation: acx-dialog-enter var(--acx-duration-fast) var(--acx-ease-standard) both;\n}\n.saq-dialog-head {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: var(--acx-space-3) var(--acx-space-4);\n  background: var(--acx-surface-sunken);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-dialog-title {\n  font: var(--acx-text-ui);\n  font-weight: 600;\n  color: var(--acx-text);\n}\n.saq-dialog-body {\n  padding: var(--acx-space-4);\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n}\n.saq-apply-summary-grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  gap: var(--acx-space-2);\n}\n.saq-summary-card {\n  display: flex;\n  flex-direction: column;\n  padding: var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n}\n.saq-summary-card.is-ready {\n  border-color: var(--acx-accent);\n  background: var(--acx-accent-subtle);\n}\n.saq-summary-card.is-matched {\n  border-color: var(--acx-success-border);\n  background: var(--acx-success-bg);\n}\n.saq-summary-card.is-overridden {\n  border-color: var(--acx-warning-border);\n  background: var(--acx-warning-bg);\n}\n.saq-summary-num {\n  font: var(--acx-text-h2);\n  font-weight: 700;\n  line-height: 1;\n  color: var(--acx-text);\n}\n.saq-summary-lbl {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  margin-top: var(--acx-space-1);\n}\n.saq-apply-notice {\n  display: flex;\n  align-items: flex-start;\n  gap: var(--acx-space-2);\n  margin: var(--acx-space-0);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n.saq-apply-notice svg {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n  color: var(--acx-info);\n  margin-top: 2px;\n}\n.saq-apply-issues-warn {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-error-bg);\n  border: var(--acx-border-width) solid var(--acx-error-border);\n  color: var(--acx-error);\n  font: var(--acx-text-small);\n}\n.saq-apply-issues-warn svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n.saq-dialog-footer {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  background: var(--acx-surface-sunken);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n}\n\n/* Interactive controls pointer-events overrides */\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet input[type=\"radio\"],\n#saq-sheet textarea.saq-import-textarea,\n#saq-sheet .saq-option,\n#saq-sheet button.saq-option,\n#saq-sheet div.saq-option,\n#saq-sheet button.saq-btn-clear,\n#saq-sheet button.saq-btn-apply-ai,\n#saq-sheet .saq-qselect-cb,\n#saq-sheet button[data-act] {\n  pointer-events: auto !important;\n  cursor: pointer !important;\n}\n#saq-sheet .saq-opt-text,\n#saq-sheet .saq-opt-text * {\n  user-select: text;\n}\n#saq-sheet .saq-opt-letter,\n#saq-sheet .saq-opt-letter *,\n#saq-sheet .saq-opt-control,\n#saq-sheet .saq-opt-control *,\n#saq-sheet .saq-opt-ai-tag,\n#saq-sheet .saq-opt-badge {\n  pointer-events: none !important;\n}\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet textarea.saq-import-textarea {\n  cursor: text !important;\n}\n/* @extension-only-end */\n\n/* ── Status / Export Notification Bar & Warning Banner (§6, §10) ────────── */\n.saq-status-bar {\n  display: none;\n  flex: none;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-4);\n  font: var(--acx-text-small);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-info-bg);\n  color: var(--acx-info);\n}\n.saq-status-bar.is-visible {\n  display: flex;\n}\n.saq-status-bar svg {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n}\n.saq-status-bar[data-tone=\"busy\"] {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  border-bottom-color: var(--acx-border);\n}\n.saq-status-bar[data-tone=\"success\"] {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-bottom-color: var(--acx-success-border);\n}\n.saq-status-bar[data-tone=\"warn\"] {\n  background: var(--acx-warning-bg);\n  color: var(--acx-warning);\n  border-bottom-color: var(--acx-warning-border);\n}\n.saq-status-bar[data-tone=\"error\"] {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-bottom-color: var(--acx-error-border);\n}\n\n.saq-warn {\n  flex: none;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-4);\n  color: var(--acx-warning);\n  background: var(--acx-warning-bg);\n  border-bottom: var(--acx-border-width) solid var(--acx-warning-border);\n  font: var(--acx-text-small);\n}\n.saq-warn svg {\n  flex: none;\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n}\n\n/* ── Reader Scroll Container & Content Scope (§5, §7, §9) ───────────────── */\n.saq-scroll {\n  flex: 1;\n  min-height: var(--acx-space-0);\n  overflow-y: auto;\n  overflow-x: hidden;\n  overscroll-behavior: contain;\n  scrollbar-color: var(--acx-border-strong) transparent;\n  scrollbar-width: thin;\n  background: var(--acx-bg);\n  padding:\n    var(--acx-space-8)\n    var(--acx-space-8)\n    calc(var(--acx-space-12) + env(safe-area-inset-bottom, 0px));\n}\n.saq-scroll:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset-inset);\n}\n.saq-inner,\n.acx-content {\n  max-width: var(--acx-reader-measure);\n  margin: var(--acx-space-0) auto;\n  font: var(--acx-text-body);\n  color: var(--acx-text);\n  zoom: var(--acx-zoom, 1);\n  transform-origin: top center;\n}\n\n/* Empty State (§6) */\n.saq-empty-state {\n  text-align: center;\n  padding: var(--acx-space-12) var(--acx-space-6);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-lg);\n  color: var(--acx-text-muted);\n}\n.saq-empty-title {\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-2);\n  font: var(--acx-text-h2);\n  letter-spacing: var(--acx-tracking-tight);\n  color: var(--acx-text);\n}\n.saq-empty-sub {\n  margin: var(--acx-space-0);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n\n/* ── Floating Launcher (§6, §9) ─────────────────────────────────────────── */\n.saq-launcher {\n  position: fixed;\n  left: 50%;\n  bottom: calc(var(--acx-space-4) + env(safe-area-inset-bottom, 0px));\n  z-index: var(--acx-z-launcher);\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: var(--acx-space-2);\n  height: var(--acx-control-h-lg);\n  min-width: var(--acx-control-h-lg);\n  padding: var(--acx-space-0) var(--acx-space-4);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-surface-raised);\n  color: var(--acx-text);\n  box-shadow: var(--acx-shadow-2);\n  cursor: pointer;\n  font: var(--acx-text-ui);\n  white-space: nowrap;\n  transform: translate(-50%, var(--acx-space-2));\n  opacity: 0;\n  pointer-events: none;\n  transition:\n    color var(--acx-duration-fast) var(--acx-ease-standard),\n    background-color var(--acx-duration-fast) var(--acx-ease-standard),\n    border-color var(--acx-duration-fast) var(--acx-ease-standard),\n    box-shadow var(--acx-duration-fast) var(--acx-ease-standard),\n    opacity var(--acx-duration-base) var(--acx-ease-standard),\n    transform var(--acx-duration-base) var(--acx-ease-standard);\n}\n.saq-launcher.is-shown {\n  transform: translateX(-50%);\n  opacity: 1;\n  pointer-events: auto;\n}\n.saq-launcher:active {\n  background: var(--acx-surface-sunken);\n  border-color: var(--acx-accent-active);\n}\n.saq-launcher:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-launcher svg {\n  width: var(--acx-icon-mark);\n  height: var(--acx-icon-mark);\n  color: var(--acx-accent);\n  flex: none;\n}\n\n/* Launcher Position Variants */\n.saq-launcher[data-pos=\"bottom-left\"] {\n  left: calc(var(--acx-space-4) + env(safe-area-inset-left, 0px));\n  right: auto;\n}\n.saq-launcher[data-pos=\"bottom-right\"] {\n  left: auto;\n  right: calc(var(--acx-space-4) + env(safe-area-inset-right, 0px));\n}\n.saq-launcher[data-pos=\"top-left\"] {\n  top: calc(var(--acx-space-4) + env(safe-area-inset-top, 0px));\n  bottom: auto;\n  left: calc(var(--acx-space-4) + env(safe-area-inset-left, 0px));\n  right: auto;\n}\n.saq-launcher[data-pos=\"top-right\"] {\n  top: calc(var(--acx-space-4) + env(safe-area-inset-top, 0px));\n  bottom: auto;\n  left: auto;\n  right: calc(var(--acx-space-4) + env(safe-area-inset-right, 0px));\n}\n.saq-launcher[data-pos=\"bottom-left\"],\n.saq-launcher[data-pos=\"bottom-right\"] {\n  transform: translateY(var(--acx-space-2));\n}\n.saq-launcher[data-pos=\"top-left\"],\n.saq-launcher[data-pos=\"top-right\"] {\n  transform: translateY(calc(var(--acx-space-2) * -1));\n}\n.saq-launcher[data-pos=\"bottom-left\"].is-shown,\n.saq-launcher[data-pos=\"bottom-right\"].is-shown,\n.saq-launcher[data-pos=\"top-left\"].is-shown,\n.saq-launcher[data-pos=\"top-right\"].is-shown {\n  transform: none;\n}\n\n/* ── Question Card & Metadata (§5, §6, §7) ──────────────────────────────── */\n.saq-block {\n  position: relative;\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-6);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-lg);\n  padding: var(--acx-space-6);\n  scroll-margin-top: var(--acx-anchor-offset);\n  content-visibility: auto;\n  contain-intrinsic-size: auto 180px;\n}\n.saq-qheader {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--acx-space-2);\n  margin-bottom: var(--acx-space-3);\n  padding-bottom: var(--acx-space-3);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-qlabel {\n  margin: var(--acx-space-0);\n  min-width: var(--acx-qnum-col);\n  font: var(--acx-text-mono-caption);\n  color: var(--acx-text-muted);\n}\n.saq-qtype,\n.saq-marks {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  font-variant-numeric: tabular-nums;\n}\n.saq-status {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  margin-left: auto;\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-status svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n.saq-status.correct {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-status.incorrect {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n.saq-feedback {\n  margin-top: var(--acx-space-4);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  font: var(--acx-text-small);\n  color: var(--acx-text);\n}\n.saq-feedback-title {\n  font: var(--acx-text-caption);\n  letter-spacing: var(--acx-tracking-overline);\n  text-transform: uppercase;\n  margin-bottom: var(--acx-space-1);\n  color: var(--acx-text-muted);\n}\n\n/* Read-only controls enforcement in Reader */\n#saq-sheet input,\n#saq-sheet textarea,\n#saq-sheet select,\n#saq-sheet button:not(.saq-btn):not(.saq-launcher):not(.saq-grip):not(.saq-dropdown-item):not(.saq-qrail-pill):not(.saq-rail-btn):not(.saq-lightbox-close-btn):not(.saq-qselect-cb):not(.saq-option):not(.saq-btn-apply):not([data-act]) {\n  pointer-events: none !important;\n  cursor: default !important;\n}\n#saq-sheet legend,\n#saq-sheet .choices-legend {\n  display: none !important;\n}\n\n/* @extension-only-start */\n/* Interactive controls pointer-events overrides */\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet textarea.saq-import-textarea,\n#saq-sheet button.saq-option,\n#saq-sheet .saq-option,\n#saq-sheet .saq-options-interactive button,\n#saq-sheet .saq-options-interactive .saq-option,\n#saq-sheet button.saq-btn,\n#saq-sheet button.saq-btn-clear,\n#saq-sheet button.saq-btn-apply-ai,\n#saq-sheet .saq-dropdown-item,\n#saq-sheet button.saq-dropdown-item,\n#saq-sheet .saq-qrail-pill,\n#saq-sheet button.saq-qrail-pill,\n#saq-sheet .saq-qselect-cb,\n#saq-sheet button.saq-qselect-cb,\n#saq-sheet .saq-rail-btn,\n#saq-sheet button.saq-rail-btn,\n#saq-sheet .saq-lightbox button,\n#saq-sheet .saq-lightbox-backdrop,\n#saq-sheet button[data-act],\n#saq-sheet .saq-opt-text,\n#saq-sheet .saq-opt-text *,\n#saq-sheet .saq-stem,\n#saq-sheet .saq-stem * {\n  pointer-events: auto !important;\n}\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet textarea.saq-import-textarea {\n  cursor: text !important;\n}\n/* @extension-only-end */\n\n/* ── Content Styling (§7) ───────────────────────────────────────────────── */\n.saq-stem {\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-4);\n  font: var(--acx-text-body-medium);\n  color: var(--acx-text);\n  overflow-wrap: anywhere;\n}\n.saq-stem-empty {\n  color: var(--acx-text-muted);\n  font: var(--acx-text-small);\n}\n.saq-stem h1 {\n  font: var(--acx-text-h1);\n  letter-spacing: var(--acx-tracking-tight);\n  margin: var(--acx-space-8) var(--acx-space-0) var(--acx-space-3);\n  scroll-margin-top: var(--acx-anchor-offset);\n}\n.saq-stem h2 {\n  font: var(--acx-text-h2);\n  letter-spacing: var(--acx-tracking-tight);\n  margin: var(--acx-space-8) var(--acx-space-0) var(--acx-space-3);\n  scroll-margin-top: var(--acx-anchor-offset);\n}\n.saq-stem h3,\n.saq-stem h4,\n.saq-stem h5,\n.saq-stem h6 {\n  font: var(--acx-text-h3);\n  margin: var(--acx-space-6) var(--acx-space-0) var(--acx-space-2);\n  scroll-margin-top: var(--acx-anchor-offset);\n}\n.saq-stem h1:first-child,\n.saq-stem h2:first-child,\n.saq-stem h3:first-child {\n  margin-top: var(--acx-space-0);\n}\n.saq-stem p {\n  font: var(--acx-text-body);\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-4);\n  text-wrap: pretty;\n  hyphens: manual;\n}\n.saq-stem p:last-child {\n  margin-bottom: var(--acx-space-0);\n}\n/* ── Mathematics Rendering (KaTeX & MathML Core) ───────────────────────────── */\n.katex {\n  font: normal 1.15em KaTeX_Main, \"Cambria Math\", \"Latin Modern Math\", serif;\n  line-height: 1.2;\n  text-indent: 0;\n  text-rendering: auto;\n  color: inherit;\n}\n\n.katex * {\n  border-color: currentColor;\n}\n\n.katex-display {\n  display: block;\n  margin: var(--acx-space-4) var(--acx-space-0);\n  text-align: center;\n  overflow-x: auto;\n  overflow-y: hidden;\n  max-width: 100%;\n  -webkit-overflow-scrolling: touch;\n  padding: var(--acx-space-1) var(--acx-space-0);\n}\n\n.katex-display > .katex {\n  display: block;\n  text-align: center;\n  white-space: nowrap;\n}\n\nmath {\n  font-family: \"KaTeX_Main\", \"Cambria Math\", \"Latin Modern Math\", \"STIX Two Math\", serif;\n  font-size: 1.05em;\n  color: inherit;\n}\n\n.math-plain {\n  font-family: \"Cambria Math\", \"Times New Roman\", serif;\n  font-style: italic;\n  color: inherit;\n}\n.saq-stem pre {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  padding: var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  overflow-x: auto;\n  font: var(--acx-text-mono);\n  tab-size: 2;\n  white-space: pre;\n  margin: var(--acx-space-4) var(--acx-space-0);\n}\n.saq-stem pre:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset-inset);\n}\n.saq-stem code {\n  font-family: var(--acx-font-mono);\n  font-size: 0.92em;\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  padding: var(--acx-space-0) var(--acx-space-1);\n  border-radius: var(--acx-radius-sm);\n}\n.saq-stem pre code {\n  background: transparent;\n  color: inherit;\n  padding: var(--acx-space-0);\n  font-size: inherit;\n}\n/* ── Responsive Table Container (§6) ────────────────────────────────────────── */\n.saq-table-wrap {\n  display: block;\n  width: 100%;\n  max-width: 100%;\n  overflow-x: auto;\n  -webkit-overflow-scrolling: touch;\n  margin: var(--acx-space-4) var(--acx-space-0);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface);\n}\n\n.saq-table,\n.saq-stem table {\n  display: table;\n  width: 100%;\n  border-collapse: collapse;\n  margin: var(--acx-space-0);\n  font: var(--acx-text-small);\n  color: var(--acx-text);\n  border: none;\n}\n\n.saq-table caption,\n.saq-stem table caption {\n  caption-side: top;\n  text-align: left;\n  font: var(--acx-text-caption);\n  font-weight: var(--acx-weight-medium);\n  color: var(--acx-text-muted);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-table th,\n.saq-table td,\n.saq-stem th,\n.saq-stem td {\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  border-right: var(--acx-border-width) solid var(--acx-border-subtle);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  text-align: left;\n  font-variant-numeric: tabular-nums;\n  vertical-align: top;\n}\n\n.saq-table th:last-child,\n.saq-table td:last-child,\n.saq-stem th:last-child,\n.saq-stem td:last-child {\n  border-right: none;\n}\n\n.saq-table tr:last-child td,\n.saq-stem tbody tr:last-child td {\n  border-bottom: none;\n}\n\n.saq-table th,\n.saq-stem th {\n  font: var(--acx-text-caption);\n  font-weight: var(--acx-weight-semibold);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  white-space: nowrap;\n}\n\n.saq-table tbody tr:hover td {\n  background: var(--acx-surface-hover);\n}\n\n.saq-table td[align=\"right\"],\n.saq-table th[align=\"right\"],\n.saq-stem td[align=\"right\"],\n.saq-stem th[align=\"right\"] {\n  text-align: right;\n}\n\n.saq-table td[align=\"center\"],\n.saq-table th[align=\"center\"],\n.saq-stem td[align=\"center\"],\n.saq-stem th[align=\"center\"] {\n  text-align: center;\n}\n.saq-stem ul,\n.saq-stem ol {\n  padding-inline-start: var(--acx-space-5);\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-4);\n}\n.saq-stem li {\n  margin-bottom: var(--acx-space-1);\n}\n.saq-stem li::marker {\n  color: var(--acx-text-muted);\n}\n.saq-stem blockquote {\n  border-inline-start: var(--acx-border-width-strong) solid var(--acx-border-strong);\n  margin: var(--acx-space-4) var(--acx-space-0);\n  padding-inline-start: var(--acx-space-4);\n  color: var(--acx-text-muted);\n}\n.saq-stem img,\n.saq-stem svg {\n  max-width: 100%;\n  height: auto;\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n  display: block;\n  margin: var(--acx-space-2) var(--acx-space-0);\n  cursor: zoom-in;\n  transition: outline var(--acx-duration-fast) var(--acx-ease-standard),\n              box-shadow var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-stem img:hover,\n.saq-stem svg:hover {\n  outline: 2px solid var(--acx-accent);\n  outline-offset: 2px;\n  box-shadow: var(--acx-shadow-2);\n}\n.saq-stem .saq-svg-wrap {\n  display: inline-block;\n  cursor: zoom-in;\n}\n.saq-btn-xs {\n  height: 24px;\n  min-width: 24px;\n  padding: 0 var(--acx-space-2);\n  font-size: 11px;\n  gap: var(--acx-space-1);\n}\n.saq-btn-xs svg {\n  width: 12px;\n  height: 12px;\n}\n\n/* ── Image Lightbox Modal ────────────────────────────────────────────────── */\n.saq-lightbox {\n  position: fixed;\n  inset: 0;\n  z-index: 1000;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: var(--acx-space-6);\n  opacity: 0;\n  visibility: hidden;\n  transition: opacity var(--acx-duration-fast) var(--acx-ease-standard),\n              visibility var(--acx-duration-fast) var(--acx-ease-standard);\n  pointer-events: none;\n}\n.saq-lightbox.is-open {\n  opacity: 1;\n  visibility: visible;\n  pointer-events: auto;\n}\n.saq-lightbox[hidden] {\n  display: none !important;\n}\n.saq-lightbox-backdrop {\n  position: absolute;\n  inset: 0;\n  background: rgba(0, 0, 0, 0.78);\n  backdrop-filter: blur(4px);\n  cursor: pointer;\n}\n.saq-lightbox-card {\n  position: relative;\n  z-index: 2;\n  max-width: min(92vw, 1100px);\n  max-height: min(90vh, 850px);\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-lg);\n  box-shadow: var(--acx-shadow-3);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  animation: acx-lightbox-pop var(--acx-duration-fast) var(--acx-ease-spring);\n}\n@keyframes acx-lightbox-pop {\n  from {\n    transform: scale(0.96);\n    opacity: 0;\n  }\n  to {\n    transform: scale(1);\n    opacity: 1;\n  }\n}\n.saq-lightbox-topbar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: var(--acx-space-2) var(--acx-space-4);\n  background: var(--acx-surface);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  gap: var(--acx-space-3);\n}\n.saq-lightbox-title {\n  font: var(--acx-text-ui);\n  font-weight: 600;\n  color: var(--acx-text);\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.saq-lightbox-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  flex: none;\n}\n.saq-lightbox-stage {\n  padding: var(--acx-space-4);\n  background: var(--acx-surface-sunken);\n  overflow: auto;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  min-height: 240px;\n  max-height: calc(85vh - 70px);\n}\n.saq-lightbox-viewport {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100%;\n  height: 100%;\n  transform-origin: center center;\n  transition: transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-lightbox-img {\n  max-width: 100%;\n  max-height: 70vh;\n  object-fit: contain;\n  border-radius: var(--acx-radius-sm);\n  box-shadow: var(--acx-shadow-2);\n  background: #ffffff;\n}\n.saq-lightbox-svg-wrap svg {\n  max-width: 100%;\n  max-height: 70vh;\n  background: #ffffff;\n  padding: var(--acx-space-3);\n  border-radius: var(--acx-radius-sm);\n  box-shadow: var(--acx-shadow-2);\n}\n.saq-lightbox-caption {\n  margin-top: var(--acx-space-3);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n  text-align: center;\n}\n.saq-stem figure {\n  margin: var(--acx-space-4) var(--acx-space-0);\n}\n.saq-stem figcaption {\n  margin-top: var(--acx-space-2);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n.saq-stem a {\n  color: var(--acx-accent);\n  text-decoration: underline;\n  text-underline-offset: var(--acx-focus-offset);\n  text-decoration-thickness: var(--acx-border-width);\n}\n.saq-stem a:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n  border-radius: var(--acx-radius-sm);\n}\n\n/* ── Options (§7) ───────────────────────────────────────────────────────── */\n.saq-options {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n  margin-top: var(--acx-space-3);\n}\n.saq-option {\n  display: flex;\n  align-items: flex-start;\n  gap: var(--acx-space-3);\n  min-height: var(--acx-control-h-md);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  font: var(--acx-text-body);\n  color: var(--acx-text);\n}\n.saq-option.selected {\n  background: var(--acx-accent-subtle);\n  border-color: var(--acx-accent);\n}\n.saq-option.correct {\n  background: var(--acx-success-bg);\n  border-color: var(--acx-success);\n}\n.saq-option.incorrect {\n  background: var(--acx-error-bg);\n  border-color: var(--acx-error);\n}\n.saq-opt-letter {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: var(--acx-opt-marker-size);\n  height: var(--acx-opt-marker-size);\n  flex: none;\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  font: var(--acx-text-mono-caption);\n  color: var(--acx-text);\n}\n.saq-option.selected .saq-opt-letter {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n}\n.saq-option.correct .saq-opt-letter {\n  background: var(--acx-success);\n  border-color: var(--acx-success);\n  color: var(--acx-text-on-accent);\n}\n.saq-option.incorrect .saq-opt-letter {\n  background: var(--acx-error);\n  border-color: var(--acx-error);\n  color: var(--acx-text-on-accent);\n}\n.saq-opt-text {\n  flex: 1;\n  min-width: var(--acx-space-0);\n  overflow-wrap: anywhere;\n}\n.saq-opt-text p {\n  margin: var(--acx-space-0);\n}\n.saq-opt-badge {\n  flex: none;\n  align-self: center;\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-opt-badge svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n.saq-opt-badge.is-selected {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-opt-badge.is-correct {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-opt-badge.is-incorrect {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n\n/* Legacy / Review DOM Fallbacks inside Reader */\n#saq-sheet .evaluated-answer .header {\n  display: flex;\n  align-items: baseline;\n  justify-content: space-between;\n  gap: var(--acx-space-3);\n  margin-bottom: var(--acx-space-3);\n  font: var(--acx-text-ui);\n}\n#saq-sheet .feedback {\n  margin-top: var(--acx-space-4);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  font: var(--acx-text-small);\n  color: var(--acx-text);\n}\n#saq-sheet .feedback .title {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  margin-bottom: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  letter-spacing: var(--acx-tracking-overline);\n  text-transform: uppercase;\n  color: var(--acx-text-muted);\n}\n#saq-sheet .textarea-wrapper,\n#saq-sheet .form-field {\n  border: var(--acx-space-0) !important;\n  background: transparent !important;\n  box-shadow: var(--acx-shadow-none) !important;\n  padding: var(--acx-space-0) !important;\n}\n#saq-sheet textarea,\n#saq-sheet input[type=text],\n#saq-sheet input[type=number] {\n  width: 100%;\n  box-sizing: border-box;\n  font: var(--acx-text-ui-regular) !important;\n  color: var(--acx-text);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  height: var(--acx-control-h-md);\n  padding: var(--acx-space-0) var(--acx-space-3);\n  outline: none;\n  box-shadow: var(--acx-shadow-none);\n}\n#saq-sheet textarea {\n  min-height: var(--acx-textarea-min-h);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  resize: vertical;\n}\n\n/* ── Responsive Breakpoints (§9): Tablet (640–1023px) & Narrow (< 640px) ── */\n@media (max-width: 1023px) {\n  #saq-sheet {\n    width: var(--acx-sheet-w-tablet);\n    height: var(--acx-sheet-h-tablet-vh);\n    height: var(--acx-sheet-h-tablet);\n  }\n  .saq-scroll {\n    padding:\n      var(--acx-space-6)\n      var(--acx-space-6)\n      calc(var(--acx-space-12) + env(safe-area-inset-bottom, 0px));\n  }\n}\n\n@media (max-width: 639px) {\n  #saq-sheet {\n    width: var(--acx-sheet-w-narrow);\n    height: var(--acx-sheet-h-narrow-vh);\n    height: var(--acx-sheet-h-narrow);\n    border-left: none;\n    border-right: none;\n  }\n  .saq-scroll {\n    padding:\n      var(--acx-space-6)\n      var(--acx-space-4)\n      calc(var(--acx-space-12) + env(safe-area-inset-bottom, 0px));\n  }\n  .saq-inner,\n  .acx-content {\n    max-width: none;\n  }\n  .saq-header {\n    padding-inline: var(--acx-space-4);\n    gap: var(--acx-space-1);\n  }\n  .saq-btn-export span,\n  .saq-btn-secondary span {\n    display: none;\n  }\n  .saq-btn-export {\n    width: var(--acx-target-min);\n    padding: var(--acx-space-0);\n  }\n  .saq-btn-secondary {\n    width: var(--acx-control-h-md);\n    padding: var(--acx-space-0);\n  }\n  .saq-block {\n    padding: var(--acx-space-4);\n  }\n  .saq-clock {\n    display: none !important;\n  }\n  /* @extension-only-start */\n  .saq-workflow-bar {\n    padding: var(--acx-space-2) var(--acx-space-4);\n  }\n  .saq-step-label {\n    display: none;\n  }\n  .saq-step-btn {\n    padding: var(--acx-space-1);\n  }\n  .saq-workflow-action-wrap {\n    width: 100%;\n    justify-content: flex-start;\n  }\n  .saq-btn-cta {\n    flex: 1;\n  }\n  .saq-import-panel {\n    left: var(--acx-space-4);\n    right: var(--acx-space-4);\n    width: auto;\n  }\n  /* @extension-only-end */\n}\n\n/* ── Fine-Pointer Hover States (§8) ─────────────────────────────────────── */\n@media (hover: hover) {\n  .saq-grip:hover::before {\n    background: var(--acx-text-muted);\n  }\n  .saq-btn:hover {\n    background: var(--acx-accent-subtle);\n    border-color: var(--acx-border-strong);\n    color: var(--acx-text);\n  }\n  .saq-btn-primary:hover {\n    background: var(--acx-accent-hover);\n    border-color: var(--acx-accent-hover);\n    color: var(--acx-text-on-accent);\n  }\n  .saq-btn-export:hover {\n    background: var(--acx-accent-subtle);\n    color: var(--acx-text);\n  }\n  .saq-launcher:hover {\n    border-color: var(--acx-accent);\n    background: var(--acx-surface-raised);\n  }\n  .saq-stem a:hover {\n    color: var(--acx-accent-hover);\n    text-decoration-thickness: var(--acx-border-width-strong);\n  }\n}\n\n/* ── Keyframes & Reduced Motion (§8) ────────────────────────────────────── */\n@keyframes acx-spin {\n  to { transform: rotate(360deg); }\n}\n@keyframes acx-dialog-enter {\n  from {\n    opacity: 0;\n    transform: translateY(var(--acx-space-2));\n  }\n}\n\n@media (prefers-reduced-motion: reduce) {\n  :host, :root {\n    --acx-duration-fast: 0.01ms;\n    --acx-duration-base: 0.01ms;\n    --acx-duration-slow: 0.01ms;\n    --acx-duration-spin: 0.01ms;\n  }\n  .saq-card {\n    animation: none !important;\n  }\n  .saq-spinner {\n    animation: none !important;\n    border-color: var(--acx-accent);\n  }\n  #saq-sheet {\n    transform: none;\n    opacity: 0;\n    transition: opacity var(--acx-duration-base) var(--acx-ease-standard);\n  }\n  #saq-sheet.is-open {\n    opacity: 1;\n  }\n  .saq-launcher,\n  .saq-launcher.is-shown {\n    transform: translateX(-50%);\n  }\n  .saq-launcher[data-pos=\"bottom-left\"],\n  .saq-launcher[data-pos=\"bottom-right\"],\n  .saq-launcher[data-pos=\"top-left\"],\n  .saq-launcher[data-pos=\"top-right\"] {\n    transform: none;\n  }\n}\n\n/* ── Forced Colors / High Contrast Mode (§10) ───────────────────────────── */\n@media (forced-colors: active) {\n  #saq-sheet,\n  .saq-card,\n  .saq-block,\n  .saq-btn,\n  .saq-launcher,\n  .saq-option,\n  .saq-status,\n  .saq-opt-badge,\n  .saq-count-pill,\n  .saq-qtype,\n  .saq-marks {\n    border: var(--acx-border-width) solid ButtonText;\n    background: Canvas;\n    color: CanvasText;\n  }\n  .saq-option.selected,\n  .saq-btn:focus-visible,\n  .saq-launcher:focus-visible {\n    outline: var(--acx-border-width-strong) solid Highlight;\n  }\n}\n\n/* ── Compact Density (§5) ───────────────────────────────────────────────── */\n#saq-sheet.saq-compact .saq-block {\n  padding: var(--acx-space-4);\n  margin-bottom: var(--acx-space-4);\n}\n#saq-sheet.saq-compact .saq-qheader {\n  margin-bottom: var(--acx-space-2);\n  padding-bottom: var(--acx-space-2);\n}\n\n/* @extension-only-start */\n/* ── Programming Assignment Reader Styles ─────────────────────────────── */\n.saq-pa-container {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-4);\n}\n\n.saq-pa-actions {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding-bottom: var(--acx-space-3);\n  margin-bottom: var(--acx-space-3);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-pa-section-title {\n  font: var(--acx-text-h3);\n  color: var(--acx-text);\n  margin-top: var(--acx-space-4);\n  margin-bottom: var(--acx-space-2);\n}\n\n.saq-test-cases-grid {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n  margin-top: var(--acx-space-2);\n}\n\n.saq-test-case-card {\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-3) var(--acx-space-4);\n}\n\n.saq-test-case-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  margin-bottom: var(--acx-space-2);\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n}\n\n.saq-test-case-io {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  gap: var(--acx-space-3);\n}\n\n@media (max-width: 600px) {\n  .saq-test-case-io {\n    grid-template-columns: 1fr;\n  }\n}\n\n.saq-tc-col {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-1);\n}\n\n.saq-tc-label {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-subtle);\n  text-transform: uppercase;\n  letter-spacing: var(--acx-tracking-overline);\n}\n\n.saq-tc-pre {\n  margin: var(--acx-space-0);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-mono);\n  color: var(--acx-text);\n  overflow-x: auto;\n  white-space: pre-wrap;\n  word-break: break-all;\n}\n\n/* ── Code Import Modal Dialog ─────────────────────────────────────────── */\n.saq-modal-scrim {\n  position: fixed;\n  inset: 0;\n  background: var(--acx-overlay-scrim);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 2147483647;\n  padding: var(--acx-space-4);\n  backdrop-filter: blur(2px);\n  pointer-events: auto !important;\n  cursor: default;\n}\n\n.saq-modal-dialog {\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-lg);\n  box-shadow: var(--acx-shadow-3);\n  width: min(580px, 100vw - 32px);\n  max-height: calc(100dvh - 64px);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  pointer-events: auto !important;\n  position: relative;\n}\n\n.saq-modal-dialog button,\n.saq-modal-dialog input,\n.saq-modal-dialog textarea,\n.saq-modal-dialog select,\n.saq-modal-dialog pre,\n.saq-modal-dialog a {\n  pointer-events: auto !important;\n}\n\n.saq-modal-dialog button {\n  cursor: pointer;\n}\n\n.saq-modal-dialog button:disabled {\n  pointer-events: none !important;\n  cursor: not-allowed !important;\n}\n\n.saq-modal-dialog textarea,\n.saq-modal-dialog pre {\n  cursor: text;\n}\n\n.saq-modal-dialog.saq-modal-wide {\n  width: min(680px, 100vw - 32px);\n}\n\n.saq-modal-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-modal-title {\n  font: var(--acx-text-h3);\n  color: var(--acx-text);\n  margin: 0;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-target {\n  color: var(--acx-accent);\n}\n\n.saq-modal-body {\n  padding: var(--acx-space-4);\n  overflow-y: auto;\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n}\n\n.saq-modal-desc {\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n  line-height: 1.45;\n}\n\n.saq-modal-desc code {\n  font: var(--acx-text-mono);\n  background: var(--acx-surface-sunken);\n  padding: 1px 4px;\n  border-radius: var(--acx-radius-xs);\n  border: 1px solid var(--acx-border);\n}\n\n.saq-modal-warning {\n  background: var(--acx-warning-bg);\n  border: var(--acx-border-width) solid var(--acx-warning);\n  color: var(--acx-warning);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  font: var(--acx-text-small);\n}\n\n.saq-modal-meta {\n  font: var(--acx-text-micro);\n  font-family: var(--acx-font-mono, monospace);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid var(--acx-border);\n  align-self: flex-start;\n}\n\n.saq-modal-parse-panel {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-block-select-wrap {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n\n.saq-field-label {\n  font: var(--acx-text-small);\n  font-weight: 500;\n  color: var(--acx-text-subtle);\n}\n\n.saq-select {\n  flex: 1;\n  padding: var(--acx-space-1) var(--acx-space-2);\n  font: var(--acx-text-small);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-sm);\n}\n\n.saq-modal-notice {\n  font: var(--acx-text-small);\n  color: var(--acx-text-subtle);\n}\n\n.saq-modal-textarea {\n  width: 100%;\n  min-height: 160px;\n  max-height: 280px;\n  resize: vertical;\n  font: var(--acx-text-mono);\n  font-size: 13px;\n  line-height: 1.45;\n  color: var(--acx-text);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-3);\n  box-sizing: border-box;\n  tab-size: 2;\n}\n\n.saq-modal-target-card {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: var(--acx-space-2) var(--acx-space-4);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-small);\n}\n\n.saq-code-target-row {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n\n.saq-code-target-label {\n  font-weight: 500;\n  color: var(--acx-text-muted);\n}\n\n.acx-badge {\n  display: inline-flex;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 1px 6px;\n  border-radius: var(--acx-radius-sm);\n  line-height: 1.3;\n  letter-spacing: 0.02em;\n}\n\n.acx-badge-neutral {\n  background: var(--acx-surface-raised);\n  color: var(--acx-text-muted);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n.acx-badge-primary {\n  background: rgba(47, 75, 219, 0.18);\n  color: #8ea2ff;\n  border: var(--acx-border-width) solid rgba(47, 75, 219, 0.35);\n}\n\n.acx-badge-success {\n  background: rgba(46, 160, 67, 0.18);\n  color: #3fb950;\n  border: var(--acx-border-width) solid rgba(46, 160, 67, 0.35);\n}\n\n.saq-modal-diff-panel {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-diff-hdr {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-diff-title-wrap {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  flex: 1 1 auto;\n  min-width: 0;\n}\n\n.saq-modal-diff-title {\n  font: var(--acx-text-small);\n  font-weight: 600;\n  color: var(--acx-text);\n  flex-shrink: 0;\n}\n\n.saq-modal-diff-summary {\n  font: var(--acx-text-micro);\n  color: var(--acx-text-muted);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.saq-modal-diff-tabs {\n  display: inline-flex;\n  align-items: center;\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  padding: 2px;\n  gap: 2px;\n  flex-shrink: 0;\n}\n\n.saq-diff-tab {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: var(--acx-space-1) var(--acx-space-2);\n  font: var(--acx-text-micro);\n  font-weight: 500;\n  color: var(--acx-text-muted);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-xs);\n  cursor: pointer;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-diff-tab.is-active {\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  box-shadow: var(--acx-shadow-1);\n}\n\n.saq-modal-diff-pre {\n  display: block;\n  font: var(--acx-text-mono);\n  font-size: 12px;\n  line-height: 1.5;\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-2) 0;\n  max-height: 200px;\n  overflow-x: auto;\n  overflow-y: auto;\n  white-space: pre;\n  margin: 0;\n  box-sizing: border-box;\n}\n\n.saq-diff-line {\n  display: block;\n  padding: 1px var(--acx-space-3);\n  font-family: inherit;\n  font-size: inherit;\n  line-height: 1.5;\n  white-space: pre-wrap;\n  word-break: break-all;\n}\n\n.saq-diff-line.diff-add {\n  background: rgba(46, 160, 67, 0.15);\n  color: #3fb950;\n}\n\n.saq-diff-line.diff-remove {\n  background: rgba(248, 81, 73, 0.15);\n  color: #f85149;\n}\n\n.saq-diff-line.diff-same {\n  color: var(--acx-text-muted);\n}\n\n.saq-modal-footer {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n}\n\n.saq-modal-footer-notice {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  font: var(--acx-text-micro);\n  color: var(--acx-text-muted);\n  line-height: 1.4;\n  flex: 1 1 auto;\n}\n\n.saq-modal-footer-notice strong {\n  color: var(--acx-text);\n}\n\n.saq-modal-footer-actions {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  flex-shrink: 0;\n}\n\n.saq-pa-editor-context {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n}\n\n.saq-pa-subregion {\n  padding: var(--acx-space-2) 0;\n  border-top: 1px dashed var(--acx-border);\n}\n\n.saq-pa-subregion:first-of-type {\n  border-top: none;\n  padding-top: 0;\n}\n\n/* ── Programming Assignment Launcher & Fast Action Menu ─────────────────── */\n.saq-launcher-pa {\n  padding: 0 !important;\n  overflow: visible !important;\n}\n\n.saq-launcher-split {\n  display: inline-flex;\n  align-items: stretch;\n  height: 100%;\n  border-radius: var(--acx-radius-full);\n}\n\n.saq-launcher-main {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  height: 100%;\n  padding: 0 var(--acx-space-3) 0 var(--acx-space-4);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-full) 0 0 var(--acx-radius-full);\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n  cursor: pointer;\n  white-space: nowrap;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-main svg {\n  width: var(--acx-icon-mark);\n  height: var(--acx-icon-mark);\n  color: var(--acx-accent);\n  flex: none;\n}\n\n.saq-launcher-toggle {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 32px;\n  height: 100%;\n  padding: 0;\n  background: transparent;\n  border: none;\n  border-left: var(--acx-border-width) solid var(--acx-border);\n  border-radius: 0 var(--acx-radius-full) var(--acx-radius-full) 0;\n  color: var(--acx-text-muted);\n  cursor: pointer;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-toggle svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n  transition: transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-toggle[aria-expanded=\"true\"] svg {\n  transform: rotate(180deg);\n}\n\n.saq-launcher-main:hover,\n.saq-launcher-main:focus-visible,\n.saq-launcher-toggle:hover,\n.saq-launcher-toggle:focus-visible {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-accent);\n  outline: none;\n}\n\n.saq-launcher-menu {\n  position: absolute;\n  bottom: calc(100% + var(--acx-space-2));\n  right: 0;\n  z-index: 100;\n  min-width: 220px;\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  box-shadow: var(--acx-shadow-3);\n  padding: var(--acx-space-1);\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n  pointer-events: auto !important;\n}\n\n.saq-launcher[data-pos^=\"top\"] .saq-launcher-menu {\n  bottom: auto;\n  top: calc(100% + var(--acx-space-2));\n}\n\n.saq-launcher-menu[hidden] {\n  display: none !important;\n}\n\n.saq-launcher-menu-hdr {\n  font: var(--acx-text-caption);\n  font-weight: 600;\n  text-transform: uppercase;\n  letter-spacing: var(--acx-tracking-overline);\n  color: var(--acx-text-muted);\n  padding: var(--acx-space-1) var(--acx-space-3);\n  user-select: none;\n}\n\n.saq-launcher-menu-item {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  width: 100%;\n  height: 32px;\n  padding: 0 var(--acx-space-3);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-ui);\n  font-size: 13px;\n  color: var(--acx-text);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  text-align: left;\n  user-select: none;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-menu-item svg {\n  width: 16px;\n  height: 16px;\n  flex: none;\n  color: var(--acx-text-muted);\n}\n\n.saq-launcher-menu-item:hover,\n.saq-launcher-menu-item:focus-visible {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  outline: none;\n}\n\n.saq-launcher-menu-item:hover svg,\n.saq-launcher-menu-item:focus-visible svg {\n  color: var(--acx-accent);\n}\n\n.saq-launcher-menu-divider {\n  height: 1px;\n  background: var(--acx-border);\n  margin: var(--acx-space-1) 0;\n}\n\n/* ── Launcher Toast Feedback ────────────────────────────────────────────── */\n.saq-launcher-toast {\n  position: fixed;\n  left: 50%;\n  bottom: calc(var(--acx-space-4) + var(--acx-control-h-lg) + var(--acx-space-2) + env(safe-area-inset-bottom, 0px));\n  transform: translateX(-50%) translateY(8px);\n  z-index: var(--acx-z-dialog);\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-4);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-brand-night-900);\n  color: var(--acx-brand-paper-0);\n  font: var(--acx-text-ui);\n  font-size: 13px;\n  box-shadow: var(--acx-shadow-3);\n  pointer-events: none;\n  opacity: 0;\n  transition: opacity var(--acx-duration-fast) var(--acx-ease-standard),\n              transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-toast.is-visible {\n  opacity: 1;\n  transform: translateX(-50%) translateY(0);\n  pointer-events: auto;\n}\n\n.saq-launcher-toast svg {\n  width: 16px;\n  height: 16px;\n  flex: none;\n  color: var(--acx-success);\n}\n\n.saq-launcher-toast[data-tone=\"error\"] svg {\n  color: var(--acx-error);\n}\n\n.saq-launcher-toast[data-tone=\"warn\"] svg {\n  color: var(--acx-warning);\n}\n\n/* ── Programming Header Pill ────────────────────────────────────────────── */\n.saq-lang-pill {\n  display: inline-flex;\n  align-items: center;\n  padding: 2px 8px;\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n/* ── Undo Import Button ─────────────────────────────────────────────────── */\n.saq-undo-btn {\n  background: var(--acx-surface-sunken) !important;\n  border-color: var(--acx-border-strong) !important;\n}\n\n.saq-undo-btn:hover {\n  border-color: var(--acx-accent) !important;\n  color: var(--acx-accent) !important;\n}\n\n/* ── Modal Language Mismatch Confirmation ───────────────────────────────── */\n.saq-modal-mismatch-confirm {\n  margin-top: var(--acx-space-3);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-warning-bg);\n  border: var(--acx-border-width) solid var(--acx-warning-border);\n}\n\n.saq-modal-mismatch-confirm .saq-checkbox-label {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  font: var(--acx-text-small);\n  color: var(--acx-warning);\n  cursor: pointer;\n}\n\n.saq-modal-mismatch-confirm input[type=\"checkbox\"] {\n  width: 16px;\n  height: 16px;\n  accent-color: var(--acx-accent);\n  cursor: pointer;\n}\n\n/* ── Status Bar Interactive Action Button ───────────────────────────────── */\n.saq-status-action-btn {\n  display: inline-flex;\n  align-items: center;\n  margin-left: var(--acx-space-2);\n  padding: 2px 8px;\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid currentColor;\n  background: transparent;\n  color: inherit;\n  font: var(--acx-text-caption);\n  font-weight: 600;\n  cursor: pointer;\n  text-decoration: underline;\n  transition: opacity var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-status-action-btn:hover {\n  opacity: 0.8;\n}\n\n\n\n/* ── Programming Assignment Single-Window Layout ───────────────────────────── */\n#saq-sheet.saq-programming-mode {\n  width: min(1080px, calc(100vw - 32px));\n}\n\n#saq-sheet.saq-programming-mode .saq-scroll {\n  background: var(--acx-surface);\n  padding: var(--acx-space-6) var(--acx-space-8) calc(var(--acx-space-8) + env(safe-area-inset-bottom, 0px));\n}\n\n#saq-sheet.saq-programming-mode .saq-inner,\n#saq-sheet.saq-programming-mode .acx-content {\n  max-width: 100%;\n}\n\n.saq-block-programming {\n  background: transparent !important;\n  border: none !important;\n  border-radius: 0 !important;\n  padding: 0 !important;\n  margin: 0 !important;\n  box-shadow: none !important;\n  content-visibility: visible !important;\n  contain-intrinsic-size: none !important;\n}\n\n.saq-pa-qheader {\n  display: flex !important;\n  align-items: center !important;\n  justify-content: space-between !important;\n  padding-bottom: var(--acx-space-3) !important;\n  margin-bottom: var(--acx-space-4) !important;\n  border-bottom: var(--acx-border-width) solid var(--acx-border) !important;\n}\n\n.saq-pa-qheader .saq-qlabel {\n  font: var(--acx-text-h2) !important;\n  font-weight: 700 !important;\n  color: var(--acx-text) !important;\n  letter-spacing: var(--acx-tracking-tight) !important;\n}\n\n.saq-pa-qheader .saq-lang-badge {\n  font: var(--acx-text-mono-caption) !important;\n  color: var(--acx-accent) !important;\n  background: var(--acx-accent-subtle) !important;\n  border: var(--acx-border-width) solid var(--acx-accent) !important;\n  padding: var(--acx-space-1) var(--acx-space-2) !important;\n  border-radius: var(--acx-radius-sm) !important;\n  letter-spacing: 0.04em !important;\n}\n\n.saq-pa-section-hdr {\n  display: flex !important;\n  align-items: center !important;\n  justify-content: space-between !important;\n  margin-top: var(--acx-space-6) !important;\n  margin-bottom: var(--acx-space-3) !important;\n}\n\n.saq-pa-section-hdr .saq-pa-section-title {\n  font: var(--acx-text-h3) !important;\n  font-weight: 700 !important;\n  color: var(--acx-text) !important;\n  margin: 0 !important;\n}\n/* ── Simplified Answers Paste UI (Normal Assessments) ───────────────────── */\n.saq-answers-input-root {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-3);\n  background: var(--acx-surface);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-answers-textarea {\n  width: 100%;\n  min-height: 120px;\n  padding: var(--acx-space-3);\n  font: var(--acx-text-mono);\n  font-size: 13px;\n  line-height: 20px;\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  resize: vertical;\n  box-sizing: border-box;\n}\n\n.saq-answers-meta-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n/* @extension-only-end */\n@media print {\n  :host {\n    display: block !important;\n    position: static !important;\n  }\n  #saq-backdrop {\n    display: none !important;\n  }\n  #saq-sheet {\n    position: static !important;\n    width: 100% !important;\n    height: auto !important;\n    min-height: var(--acx-space-0) !important;\n    max-height: none !important;\n    transform: none !important;\n    box-shadow: var(--acx-shadow-none) !important;\n    border-radius: var(--acx-radius-none) !important;\n    border: var(--acx-space-0) !important;\n    background: var(--acx-brand-paper-0) !important;\n    color: var(--acx-brand-ink-900) !important;\n    pointer-events: auto !important;\n  }\n  .saq-grip,\n  .saq-header,\n  .saq-status-bar,\n  .saq-warn {\n    display: none !important;\n  }\n  .saq-scroll {\n    overflow: visible !important;\n    height: auto !important;\n    padding: var(--acx-space-0) !important;\n    background: var(--acx-brand-paper-0) !important;\n  }\n  .saq-inner,\n  .acx-content {\n    max-width: none !important;\n  }\n  .saq-block {\n    break-inside: avoid;\n    background: var(--acx-brand-paper-0) !important;\n    color: var(--acx-brand-ink-900) !important;\n    border: var(--acx-border-width) solid var(--acx-brand-paper-200) !important;\n    box-shadow: var(--acx-shadow-none) !important;\n  }\n}\n\n\n/* ── CodeMirror Programming Assignment Editor ─────────────────────────────── */\n/* @extension-only-start */\n.saq-programming-header .saq-title { flex: none; }\n.saq-sync-status {\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  color: var(--acx-text-muted);\n  font: var(--acx-text-caption);\n  white-space: nowrap;\n}\n.saq-code-editor-root {\n  display: flex;\n  flex-direction: column;\n  max-width: 100%;\n  margin: var(--acx-space-4) 0;\n  overflow: hidden;\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n}\n.saq-code-editor-header,\n.saq-code-editor-footer {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface);\n}\n.saq-code-editor-header { border-bottom: var(--acx-border-width) solid var(--acx-border); }\n.saq-code-editor-footer { border-top: var(--acx-border-width) solid var(--acx-border); }\n.saq-code-editor-heading,\n.saq-code-editor-tools,\n.saq-editor-footer-actions {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-code-editor-title { color: var(--acx-text); font: var(--acx-text-ui); font-weight: 700; }\n.saq-editor-language-hint,\n.saq-editor-help,\n.saq-editor-footer-status { color: var(--acx-text-muted); font: var(--acx-text-small); }\n.saq-editor-help { margin: var(--acx-space-2) var(--acx-space-3); }\n.saq-continuous-editor-stage {\n  min-height: var(--acx-editor-min-height);\n  max-height: var(--acx-editor-max-height);\n  overflow: auto;\n  overscroll-behavior: contain;\n  background: var(--acx-surface-sunken);\n}\n.saq-cm-host { min-width: 0; width: 100%; }\n#saq-sheet .saq-code-editor-root .cm-editor,\n#saq-sheet .saq-code-editor-root .cm-content { pointer-events: auto !important; cursor: text !important; }\n#saq-sheet .saq-programming-header .saq-btn[hidden] { display: none !important; }\n.saq-programming-header {\n  display: flex !important;\n  align-items: center !important;\n  justify-content: space-between !important;\n  flex-wrap: nowrap !important;\n  height: var(--acx-header-h) !important;\n  min-height: var(--acx-header-h) !important;\n  padding-inline: var(--acx-space-6) !important;\n  background: var(--acx-surface) !important;\n  border-bottom: var(--acx-border-width) solid var(--acx-border) !important;\n  flex-shrink: 0 !important;\n}\n.saq-header-left {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-3);\n  min-width: 0;\n  flex-shrink: 0;\n  white-space: nowrap;\n}\n.saq-programming-header .saq-actions {\n  display: flex !important;\n  align-items: center !important;\n  gap: var(--acx-space-2) !important;\n  margin-left: auto !important;\n  flex: 0 0 auto !important;\n  flex-wrap: nowrap !important;\n  justify-content: flex-end !important;\n  white-space: nowrap !important;\n}\n.saq-programming-header .saq-actions .saq-btn { white-space: nowrap; flex-shrink: 0; }\n/* @extension-only-end */\n\n/* ── Embedded KaTeX Layout Rules ───────────────────────────────────────────── */\n.katex{font:normal 1.21em KaTeX_Main,math,Times New Roman,serif;line-height:1.2;position:relative;text-indent:0;text-rendering:auto}.katex *{-ms-high-contrast-adjust:none!important;border-color:currentColor}.katex .katex-version:after{content:\"0.19.0\"}.katex .katex-mathml{border:0;-webkit-clip-path:inset(50%);clip-path:inset(50%);height:1px;overflow:hidden;padding:0;position:absolute;width:1px}.katex .katex-html>.katex-newline{display:block}.katex .katex-base{position:relative;white-space:nowrap;width:-webkit-min-content;width:-moz-min-content;width:min-content}.katex .katex-base,.katex .katex-strut{display:inline-block}.katex .textbf{font-weight:700}.katex .textit{font-style:italic}.katex .textrm{font-family:KaTeX_Main}.katex .textsf{font-family:KaTeX_SansSerif}.katex .texttt{font-family:KaTeX_Typewriter}.katex .mathnormal{font-family:KaTeX_Math;font-style:italic}.katex .mathit{font-family:KaTeX_Main;font-style:italic}.katex .mathrm{font-style:normal}.katex .mathbf{font-family:KaTeX_Main;font-weight:700}.katex .boldsymbol{font-family:KaTeX_Math;font-style:italic;font-weight:700}.katex .amsrm,.katex .mathbb,.katex .textbb{font-family:KaTeX_AMS}.katex .mathcal{font-family:KaTeX_Caligraphic}.katex .mathfrak,.katex .textfrak{font-family:KaTeX_Fraktur}.katex .mathboldfrak,.katex .textboldfrak{font-family:KaTeX_Fraktur;font-weight:700}.katex .mathtt{font-family:KaTeX_Typewriter}.katex .mathscr,.katex .textscr{font-family:KaTeX_Script}.katex .mathsf,.katex .textsf{font-family:KaTeX_SansSerif}.katex .mathboldsf,.katex .textboldsf{font-family:KaTeX_SansSerif;font-weight:700}.katex .mathitsf,.katex .mathsfit,.katex .textitsf{font-family:KaTeX_SansSerif;font-style:italic}.katex .mainrm{font-family:KaTeX_Main;font-style:normal}.katex .vlist-t{border-collapse:collapse;display:inline-table;table-layout:fixed}.katex .vlist-r{display:table-row}.katex .vlist{display:table-cell;position:relative;vertical-align:bottom}.katex .vlist>span{display:block;height:0;position:relative}.katex .vlist>span>span{display:inline-block}.katex .vlist>span>.pstrut{overflow:hidden;width:0}.katex .vlist-t2{margin-right:-2px}.katex .vlist-s{display:table-cell;font-size:1px;min-width:2px;vertical-align:bottom;width:2px}.katex .katex-vbox{align-items:baseline;display:inline-flex;flex-direction:column}.katex .katex-thinbox{display:inline-flex;flex-direction:row;max-width:0;width:0}.katex .msupsub{text-align:left}.katex .mfrac>span>span{text-align:center}.katex .mfrac .frac-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .katex-hdashline,.katex .katex-hline,.katex .katex-overline .overline-line,.katex .katex-rule,.katex .katex-underline .underline-line,.katex .mfrac .frac-line{min-height:1px}.katex .mspace{display:inline-block}.katex .katex-smash{display:inline;line-height:0}.katex .clap,.katex .llap,.katex .rlap{position:relative;width:0}.katex .clap>.katex-inner,.katex .llap>.katex-inner,.katex .rlap>.katex-inner{position:absolute}.katex .clap>.katex-fix,.katex .llap>.katex-fix,.katex .rlap>.katex-fix{display:inline-block}.katex .llap>.katex-inner{right:0}.katex .clap>.katex-inner,.katex .rlap>.katex-inner{left:0}.katex .clap>.katex-inner>span{margin-left:-50%;margin-right:50%}.katex .katex-rule{border:0 solid;display:inline-block;position:relative}.katex .katex-hline,.katex .katex-overline .overline-line,.katex .katex-underline .underline-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .katex-hdashline{border-bottom-style:dashed;display:inline-block;width:100%}.katex .sqrt>.katex-root{margin-left:.2777777778em;margin-right:-.5555555556em}.katex .fontsize-ensurer.reset-size1.size1,.katex .katex-sizing.reset-size1.size1{font-size:1em}.katex .fontsize-ensurer.reset-size1.size2,.katex .katex-sizing.reset-size1.size2{font-size:1.2em}.katex .fontsize-ensurer.reset-size1.size3,.katex .katex-sizing.reset-size1.size3{font-size:1.4em}.katex .fontsize-ensurer.reset-size1.size4,.katex .katex-sizing.reset-size1.size4{font-size:1.6em}.katex .fontsize-ensurer.reset-size1.size5,.katex .katex-sizing.reset-size1.size5{font-size:1.8em}.katex .fontsize-ensurer.reset-size1.size6,.katex .katex-sizing.reset-size1.size6{font-size:2em}.katex .fontsize-ensurer.reset-size1.size7,.katex .katex-sizing.reset-size1.size7{font-size:2.4em}.katex .fontsize-ensurer.reset-size1.size8,.katex .katex-sizing.reset-size1.size8{font-size:2.88em}.katex .fontsize-ensurer.reset-size1.size9,.katex .katex-sizing.reset-size1.size9{font-size:3.456em}.katex .fontsize-ensurer.reset-size1.size10,.katex .katex-sizing.reset-size1.size10{font-size:4.148em}.katex .fontsize-ensurer.reset-size1.size11,.katex .katex-sizing.reset-size1.size11{font-size:4.976em}.katex .fontsize-ensurer.reset-size2.size1,.katex .katex-sizing.reset-size2.size1{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size2.size2,.katex .katex-sizing.reset-size2.size2{font-size:1em}.katex .fontsize-ensurer.reset-size2.size3,.katex .katex-sizing.reset-size2.size3{font-size:1.1666666667em}.katex .fontsize-ensurer.reset-size2.size4,.katex .katex-sizing.reset-size2.size4{font-size:1.3333333333em}.katex .fontsize-ensurer.reset-size2.size5,.katex .katex-sizing.reset-size2.size5{font-size:1.5em}.katex .fontsize-ensurer.reset-size2.size6,.katex .katex-sizing.reset-size2.size6{font-size:1.6666666667em}.katex .fontsize-ensurer.reset-size2.size7,.katex .katex-sizing.reset-size2.size7{font-size:2em}.katex .fontsize-ensurer.reset-size2.size8,.katex .katex-sizing.reset-size2.size8{font-size:2.4em}.katex .fontsize-ensurer.reset-size2.size9,.katex .katex-sizing.reset-size2.size9{font-size:2.88em}.katex .fontsize-ensurer.reset-size2.size10,.katex .katex-sizing.reset-size2.size10{font-size:3.4566666667em}.katex .fontsize-ensurer.reset-size2.size11,.katex .katex-sizing.reset-size2.size11{font-size:4.1466666667em}.katex .fontsize-ensurer.reset-size3.size1,.katex .katex-sizing.reset-size3.size1{font-size:.7142857143em}.katex .fontsize-ensurer.reset-size3.size2,.katex .katex-sizing.reset-size3.size2{font-size:.8571428571em}.katex .fontsize-ensurer.reset-size3.size3,.katex .katex-sizing.reset-size3.size3{font-size:1em}.katex .fontsize-ensurer.reset-size3.size4,.katex .katex-sizing.reset-size3.size4{font-size:1.1428571429em}.katex .fontsize-ensurer.reset-size3.size5,.katex .katex-sizing.reset-size3.size5{font-size:1.2857142857em}.katex .fontsize-ensurer.reset-size3.size6,.katex .katex-sizing.reset-size3.size6{font-size:1.4285714286em}.katex .fontsize-ensurer.reset-size3.size7,.katex .katex-sizing.reset-size3.size7{font-size:1.7142857143em}.katex .fontsize-ensurer.reset-size3.size8,.katex .katex-sizing.reset-size3.size8{font-size:2.0571428571em}.katex .fontsize-ensurer.reset-size3.size9,.katex .katex-sizing.reset-size3.size9{font-size:2.4685714286em}.katex .fontsize-ensurer.reset-size3.size10,.katex .katex-sizing.reset-size3.size10{font-size:2.9628571429em}.katex .fontsize-ensurer.reset-size3.size11,.katex .katex-sizing.reset-size3.size11{font-size:3.5542857143em}.katex .fontsize-ensurer.reset-size4.size1,.katex .katex-sizing.reset-size4.size1{font-size:.625em}.katex .fontsize-ensurer.reset-size4.size2,.katex .katex-sizing.reset-size4.size2{font-size:.75em}.katex .fontsize-ensurer.reset-size4.size3,.katex .katex-sizing.reset-size4.size3{font-size:.875em}.katex .fontsize-ensurer.reset-size4.size4,.katex .katex-sizing.reset-size4.size4{font-size:1em}.katex .fontsize-ensurer.reset-size4.size5,.katex .katex-sizing.reset-size4.size5{font-size:1.125em}.katex .fontsize-ensurer.reset-size4.size6,.katex .katex-sizing.reset-size4.size6{font-size:1.25em}.katex .fontsize-ensurer.reset-size4.size7,.katex .katex-sizing.reset-size4.size7{font-size:1.5em}.katex .fontsize-ensurer.reset-size4.size8,.katex .katex-sizing.reset-size4.size8{font-size:1.8em}.katex .fontsize-ensurer.reset-size4.size9,.katex .katex-sizing.reset-size4.size9{font-size:2.16em}.katex .fontsize-ensurer.reset-size4.size10,.katex .katex-sizing.reset-size4.size10{font-size:2.5925em}.katex .fontsize-ensurer.reset-size4.size11,.katex .katex-sizing.reset-size4.size11{font-size:3.11em}.katex .fontsize-ensurer.reset-size5.size1,.katex .katex-sizing.reset-size5.size1{font-size:.5555555556em}.katex .fontsize-ensurer.reset-size5.size2,.katex .katex-sizing.reset-size5.size2{font-size:.6666666667em}.katex .fontsize-ensurer.reset-size5.size3,.katex .katex-sizing.reset-size5.size3{font-size:.7777777778em}.katex .fontsize-ensurer.reset-size5.size4,.katex .katex-sizing.reset-size5.size4{font-size:.8888888889em}.katex .fontsize-ensurer.reset-size5.size5,.katex .katex-sizing.reset-size5.size5{font-size:1em}.katex .fontsize-ensurer.reset-size5.size6,.katex .katex-sizing.reset-size5.size6{font-size:1.1111111111em}.katex .fontsize-ensurer.reset-size5.size7,.katex .katex-sizing.reset-size5.size7{font-size:1.3333333333em}.katex .fontsize-ensurer.reset-size5.size8,.katex .katex-sizing.reset-size5.size8{font-size:1.6em}.katex .fontsize-ensurer.reset-size5.size9,.katex .katex-sizing.reset-size5.size9{font-size:1.92em}.katex .fontsize-ensurer.reset-size5.size10,.katex .katex-sizing.reset-size5.size10{font-size:2.3044444444em}.katex .fontsize-ensurer.reset-size5.size11,.katex .katex-sizing.reset-size5.size11{font-size:2.7644444444em}.katex .fontsize-ensurer.reset-size6.size1,.katex .katex-sizing.reset-size6.size1{font-size:.5em}.katex .fontsize-ensurer.reset-size6.size2,.katex .katex-sizing.reset-size6.size2{font-size:.6em}.katex .fontsize-ensurer.reset-size6.size3,.katex .katex-sizing.reset-size6.size3{font-size:.7em}.katex .fontsize-ensurer.reset-size6.size4,.katex .katex-sizing.reset-size6.size4{font-size:.8em}.katex .fontsize-ensurer.reset-size6.size5,.katex .katex-sizing.reset-size6.size5{font-size:.9em}.katex .fontsize-ensurer.reset-size6.size6,.katex .katex-sizing.reset-size6.size6{font-size:1em}.katex .fontsize-ensurer.reset-size6.size7,.katex .katex-sizing.reset-size6.size7{font-size:1.2em}.katex .fontsize-ensurer.reset-size6.size8,.katex .katex-sizing.reset-size6.size8{font-size:1.44em}.katex .fontsize-ensurer.reset-size6.size9,.katex .katex-sizing.reset-size6.size9{font-size:1.728em}.katex .fontsize-ensurer.reset-size6.size10,.katex .katex-sizing.reset-size6.size10{font-size:2.074em}.katex .fontsize-ensurer.reset-size6.size11,.katex .katex-sizing.reset-size6.size11{font-size:2.488em}.katex .fontsize-ensurer.reset-size7.size1,.katex .katex-sizing.reset-size7.size1{font-size:.4166666667em}.katex .fontsize-ensurer.reset-size7.size2,.katex .katex-sizing.reset-size7.size2{font-size:.5em}.katex .fontsize-ensurer.reset-size7.size3,.katex .katex-sizing.reset-size7.size3{font-size:.5833333333em}.katex .fontsize-ensurer.reset-size7.size4,.katex .katex-sizing.reset-size7.size4{font-size:.6666666667em}.katex .fontsize-ensurer.reset-size7.size5,.katex .katex-sizing.reset-size7.size5{font-size:.75em}.katex .fontsize-ensurer.reset-size7.size6,.katex .katex-sizing.reset-size7.size6{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size7.size7,.katex .katex-sizing.reset-size7.size7{font-size:1em}.katex .fontsize-ensurer.reset-size7.size8,.katex .katex-sizing.reset-size7.size8{font-size:1.2em}.katex .fontsize-ensurer.reset-size7.size9,.katex .katex-sizing.reset-size7.size9{font-size:1.44em}.katex .fontsize-ensurer.reset-size7.size10,.katex .katex-sizing.reset-size7.size10{font-size:1.7283333333em}.katex .fontsize-ensurer.reset-size7.size11,.katex .katex-sizing.reset-size7.size11{font-size:2.0733333333em}.katex .fontsize-ensurer.reset-size8.size1,.katex .katex-sizing.reset-size8.size1{font-size:.3472222222em}.katex .fontsize-ensurer.reset-size8.size2,.katex .katex-sizing.reset-size8.size2{font-size:.4166666667em}.katex .fontsize-ensurer.reset-size8.size3,.katex .katex-sizing.reset-size8.size3{font-size:.4861111111em}.katex .fontsize-ensurer.reset-size8.size4,.katex .katex-sizing.reset-size8.size4{font-size:.5555555556em}.katex .fontsize-ensurer.reset-size8.size5,.katex .katex-sizing.reset-size8.size5{font-size:.625em}.katex .fontsize-ensurer.reset-size8.size6,.katex .katex-sizing.reset-size8.size6{font-size:.6944444444em}.katex .fontsize-ensurer.reset-size8.size7,.katex .katex-sizing.reset-size8.size7{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size8.size8,.katex .katex-sizing.reset-size8.size8{font-size:1em}.katex .fontsize-ensurer.reset-size8.size9,.katex .katex-sizing.reset-size8.size9{font-size:1.2em}.katex .fontsize-ensurer.reset-size8.size10,.katex .katex-sizing.reset-size8.size10{font-size:1.4402777778em}.katex .fontsize-ensurer.reset-size8.size11,.katex .katex-sizing.reset-size8.size11{font-size:1.7277777778em}.katex .fontsize-ensurer.reset-size9.size1,.katex .katex-sizing.reset-size9.size1{font-size:.2893518519em}.katex .fontsize-ensurer.reset-size9.size2,.katex .katex-sizing.reset-size9.size2{font-size:.3472222222em}.katex .fontsize-ensurer.reset-size9.size3,.katex .katex-sizing.reset-size9.size3{font-size:.4050925926em}.katex .fontsize-ensurer.reset-size9.size4,.katex .katex-sizing.reset-size9.size4{font-size:.462962963em}.katex .fontsize-ensurer.reset-size9.size5,.katex .katex-sizing.reset-size9.size5{font-size:.5208333333em}.katex .fontsize-ensurer.reset-size9.size6,.katex .katex-sizing.reset-size9.size6{font-size:.5787037037em}.katex .fontsize-ensurer.reset-size9.size7,.katex .katex-sizing.reset-size9.size7{font-size:.6944444444em}.katex .fontsize-ensurer.reset-size9.size8,.katex .katex-sizing.reset-size9.size8{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size9.size9,.katex .katex-sizing.reset-size9.size9{font-size:1em}.katex .fontsize-ensurer.reset-size9.size10,.katex .katex-sizing.reset-size9.size10{font-size:1.2002314815em}.katex .fontsize-ensurer.reset-size9.size11,.katex .katex-sizing.reset-size9.size11{font-size:1.4398148148em}.katex .fontsize-ensurer.reset-size10.size1,.katex .katex-sizing.reset-size10.size1{font-size:.2410800386em}.katex .fontsize-ensurer.reset-size10.size2,.katex .katex-sizing.reset-size10.size2{font-size:.2892960463em}.katex .fontsize-ensurer.reset-size10.size3,.katex .katex-sizing.reset-size10.size3{font-size:.337512054em}.katex .fontsize-ensurer.reset-size10.size4,.katex .katex-sizing.reset-size10.size4{font-size:.3857280617em}.katex .fontsize-ensurer.reset-size10.size5,.katex .katex-sizing.reset-size10.size5{font-size:.4339440694em}.katex .fontsize-ensurer.reset-size10.size6,.katex .katex-sizing.reset-size10.size6{font-size:.4821600771em}.katex .fontsize-ensurer.reset-size10.size7,.katex .katex-sizing.reset-size10.size7{font-size:.5785920926em}.katex .fontsize-ensurer.reset-size10.size8,.katex .katex-sizing.reset-size10.size8{font-size:.6943105111em}.katex .fontsize-ensurer.reset-size10.size9,.katex .katex-sizing.reset-size10.size9{font-size:.8331726133em}.katex .fontsize-ensurer.reset-size10.size10,.katex .katex-sizing.reset-size10.size10{font-size:1em}.katex .fontsize-ensurer.reset-size10.size11,.katex .katex-sizing.reset-size10.size11{font-size:1.1996142719em}.katex .fontsize-ensurer.reset-size11.size1,.katex .katex-sizing.reset-size11.size1{font-size:.2009646302em}.katex .fontsize-ensurer.reset-size11.size2,.katex .katex-sizing.reset-size11.size2{font-size:.2411575563em}.katex .fontsize-ensurer.reset-size11.size3,.katex .katex-sizing.reset-size11.size3{font-size:.2813504823em}.katex .fontsize-ensurer.reset-size11.size4,.katex .katex-sizing.reset-size11.size4{font-size:.3215434084em}.katex .fontsize-ensurer.reset-size11.size5,.katex .katex-sizing.reset-size11.size5{font-size:.3617363344em}.katex .fontsize-ensurer.reset-size11.size6,.katex .katex-sizing.reset-size11.size6{font-size:.4019292605em}.katex .fontsize-ensurer.reset-size11.size7,.katex .katex-sizing.reset-size11.size7{font-size:.4823151125em}.katex .fontsize-ensurer.reset-size11.size8,.katex .katex-sizing.reset-size11.size8{font-size:.578778135em}.katex .fontsize-ensurer.reset-size11.size9,.katex .katex-sizing.reset-size11.size9{font-size:.6945337621em}.katex .fontsize-ensurer.reset-size11.size10,.katex .katex-sizing.reset-size11.size10{font-size:.8336012862em}.katex .fontsize-ensurer.reset-size11.size11,.katex .katex-sizing.reset-size11.size11{font-size:1em}.katex .delimsizing.size1{font-family:KaTeX_Size1}.katex .delimsizing.size2{font-family:KaTeX_Size2}.katex .delimsizing.size3{font-family:KaTeX_Size3}.katex .delimsizing.size4{font-family:KaTeX_Size4}.katex .delimsizing.mult .delim-size1>span{font-family:KaTeX_Size1}.katex .delimsizing.mult .delim-size4>span{font-family:KaTeX_Size4}.katex .nulldelimiter{display:inline-block;width:.12em}.katex .delimcenter,.katex .op-symbol{position:relative}.katex .op-symbol.small-op{font-family:KaTeX_Size1}.katex .op-symbol.large-op{font-family:KaTeX_Size2}.katex .katex-accent>.vlist-t,.katex .op-limits>.vlist-t{text-align:center}.katex .katex-accent .accent-body{position:relative}.katex .katex-accent .accent-body:not(.accent-full){width:0}.katex .katex-overlay{display:block}.katex .mtable .vertical-separator{display:inline-block;min-width:1px}.katex .mtable .arraycolsep{display:inline-block}.katex .mtable .col-align-c>.vlist-t{text-align:center}.katex .mtable .col-align-l>.vlist-t{text-align:left}.katex .mtable .col-align-r>.vlist-t{text-align:right}.katex .svg-align{text-align:left}.katex svg{fill:currentColor;stroke:currentColor;display:block;height:inherit;position:absolute;width:100%}.katex svg path{stroke:none}.katex svg{fill-rule:nonzero;fill-opacity:1;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1}.katex img{border-style:none;max-height:none;max-width:none;min-height:0;min-width:0}.katex .katex-stretchy{display:block;overflow:hidden;position:relative;width:100%}.katex .katex-stretchy:after,.katex .katex-stretchy:before{content:\"\"}.katex .hide-tail{overflow:hidden;position:relative;width:100%}.katex .halfarrow-left{left:0;overflow:hidden;position:absolute;width:50.2%}.katex .halfarrow-right{overflow:hidden;position:absolute;right:0;width:50.2%}.katex .brace-left{left:0;overflow:hidden;position:absolute;width:25.1%}.katex .brace-center{left:25%;overflow:hidden;position:absolute;width:50%}.katex .brace-right{overflow:hidden;position:absolute;right:0;width:25.1%}.katex .x-arrow-pad{padding:0 .5em}.katex .cd-arrow-pad{padding:0 .55556em 0 .27778em}.katex .mover,.katex .munder,.katex .x-arrow{text-align:center}.katex .boxpad{padding:0 .3em}.katex .fbox,.katex .fcolorbox{border:.04em solid;box-sizing:border-box}.katex .cancel-pad{padding:0 .2em}.katex .cancel-lap{margin-left:-.2em;margin-right:-.2em}.katex .katex-sout{border-bottom-style:solid;border-bottom-width:.08em}.katex .angl{border-right:.049em solid;border-top:.049em solid;box-sizing:border-box;margin-right:.03889em}.katex .anglpad{padding:0 .03889em}.katex .reflectbox{display:inline-block;transform:scaleX(-1)}.katex .eqn-num:before{content:\"(\" counter(katexEqnNo) \")\";counter-increment:katexEqnNo}.katex .mml-eqn-num:before{content:\"(\" counter(mmlEqnNo) \")\";counter-increment:mmlEqnNo}.katex .mtr-glue{width:50%}.katex .cd-vert-arrow{display:inline-block;position:relative}.katex .cd-label-left{display:inline-block;position:absolute;right:calc(50% + .3em);text-align:left}.katex .cd-label-right{display:inline-block;left:calc(50% + .3em);position:absolute;text-align:right}.katex-display{display:block;margin:1em 0;text-align:center}.katex-display>.katex{display:block;text-align:center;white-space:nowrap}.katex-display>.katex>.katex-html{display:block;position:relative}.katex-display>.katex>.katex-html>.katex-tag{position:absolute;right:0}.katex-display.leqno>.katex>.katex-html>.katex-tag{left:0;right:auto}.katex-display.fleqn>.katex{padding-left:2em;text-align:left}body{counter-reset:katexEqnNo mmlEqnNo}\n";
+  const __CSS__ = ":host, :root {\n  all: initial;\n  display: block;\n  color-scheme: light;\n\n  /* ── 1. Brand Tokens (Identity; Tier 1) ─────────────────────────────────── */\n  --acx-brand-accent-500: #2F4BDB;\n  --acx-brand-accent-600: #2540C2;\n  --acx-brand-accent-700: #1D33A3;\n  --acx-brand-accent-300: #8EA2FF;\n  --acx-brand-accent-200: #A9B8FF;\n  --acx-brand-accent-400: #7089F5;\n\n  --acx-brand-paper-0:   #FFFFFF;\n  --acx-brand-paper-50:  #FAFAF8;\n  --acx-brand-paper-100: #F3F3F0;\n  --acx-brand-paper-200: #E4E4DF;\n  --acx-brand-paper-300: #CFCFC8;\n  --acx-brand-ink-900:   #16181D;\n  --acx-brand-ink-600:   #5B606B;\n  --acx-brand-ink-500:   #6B707B;\n\n  --acx-brand-night-950: #0E1013;\n  --acx-brand-night-900: #15181D;\n  --acx-brand-night-800: #1C2026;\n  --acx-brand-night-700: #2A2F37;\n  --acx-brand-night-600: #3A404A;\n  --acx-brand-fog-100:   #ECEDEF;\n  --acx-brand-fog-300:   #A3A8B2;\n  --acx-brand-fog-400:   #868B95;\n\n  --acx-brand-scrim-light:         rgb(22 24 29 / 0.40);\n  --acx-brand-scrim-dark:          rgb(0 0 0 / 0.60);\n  --acx-brand-accent-subtle-light: rgb(47 75 219 / 0.08);\n  --acx-brand-accent-subtle-dark:  rgb(142 162 255 / 0.14);\n\n  --acx-brand-success-light:        #1A7F4B;\n  --acx-brand-success-dark:         #5FD08A;\n  --acx-brand-success-bg-light:     rgb(26 127 75 / 0.10);\n  --acx-brand-success-bg-dark:      rgb(95 208 138 / 0.14);\n  --acx-brand-success-border-light: rgb(26 127 75 / 0.30);\n  --acx-brand-success-border-dark:  rgb(95 208 138 / 0.30);\n\n  --acx-brand-warning-light:        #9A6700;\n  --acx-brand-warning-dark:         #E3B341;\n  --acx-brand-warning-bg-light:     rgb(154 103 0 / 0.10);\n  --acx-brand-warning-bg-dark:      rgb(227 179 65 / 0.14);\n  --acx-brand-warning-border-light: rgb(154 103 0 / 0.30);\n  --acx-brand-warning-border-dark:  rgb(227 179 65 / 0.30);\n\n  --acx-brand-error-light:          #C62828;\n  --acx-brand-error-dark:           #FF7B72;\n  --acx-brand-error-bg-light:       rgb(198 40 40 / 0.08);\n  --acx-brand-error-bg-dark:        rgb(255 123 114 / 0.14);\n  --acx-brand-error-border-light:   rgb(198 40 40 / 0.30);\n  --acx-brand-error-border-dark:    rgb(255 123 114 / 0.30);\n\n  --acx-brand-info-light:           #0B6FB8;\n  --acx-brand-info-dark:            #62B0F0;\n  --acx-brand-info-bg-light:        rgb(11 111 184 / 0.08);\n  --acx-brand-info-bg-dark:         rgb(98 176 240 / 0.14);\n  --acx-brand-info-border-light:    rgb(11 111 184 / 0.30);\n  --acx-brand-info-border-dark:     rgb(98 176 240 / 0.30);\n\n  /* ── 2. Semantic UI Tokens — Light Theme Default (Tier 2) ───────────────── */\n  --acx-bg:              var(--acx-brand-paper-50);\n  --acx-surface:         var(--acx-brand-paper-0);\n  --acx-surface-raised:  var(--acx-brand-paper-0);\n  --acx-surface-sunken:  var(--acx-brand-paper-100);\n  --acx-overlay-scrim:   var(--acx-brand-scrim-light);\n\n  --acx-text:            var(--acx-brand-ink-900);\n  --acx-text-muted:      var(--acx-brand-ink-600);\n  --acx-text-subtle:     var(--acx-brand-ink-500);\n  --acx-text-on-accent:  var(--acx-brand-paper-0);\n  --acx-text-disabled:   var(--acx-brand-paper-300);\n\n  --acx-border:          var(--acx-brand-paper-200);\n  --acx-border-strong:   var(--acx-brand-paper-300);\n\n  --acx-accent:          var(--acx-brand-accent-500);\n  --acx-accent-hover:    var(--acx-brand-accent-600);\n  --acx-accent-active:   var(--acx-brand-accent-700);\n  --acx-accent-subtle:   var(--acx-brand-accent-subtle-light);\n  --acx-focus-ring:      var(--acx-brand-accent-500);\n\n  --acx-success:         var(--acx-brand-success-light);\n  --acx-success-bg:      var(--acx-brand-success-bg-light);\n  --acx-success-border:  var(--acx-brand-success-border-light);\n  --acx-warning:         var(--acx-brand-warning-light);\n  --acx-warning-bg:      var(--acx-brand-warning-bg-light);\n  --acx-warning-border:  var(--acx-brand-warning-border-light);\n  --acx-error:           var(--acx-brand-error-light);\n  --acx-error-bg:        var(--acx-brand-error-bg-light);\n  --acx-error-border:    var(--acx-brand-error-border-light);\n  --acx-info:            var(--acx-brand-info-light);\n  --acx-info-bg:         var(--acx-brand-info-bg-light);\n  --acx-info-border:     var(--acx-brand-info-border-light);\n\n  /* ── 3. Typography Tokens (§2) ──────────────────────────────────────────── */\n  --acx-font-ui:      \"Satoshi Variable\", \"Satoshi\", system-ui, -apple-system, \"Segoe UI\", sans-serif;\n  --acx-font-display: \"Outfit\", \"Satoshi Variable\", system-ui, sans-serif;\n  --acx-font-mono:    \"JetBrainsMono Nerd Font\", \"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, Consolas, monospace;\n\n  --acx-text-display:      600 32px/40px var(--acx-font-display);\n  --acx-text-h1:           600 26px/34px var(--acx-font-display);\n  --acx-text-h2:           600 20px/28px var(--acx-font-display);\n  --acx-text-wordmark:     600 18px/24px var(--acx-font-display);\n  --acx-text-h3:           700 17px/24px var(--acx-font-ui);\n  --acx-text-body:         400 16px/26px var(--acx-font-ui);\n  --acx-text-body-medium:  500 16px/26px var(--acx-font-ui);\n  --acx-text-ui:           500 14px/20px var(--acx-font-ui);\n  --acx-text-ui-regular:   400 14px/20px var(--acx-font-ui);\n  --acx-text-small:        400 13px/18px var(--acx-font-ui);\n  --acx-text-caption:      500 12px/16px var(--acx-font-ui);\n  --acx-text-mono:         400 13px/20px var(--acx-font-mono);\n  --acx-text-mono-caption: 500 12px/16px var(--acx-font-mono);\n\n  --acx-tracking-tight:    -0.01em;\n  --acx-tracking-normal:   0;\n  --acx-tracking-overline: 0.04em;\n\n  /* ── 4. Spacing, Shape, Depth, Motion, Layer & Sizing Tokens (§3.3) ─────── */\n  --acx-space-0:  0px;\n  --acx-space-1:  4px;\n  --acx-space-2:  8px;\n  --acx-space-3:  12px;\n  --acx-space-4:  16px;\n  --acx-space-5:  20px;\n  --acx-space-6:  24px;\n  --acx-space-8:  32px;\n  --acx-space-10: 40px;\n  --acx-space-12: 48px;\n  --acx-space-16: 64px;\n\n  --acx-radius-none: 0px;\n  --acx-radius-sm:   4px;\n  --acx-radius-md:   8px;\n  --acx-radius-lg:   12px;\n  --acx-radius-xl:   16px;\n  --acx-radius-full: 999px;\n\n  --acx-border-width:        1px;\n  --acx-border-width-strong: 2px;\n  --acx-focus-offset:        2px;\n  --acx-focus-offset-inset:  -2px;\n\n  --acx-shadow-none: none;\n  --acx-shadow-1:    0 1px 2px rgb(22 24 29 / 0.06);\n  --acx-shadow-2:    0 4px 12px rgb(22 24 29 / 0.10);\n  --acx-shadow-3:    0 12px 32px rgb(22 24 29 / 0.16), 0 2px 6px rgb(22 24 29 / 0.08);\n\n  --acx-duration-fast: 120ms;\n  --acx-duration-base: 200ms;\n  --acx-duration-slow: 280ms;\n  --acx-duration-spin: 800ms;\n  --acx-ease-standard: cubic-bezier(0.2, 0, 0, 1);\n  --acx-ease-exit:     cubic-bezier(0.4, 0, 1, 1);\n\n  --acx-z-launcher: 1;\n  --acx-z-reader:   2;\n  --acx-z-popover:  3;\n  --acx-z-dialog:   4;\n  --acx-z-toast:    5;\n\n  --acx-control-h-sm:   28px;\n  --acx-control-h-md:   36px;\n  --acx-control-h-lg:   44px;\n  --acx-target-min:     32px;\n  --acx-reader-measure: 68ch;\n  --acx-editor-min-height: 320px;\n  --acx-editor-max-height: 480px;\n  --acx-editor-font-size: 13px;\n  --acx-editor-font-size-min: 12px;\n  --acx-editor-font-size-max: 20px;\n  --acx-editor-line-height: 20px;\n  --acx-editor-tab-size: 4;\n  --acx-editor-padding-block: 12px;\n  --acx-editor-padding-inline: 16px;\n  --acx-editor-gutter-width: 48px;\n  --acx-editor-autocomplete-min-width: 180px;\n\n  /* ── 5. Component Layout Tokens ─────────────────────────────────────────── */\n  --acx-header-h:           56px;\n  --acx-handle-w:           36px;\n  --acx-handle-h:           4px;\n  --acx-icon-sm:            12px;\n  --acx-icon-md:            16px;\n  --acx-icon-lg:            18px;\n  --acx-icon-mark:          20px;\n  --acx-opt-marker-size:    24px;\n  --acx-qnum-col:           32px;\n  --acx-anchor-offset:      72px;\n  --acx-textarea-min-h:     192px;\n  --acx-dialog-w:           min(480px, calc(100vw - 32px));\n  --acx-dialog-max-h-vh:    calc(100vh - 64px);\n  --acx-dialog-max-h:       calc(100dvh - 64px);\n  --acx-sheet-w-narrow:     100vw;\n  --acx-sheet-w-tablet:     min(720px, calc(100vw - 32px));\n  --acx-sheet-w-desktop:    min(880px, calc(100vw - 48px));\n  --acx-sheet-h-narrow-vh:  88vh;\n  --acx-sheet-h-narrow:     88dvh;\n  --acx-sheet-h-tablet-vh:  80vh;\n  --acx-sheet-h-tablet:     80dvh;\n  --acx-sheet-h-desktop-vh: 72vh;\n  --acx-sheet-h-desktop:    72dvh;\n  --acx-sheet-h-min:        360px;\n  --acx-sheet-h-max-vh:     90vh;\n  --acx-sheet-h-max:        90dvh;\n\n  font-family: var(--acx-font-ui);\n  color: var(--acx-text);\n}\n\n/* ── Theme Strategy (§3.4): Dark Mode via system preference or explicit attribute ── */\n@media (prefers-color-scheme: dark) {\n  :host(:not([data-theme=\"light\"])) {\n    color-scheme: dark;\n    --acx-bg:              var(--acx-brand-night-950);\n    --acx-surface:         var(--acx-brand-night-900);\n    --acx-surface-raised:  var(--acx-brand-night-800);\n    --acx-surface-sunken:  var(--acx-brand-night-950);\n    --acx-overlay-scrim:   var(--acx-brand-scrim-dark);\n    --acx-text:            var(--acx-brand-fog-100);\n    --acx-text-muted:      var(--acx-brand-fog-300);\n    --acx-text-subtle:     var(--acx-brand-fog-400);\n    --acx-text-on-accent:  var(--acx-brand-night-950);\n    --acx-text-disabled:   var(--acx-brand-night-600);\n    --acx-border:          var(--acx-brand-night-700);\n    --acx-border-strong:   var(--acx-brand-night-600);\n    --acx-accent:          var(--acx-brand-accent-300);\n    --acx-accent-hover:    var(--acx-brand-accent-200);\n    --acx-accent-active:   var(--acx-brand-accent-400);\n    --acx-accent-subtle:   var(--acx-brand-accent-subtle-dark);\n    --acx-focus-ring:      var(--acx-brand-accent-300);\n    --acx-success:         var(--acx-brand-success-dark);\n    --acx-success-bg:      var(--acx-brand-success-bg-dark);\n    --acx-success-border:  var(--acx-brand-success-border-dark);\n    --acx-warning:         var(--acx-brand-warning-dark);\n    --acx-warning-bg:      var(--acx-brand-warning-bg-dark);\n    --acx-warning-border:  var(--acx-brand-warning-border-dark);\n    --acx-error:           var(--acx-brand-error-dark);\n    --acx-error-bg:        var(--acx-brand-error-bg-dark);\n    --acx-error-border:    var(--acx-brand-error-border-dark);\n    --acx-info:            var(--acx-brand-info-dark);\n    --acx-info-bg:         var(--acx-brand-info-bg-dark);\n    --acx-info-border:     var(--acx-brand-info-border-dark);\n    --acx-shadow-1:        0 1px 2px rgb(0 0 0 / 0.15);\n    --acx-shadow-2:        0 4px 12px rgb(0 0 0 / 0.25);\n    --acx-shadow-3:        0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);\n  }\n}\n\n:host([data-theme=\"dark\"]) {\n  color-scheme: dark;\n  --acx-bg:              var(--acx-brand-night-950);\n  --acx-surface:         var(--acx-brand-night-900);\n  --acx-surface-raised:  var(--acx-brand-night-800);\n  --acx-surface-sunken:  var(--acx-brand-night-950);\n  --acx-overlay-scrim:   var(--acx-brand-scrim-dark);\n  --acx-text:            var(--acx-brand-fog-100);\n  --acx-text-muted:      var(--acx-brand-fog-300);\n  --acx-text-subtle:     var(--acx-brand-fog-400);\n  --acx-text-on-accent:  var(--acx-brand-night-950);\n  --acx-text-disabled:   var(--acx-brand-night-600);\n  --acx-border:          var(--acx-brand-night-700);\n  --acx-border-strong:   var(--acx-brand-night-600);\n  --acx-accent:          var(--acx-brand-accent-300);\n  --acx-accent-hover:    var(--acx-brand-accent-200);\n  --acx-accent-active:   var(--acx-brand-accent-400);\n  --acx-accent-subtle:   var(--acx-brand-accent-subtle-dark);\n  --acx-focus-ring:      var(--acx-brand-accent-300);\n  --acx-success:         var(--acx-brand-success-dark);\n  --acx-success-bg:      var(--acx-brand-success-bg-dark);\n  --acx-success-border:  var(--acx-brand-success-border-dark);\n  --acx-warning:         var(--acx-brand-warning-dark);\n  --acx-warning-bg:      var(--acx-brand-warning-bg-dark);\n  --acx-warning-border:  var(--acx-brand-warning-border-dark);\n  --acx-error:           var(--acx-brand-error-dark);\n  --acx-error-bg:        var(--acx-brand-error-bg-dark);\n  --acx-error-border:    var(--acx-brand-error-border-dark);\n  --acx-info:            var(--acx-brand-info-dark);\n  --acx-info-bg:         var(--acx-brand-info-bg-dark);\n  --acx-info-border:     var(--acx-brand-info-border-dark);\n  --acx-shadow-1:        0 1px 2px rgb(0 0 0 / 0.15);\n  --acx-shadow-2:        0 4px 12px rgb(0 0 0 / 0.25);\n  --acx-shadow-3:        0 12px 32px rgb(0 0 0 / 0.40), 0 2px 6px rgb(0 0 0 / 0.20);\n}\n\n/* ── Coarse Pointer Target Sizing (§9) ──────────────────────────────────── */\n@media (pointer: coarse) {\n  :host, :root {\n    --acx-target-min: 44px;\n    --acx-control-h-md: 44px;\n  }\n}\n\n/* ── Dialog / Progress Overlay (§6) ─────────────────────────────────────── */\n#saq-overlay {\n  position: fixed;\n  inset: var(--acx-space-0);\n  z-index: var(--acx-z-dialog);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: var(--acx-overlay-scrim);\n  opacity: 1;\n  transition: opacity var(--acx-duration-base) var(--acx-ease-standard);\n}\n#saq-overlay[data-leaving] {\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity var(--acx-duration-base) var(--acx-ease-exit);\n}\n.saq-card {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-4);\n  width: var(--acx-dialog-w);\n  max-height: var(--acx-dialog-max-h-vh);\n  max-height: var(--acx-dialog-max-h);\n  padding: var(--acx-space-6);\n  border-radius: var(--acx-radius-lg);\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border);\n  box-shadow: var(--acx-shadow-3);\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n  animation: acx-dialog-enter var(--acx-duration-base) var(--acx-ease-standard) both;\n}\n.saq-card-row {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-3);\n}\n.saq-spinner {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n  border-radius: var(--acx-radius-full);\n  border: var(--acx-border-width-strong) solid var(--acx-border);\n  border-top-color: var(--acx-accent);\n  animation: acx-spin var(--acx-duration-spin) linear infinite;\n}\n.saq-spinner-sm {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n}\n.saq-count {\n  margin-left: auto;\n  color: var(--acx-text-muted);\n  font: var(--acx-text-mono);\n  font-variant-numeric: tabular-nums;\n}\n.saq-track {\n  height: var(--acx-space-1);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-surface-sunken);\n  overflow: hidden;\n}\n.saq-bar {\n  height: 100%;\n  width: 100%;\n  background: var(--acx-accent);\n  border-radius: var(--acx-radius-full);\n  transform: scaleX(0);\n  transform-origin: left;\n  transition: transform var(--acx-duration-base) var(--acx-ease-standard);\n}\n\n/* ── Bottom-Sheet Reader & Scrim (§6, §9) ───────────────────────────────── */\n#saq-backdrop {\n  position: fixed;\n  inset: var(--acx-space-0);\n  z-index: var(--acx-z-reader);\n  background: var(--acx-overlay-scrim);\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity var(--acx-duration-slow) var(--acx-ease-standard);\n}\n#saq-backdrop.is-open {\n  opacity: 1;\n  pointer-events: auto;\n}\n\n#saq-sheet {\n  position: fixed;\n  left: var(--acx-space-0);\n  right: var(--acx-space-0);\n  bottom: var(--acx-space-0);\n  margin-inline: auto;\n  z-index: var(--acx-z-reader);\n  width: var(--acx-sheet-w-desktop);\n  height: var(--acx-sheet-h-desktop-vh);\n  height: var(--acx-sheet-h-desktop);\n  min-height: var(--acx-sheet-h-min);\n  max-height: var(--acx-sheet-h-max-vh);\n  max-height: var(--acx-sheet-h-max);\n  display: flex;\n  flex-direction: column;\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  border-radius: var(--acx-radius-xl) var(--acx-radius-xl) var(--acx-radius-none) var(--acx-radius-none);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n  border-left: var(--acx-border-width) solid var(--acx-border);\n  border-right: var(--acx-border-width) solid var(--acx-border);\n  box-shadow: var(--acx-shadow-3);\n  font-family: var(--acx-font-ui);\n  transform: translateY(100%);\n  will-change: transform;\n  pointer-events: none;\n  overflow-x: hidden;\n  transition: transform var(--acx-duration-slow) var(--acx-ease-standard);\n}\n#saq-sheet:focus {\n  outline: none;\n}\n#saq-sheet:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset-inset);\n}\n#saq-sheet.is-open {\n  transform: translateY(0);\n  pointer-events: auto;\n}\n#saq-sheet.is-dragging {\n  transition: none;\n}\n\n/* Sheet Handle (§6) */\n.saq-grip {\n  flex: none;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100%;\n  padding: var(--acx-space-2) var(--acx-space-0) var(--acx-space-1);\n  background: transparent;\n  border: var(--acx-space-0);\n  cursor: grab;\n  touch-action: none;\n}\n.saq-grip::before {\n  content: \"\";\n  width: var(--acx-handle-w);\n  height: var(--acx-handle-h);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-border-strong);\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n/* Reader Header (§6) */\n.saq-header {\n  position: relative;\n  z-index: 50;\n  flex: none;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  height: var(--acx-header-h);\n  padding-inline: var(--acx-space-4);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n}\n.saq-title {\n  font: var(--acx-text-wordmark);\n  color: var(--acx-text);\n  letter-spacing: var(--acx-tracking-tight);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.saq-count-pill {\n  font: var(--acx-text-mono-caption);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  font-variant-numeric: tabular-nums;\n}\n.saq-tag {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  color: var(--acx-success);\n  background: var(--acx-success-bg);\n  border: var(--acx-border-width) solid var(--acx-success-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n}\n.saq-actions {\n  margin-left: auto;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-export-group {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  background: var(--acx-surface-sunken);\n  padding: var(--acx-space-0) var(--acx-space-1);\n  min-height: var(--acx-control-h-md);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n/* Primitives: Button & IconButton (§6) */\n.saq-btn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: var(--acx-space-2);\n  height: var(--acx-control-h-md);\n  min-width: var(--acx-target-min);\n  box-sizing: border-box;\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  padding: var(--acx-space-0) var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  cursor: pointer;\n  white-space: nowrap;\n  flex-shrink: 0;\n  transition:\n    color var(--acx-duration-fast) var(--acx-ease-standard),\n    background-color var(--acx-duration-fast) var(--acx-ease-standard),\n    border-color var(--acx-duration-fast) var(--acx-ease-standard),\n    box-shadow var(--acx-duration-fast) var(--acx-ease-standard),\n    opacity var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-btn-primary {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n}\n.saq-btn-export {\n  height: var(--acx-target-min);\n  min-width: var(--acx-target-min);\n  padding: var(--acx-space-0) var(--acx-space-3);\n  border-radius: var(--acx-radius-sm);\n  background: transparent;\n  border-color: transparent;\n  color: var(--acx-text-muted);\n}\n.saq-btn-export.is-active-export {\n  background: var(--acx-surface);\n  border-color: var(--acx-border-strong);\n  color: var(--acx-text);\n  box-shadow: var(--acx-shadow-1);\n}\n.saq-btn-secondary {\n  background: var(--acx-surface);\n  border-color: var(--acx-border-strong);\n  color: var(--acx-text);\n}\n.saq-btn:active {\n  background: var(--acx-accent-subtle);\n  border-color: var(--acx-border-strong);\n}\n.saq-btn-primary:active {\n  background: var(--acx-accent-active);\n  border-color: var(--acx-accent-active);\n}\n.saq-btn:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-btn:disabled,\n.saq-btn.is-busy {\n  color: var(--acx-text-disabled);\n  background: var(--acx-surface-sunken);\n  border-color: var(--acx-border);\n  cursor: not-allowed;\n  pointer-events: none;\n}\n.saq-btn svg {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n}\n.saq-icon {\n  width: var(--acx-control-h-md);\n  height: var(--acx-control-h-md);\n  min-width: var(--acx-target-min);\n  padding: var(--acx-space-0);\n  gap: var(--acx-space-0);\n  justify-content: center;\n  border-radius: var(--acx-radius-md);\n  color: var(--acx-text-muted);\n  background: transparent;\n  border-color: transparent;\n}\n.saq-icon svg {\n  width: var(--acx-icon-lg);\n  height: var(--acx-icon-lg);\n}\n.saq-icon[aria-pressed=\"true\"] {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-clock {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-mono-caption);\n  font-variant-numeric: tabular-nums;\n  color: var(--acx-text-muted);\n  white-space: nowrap;\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n}\n.saq-clock svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n}\n\n/* @extension-only-start */\n/* ── Dropdown Wrap & Export Dropdown Menu ───────────────────────────────── */\n.saq-dropdown-wrap,\n.saq-split-btn-group {\n  position: relative;\n  display: inline-flex;\n  align-items: stretch;\n  z-index: 51;\n}\n.saq-split-btn-group .saq-split-main {\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n  border-right: none;\n  padding-right: var(--acx-space-3);\n}\n.saq-split-btn-group .saq-split-arrow {\n  padding: 0 var(--acx-space-2);\n  min-width: 28px;\n  width: 28px;\n  height: var(--acx-control-h-md);\n  border-top-left-radius: 0;\n  border-bottom-left-radius: 0;\n  border-left: var(--acx-border-width) solid var(--acx-border-strong);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n}\n.saq-split-btn-group .saq-split-arrow svg {\n  width: 14px;\n  height: 14px;\n  flex: none;\n  pointer-events: none;\n  transition: transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-split-btn-group .saq-split-arrow[aria-expanded=\"true\"] svg {\n  transform: rotate(180deg);\n}\n.saq-split-btn-group .saq-split-arrow[aria-expanded=\"true\"],\n.saq-split-btn-group .saq-split-arrow:hover {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n  z-index: 1;\n}\n.saq-split-btn-group .saq-split-main:hover {\n  z-index: 1;\n}\n.saq-split-btn-group .saq-split-main:focus-visible,\n.saq-split-btn-group .saq-split-arrow:focus-visible {\n  z-index: 2;\n}\n\n.saq-dropdown-menu {\n  position: absolute;\n  top: calc(100% + var(--acx-space-1));\n  right: 0;\n  z-index: 100;\n  min-width: 190px;\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  box-shadow: var(--acx-shadow-3);\n  padding: var(--acx-space-1);\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n  pointer-events: auto !important;\n}\n.saq-dropdown-menu[hidden] {\n  display: none !important;\n}\n.saq-dropdown-item {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  width: 100%;\n  height: 32px;\n  padding: 0 var(--acx-space-3);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-ui);\n  font-size: 13px;\n  color: var(--acx-text);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  text-align: left;\n  user-select: none;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-dropdown-item * {\n  pointer-events: none;\n}\n.saq-dropdown-item:hover,\n.saq-dropdown-item:focus-visible {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  outline: none;\n}\n.saq-dropdown-item svg {\n  width: 16px;\n  height: 16px;\n  flex: none;\n  color: var(--acx-text-muted);\n}\n.saq-dropdown-item:hover svg,\n.saq-dropdown-item:focus-visible svg {\n  color: var(--acx-accent);\n}\n\n/* ── Intelligent Question Navigation Rail (§5, §6) ───────────────────────── */\n.saq-qrail {\n  flex: none;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-4);\n  padding: var(--acx-space-2) var(--acx-space-6);\n  background: var(--acx-surface-raised);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  box-shadow: var(--acx-shadow-1);\n}\n\n.saq-qrail-stats {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  white-space: nowrap;\n  flex: none;\n}\n.saq-stat-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font-weight: 500;\n}\n.saq-stat-badge strong {\n  font-variant-numeric: tabular-nums;\n  font-weight: 700;\n  color: var(--acx-text);\n}\n.saq-stat-dot {\n  width: 8px;\n  height: 8px;\n  border-radius: var(--acx-radius-full);\n}\n.saq-stat-badge.is-attempted .saq-stat-dot {\n  background: var(--acx-success);\n}\n.saq-stat-badge.is-pending .saq-stat-dot {\n  background: var(--acx-border-strong);\n}\n.saq-stat-divider {\n  color: var(--acx-border-strong);\n}\n\n.saq-qrail-scroll {\n  flex: 1;\n  overflow-x: auto;\n  scrollbar-width: none;\n  -webkit-overflow-scrolling: touch;\n}\n.saq-qrail-scroll::-webkit-scrollbar {\n  display: none;\n}\n\n.saq-qrail-track {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  padding: 2px 0;\n}\n\n.saq-qrail-pill {\n  position: relative;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  height: 26px;\n  min-width: 38px;\n  padding: 0 var(--acx-space-2);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  font-weight: 600;\n  color: var(--acx-text-muted);\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-qrail-pill:hover {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  border-color: var(--acx-border-strong);\n}\n.saq-qrail-pill:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: 1px;\n}\n\n/* Attempted state: filled green/accent indicator */\n.saq-qrail-pill.is-attempted {\n  background: var(--acx-success-bg);\n  border-color: var(--acx-success);\n  color: var(--acx-success);\n}\n.saq-qrail-pill.is-attempted .saq-qrail-dot {\n  background: var(--acx-success);\n}\n\n/* Pending state: subtle outline */\n.saq-qrail-pill.is-pending {\n  background: var(--acx-surface);\n  color: var(--acx-text-muted);\n}\n.saq-qrail-pill.is-pending .saq-qrail-dot {\n  background: var(--acx-border-strong);\n}\n\n/* Active in viewport state */\n.saq-qrail-pill.is-active {\n  background: var(--acx-surface-raised);\n  border-color: var(--acx-accent);\n  color: var(--acx-accent);\n  box-shadow: 0 0 0 1px var(--acx-accent);\n  font-weight: 700;\n}\n.saq-qrail-pill.is-active.is-attempted {\n  border-color: var(--acx-success);\n  box-shadow: 0 0 0 1px var(--acx-success);\n}\n\n.saq-qrail-dot {\n  width: 5px;\n  height: 5px;\n  border-radius: var(--acx-radius-full);\n  flex: none;\n}\n\n/* ── Question Navigation Rail Actions (Zoom & Bulk Selection) ─────────────── */\n.saq-qrail-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  margin-left: auto;\n  flex: none;\n}\n.saq-rail-group {\n  display: inline-flex;\n  align-items: center;\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  padding: 1px;\n  gap: 1px;\n}\n.saq-rail-btn {\n  height: 24px;\n  min-width: 24px;\n  padding: 0 var(--acx-space-2);\n  background: transparent;\n  border: none;\n  border-radius: calc(var(--acx-radius-sm) - 1px);\n  font: var(--acx-text-caption);\n  font-size: 11px;\n  font-weight: 600;\n  color: var(--acx-text-muted);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n  user-select: none;\n}\n.saq-rail-btn:hover {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n}\n.saq-rail-btn:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: 1px;\n  color: var(--acx-text);\n}\n.saq-rail-zoom-val {\n  min-width: 38px;\n  font-variant-numeric: tabular-nums;\n  font-family: var(--acx-font-mono);\n  font-size: 10.5px;\n}\n/* ── Card Header Question Selection Checkbox ─────────────────────────────── */\n.saq-qselect-wrap {\n  display: inline-flex;\n  align-items: center;\n  margin-right: var(--acx-space-1);\n}\n.saq-qselect-cb {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width-strong) solid var(--acx-border-strong);\n  background: var(--acx-surface);\n  color: var(--acx-text-on-accent);\n  cursor: pointer;\n  padding: 0;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-qselect-cb:hover {\n  border-color: var(--acx-accent);\n}\n.saq-qselect-cb:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-qselect-cb.is-checked {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-qselect-cb svg {\n  width: 12px;\n  height: 12px;\n}\n\n/* ── Import AI Answer Modal Dialog (§11) ─────────────────────────────────── */\n.saq-import-dialog .saq-dialog-content {\n  max-width: min(var(--acx-dialog-w), 100%);\n  max-height: var(--acx-dialog-max-h);\n  display: flex;\n  flex-direction: column;\n}\n.saq-import-dialog .saq-dialog-head {\n  flex: none;\n  align-items: flex-start;\n}\n.saq-dialog-head-title {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--acx-space-2);\n  min-width: 0;\n}\n.saq-dialog-step-tag {\n  font: var(--acx-text-mono-caption);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n}\n.saq-import-dialog .saq-dialog-title {\n  font: var(--acx-text-h3);\n}\n.saq-import-body {\n  display: flex;\n  flex: 1 1 auto;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n  min-height: 0;\n  padding: var(--acx-space-4);\n  overflow-y: auto;\n  overscroll-behavior: contain;\n}\n.saq-import-clipboard-row {\n  display: flex;\n  align-items: center;\n  justify-content: flex-start;\n  gap: var(--acx-space-2);\n}\n.saq-btn-paste-clipboard {\n  width: auto;\n  height: var(--acx-control-h-md);\n  font-weight: 500;\n  gap: var(--acx-space-2);\n}\n.saq-import-field-heading {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-2);\n}\n.saq-import-field-label {\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n}\n.saq-answers-counter-badge {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  white-space: nowrap;\n}\n.saq-import-format-hint {\n  margin: calc(var(--acx-space-2) * -1) 0 0;\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n.saq-import-format-example {\n  display: block;\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  font: var(--acx-text-mono);\n  white-space: pre-wrap;\n}\n.saq-import-textarea {\n  width: 100%;\n  min-height: var(--acx-textarea-min-h);\n  box-sizing: border-box;\n  color: var(--acx-text);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  font: var(--acx-text-mono);\n  padding: var(--acx-space-3);\n  overflow-wrap: anywhere;\n  resize: vertical;\n}\n.saq-import-textarea:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n  border-color: var(--acx-accent);\n}\n.saq-import-actions {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  gap: var(--acx-space-2);\n  padding-top: var(--acx-space-2);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-import-results {\n  display: block;\n  font: var(--acx-text-small);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  color: var(--acx-text);\n  overflow-wrap: anywhere;\n}\n.saq-import-results[hidden] {\n  display: none;\n}\n.saq-import-results[data-tone=\"success\"] {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-import-results[data-tone=\"warn\"] {\n  background: var(--acx-warning-bg);\n  color: var(--acx-warning);\n  border-color: var(--acx-warning-border);\n}\n.saq-import-results[data-tone=\"error\"] {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n.saq-import-issues {\n  margin: var(--acx-space-0);\n  padding-inline-start: var(--acx-space-5);\n  color: var(--acx-error);\n  font: var(--acx-text-small);\n  overflow-wrap: anywhere;\n}\n.saq-import-replaced {\n  margin: var(--acx-space-0);\n  color: var(--acx-text-muted);\n  font: var(--acx-text-caption);\n}\n\n.saq-ai-answer-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  max-width: 100%;\n  padding: var(--acx-space-1) var(--acx-space-2);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-mono-caption);\n  overflow-wrap: anywhere;\n}\n.saq-ai-answer-badge.is-invalid {\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n.saq-ai-answer-icon {\n  display: inline-grid;\n  place-items: center;\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n  border: var(--acx-border-width) solid currentColor;\n  border-radius: var(--acx-radius-full);\n  font: var(--acx-text-caption);\n}\n\n/* ── Action Groups & Workflow (§6) ───────────────────────────────────────── */\n.saq-action-group {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n}\n.saq-action-group-workflow,\n.saq-workflow-group {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-action-group-export {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  background: var(--acx-surface-sunken);\n  padding: var(--acx-space-0) var(--acx-space-1);\n  min-height: var(--acx-control-h-md);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-action-group-utility {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n}\n.saq-btn-workflow {\n  font-weight: 500;\n  border-color: var(--acx-border-strong);\n}\n.saq-btn-apply {\n  background: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n  border-color: var(--acx-accent);\n  position: relative;\n}\n.saq-btn-apply:hover:not(:disabled) {\n  background: var(--acx-accent-hover);\n  border-color: var(--acx-accent-hover);\n}\n.saq-ready-badge {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 18px;\n  height: 18px;\n  padding: 0 5px;\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-surface);\n  color: var(--acx-accent);\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  line-height: 1;\n  font-weight: 700;\n}\n.saq-btn-apply .saq-btn-badge {\n  background: var(--acx-surface);\n  color: var(--acx-accent);\n}\n\n/* ── Card Header Status Badges ───────────────────────────────────────────── */\n.saq-status-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  padding: 2px 8px;\n  border-radius: var(--acx-radius-full);\n  font-weight: 500;\n  margin-left: auto;\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-status-badge.is-ai-matched {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-status-badge.is-overridden {\n  background: var(--acx-warning-bg);\n  color: var(--acx-warning);\n  border-color: var(--acx-warning-border);\n}\n.saq-status-badge.is-ai-suggested {\n  background: var(--acx-info-bg);\n  color: var(--acx-info);\n  border-color: var(--acx-info-border);\n}\n.saq-status-badge.is-user-selected {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-status-badge.is-unanswered {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text-muted);\n  border-color: var(--acx-border);\n}\n.saq-status-badge.is-invalid {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n\n/* ── AI Suggestion Sub-Bar ───────────────────────────────────────────────── */\n.saq-ai-suggestion-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  margin-bottom: var(--acx-space-3);\n}\n.saq-ai-suggestion-info {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--acx-space-2);\n}\n.saq-ai-suggestion-label {\n  font: var(--acx-text-caption);\n  text-transform: uppercase;\n  letter-spacing: var(--acx-tracking-overline);\n  color: var(--acx-text-muted);\n  font-weight: 500;\n}\n.saq-ai-suggestion-val {\n  font: var(--acx-text-ui);\n  font-family: var(--acx-font-mono);\n  font-weight: 600;\n  color: var(--acx-text);\n}\n.saq-ai-suggestion-val.is-invalid {\n  color: var(--acx-error);\n}\n.saq-models-breakdown {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n}\n.saq-model-pill {\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  padding: 1px 6px;\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  color: var(--acx-text-muted);\n}\n.saq-btn-apply-ai {\n  height: var(--acx-control-h-sm);\n  padding: 0 var(--acx-space-2);\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  background: var(--acx-surface);\n  border-color: var(--acx-border-strong);\n  color: var(--acx-text);\n  pointer-events: auto !important;\n}\n.saq-btn-apply-ai:hover {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-btn-apply-ai svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n}\n\n/* ── Interactive Option Controls (Radio & Checkbox) ───────────────────────── */\n.saq-options-interactive button.saq-option,\nbutton.saq-option,\ndiv.saq-option {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-3);\n  min-height: var(--acx-control-h-md);\n  width: 100%;\n  box-sizing: border-box;\n  text-align: left;\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  font: var(--acx-text-body);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  margin: 0;\n  transition:\n    color var(--acx-duration-fast) var(--acx-ease-standard),\n    background-color var(--acx-duration-fast) var(--acx-ease-standard),\n    border-color var(--acx-duration-fast) var(--acx-ease-standard);\n  pointer-events: auto !important;\n  cursor: pointer !important;\n  user-select: text;\n}\n.saq-options-interactive button.saq-option:hover,\nbutton.saq-option:hover {\n  background: var(--acx-surface-sunken);\n  border-color: var(--acx-border-strong);\n}\n.saq-options-interactive button.saq-option:focus-visible,\nbutton.saq-option:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-options-interactive button.saq-option.is-selected,\n.saq-options-interactive button.saq-option.selected,\nbutton.saq-option.is-selected,\nbutton.saq-option.selected,\ndiv.saq-option.selected {\n  background: var(--acx-accent-subtle);\n  border-color: var(--acx-accent);\n}\n.saq-options-interactive button.saq-option.is-ai-suggested:not(.is-selected):not(.selected),\nbutton.saq-option.is-ai-suggested:not(.is-selected):not(.selected) {\n  border-inline-start-width: 3px;\n  border-inline-start-color: var(--acx-info);\n}\n.saq-option.is-selected .saq-opt-letter,\n.saq-option.selected .saq-opt-letter {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n}\n.saq-opt-ai-tag {\n  align-self: center;\n  font: var(--acx-text-caption);\n  padding: 1px 6px;\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-info-bg);\n  color: var(--acx-info);\n  border: var(--acx-border-width) solid var(--acx-info-border);\n  font-weight: 500;\n  margin-left: auto;\n  white-space: nowrap;\n}\n\n/* ── Numerical & Text Answer Inputs ───────────────────────────────────────── */\n.saq-answer-input-wrap {\n  margin-top: var(--acx-space-3);\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n}\n.saq-input-label {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  font-weight: 500;\n}\n.saq-input-row {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-num-input,\n.saq-text-input {\n  max-width: 320px;\n  width: 100%;\n  padding: var(--acx-space-2) var(--acx-space-3);\n  font: var(--acx-text-ui);\n  font-family: var(--acx-font-mono);\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  pointer-events: auto !important;\n  cursor: text !important;\n}\n.saq-num-input:focus-visible,\n.saq-text-input:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n  border-color: var(--acx-accent);\n}\n.saq-num-input.is-invalid {\n  border-color: var(--acx-error);\n  background: var(--acx-error-bg);\n}\n.saq-input-error {\n  font: var(--acx-text-caption);\n  color: var(--acx-error);\n}\n.saq-btn-clear {\n  height: var(--acx-control-h-md);\n  pointer-events: auto !important;\n}\n.saq-unsupported-notice {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n  margin-top: var(--acx-space-3);\n}\n.saq-unsupported-notice svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n\n/* ── Apply Answers Confirmation Modal Dialog ────────────────────────────── */\n.saq-dialog-modal {\n  position: fixed;\n  inset: 0;\n  z-index: var(--acx-z-dialog);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: var(--acx-space-4);\n}\n.saq-dialog-modal[hidden] {\n  display: none !important;\n}\n.saq-dialog-backdrop {\n  position: absolute;\n  inset: 0;\n  background: var(--acx-overlay-scrim);\n  animation: acx-fade-enter var(--acx-duration-fast) var(--acx-ease-standard) both;\n}\n.saq-dialog-content {\n  position: relative;\n  width: 100%;\n  max-width: 520px;\n  background: var(--acx-surface-raised);\n  color: var(--acx-text);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-lg);\n  box-shadow: var(--acx-shadow-3);\n  overflow: hidden;\n  animation: acx-dialog-enter var(--acx-duration-fast) var(--acx-ease-standard) both;\n}\n.saq-dialog-head {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: var(--acx-space-3) var(--acx-space-4);\n  background: var(--acx-surface-sunken);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-dialog-title {\n  font: var(--acx-text-ui);\n  font-weight: 600;\n  color: var(--acx-text);\n}\n.saq-dialog-body {\n  padding: var(--acx-space-4);\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n}\n.saq-apply-summary-grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  gap: var(--acx-space-2);\n}\n.saq-summary-card {\n  display: flex;\n  flex-direction: column;\n  padding: var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n}\n.saq-summary-card.is-ready {\n  border-color: var(--acx-accent);\n  background: var(--acx-accent-subtle);\n}\n.saq-summary-card.is-matched {\n  border-color: var(--acx-success-border);\n  background: var(--acx-success-bg);\n}\n.saq-summary-card.is-overridden {\n  border-color: var(--acx-warning-border);\n  background: var(--acx-warning-bg);\n}\n.saq-summary-num {\n  font: var(--acx-text-h2);\n  font-weight: 700;\n  line-height: 1;\n  color: var(--acx-text);\n}\n.saq-summary-lbl {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  margin-top: var(--acx-space-1);\n}\n.saq-apply-notice {\n  display: flex;\n  align-items: flex-start;\n  gap: var(--acx-space-2);\n  margin: var(--acx-space-0);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n.saq-apply-notice svg {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n  color: var(--acx-info);\n  margin-top: 2px;\n}\n.saq-apply-issues-warn {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-error-bg);\n  border: var(--acx-border-width) solid var(--acx-error-border);\n  color: var(--acx-error);\n  font: var(--acx-text-small);\n}\n.saq-apply-issues-warn svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n.saq-dialog-footer {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  background: var(--acx-surface-sunken);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n}\n\n/* Interactive controls pointer-events overrides */\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet input[type=\"radio\"],\n#saq-sheet textarea.saq-import-textarea,\n#saq-sheet .saq-option,\n#saq-sheet button.saq-option,\n#saq-sheet div.saq-option,\n#saq-sheet button.saq-btn-clear,\n#saq-sheet button.saq-btn-apply-ai,\n#saq-sheet .saq-qselect-cb,\n#saq-sheet button[data-act] {\n  pointer-events: auto !important;\n  cursor: pointer !important;\n}\n#saq-sheet .saq-opt-text,\n#saq-sheet .saq-opt-text * {\n  user-select: text;\n}\n#saq-sheet .saq-opt-letter,\n#saq-sheet .saq-opt-letter *,\n#saq-sheet .saq-opt-control,\n#saq-sheet .saq-opt-control *,\n#saq-sheet .saq-opt-ai-tag,\n#saq-sheet .saq-opt-badge {\n  pointer-events: none !important;\n}\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet textarea.saq-import-textarea {\n  cursor: text !important;\n}\n/* @extension-only-end */\n\n/* ── Status / Export Notification Bar & Warning Banner (§6, §10) ────────── */\n.saq-status-bar {\n  display: none;\n  flex: none;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-4);\n  font: var(--acx-text-small);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-info-bg);\n  color: var(--acx-info);\n}\n.saq-status-bar.is-visible {\n  display: flex;\n}\n.saq-status-bar svg {\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n  flex: none;\n}\n.saq-status-bar[data-tone=\"busy\"] {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  border-bottom-color: var(--acx-border);\n}\n.saq-status-bar[data-tone=\"success\"] {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-bottom-color: var(--acx-success-border);\n}\n.saq-status-bar[data-tone=\"warn\"] {\n  background: var(--acx-warning-bg);\n  color: var(--acx-warning);\n  border-bottom-color: var(--acx-warning-border);\n}\n.saq-status-bar[data-tone=\"error\"] {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-bottom-color: var(--acx-error-border);\n}\n\n.saq-warn {\n  flex: none;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-4);\n  color: var(--acx-warning);\n  background: var(--acx-warning-bg);\n  border-bottom: var(--acx-border-width) solid var(--acx-warning-border);\n  font: var(--acx-text-small);\n}\n.saq-warn svg {\n  flex: none;\n  width: var(--acx-icon-md);\n  height: var(--acx-icon-md);\n}\n\n/* ── Reader Scroll Container & Content Scope (§5, §7, §9) ───────────────── */\n.saq-scroll {\n  flex: 1;\n  min-height: var(--acx-space-0);\n  overflow-y: auto;\n  overflow-x: hidden;\n  overscroll-behavior: contain;\n  scrollbar-color: var(--acx-border-strong) transparent;\n  scrollbar-width: thin;\n  background: var(--acx-bg);\n  padding:\n    var(--acx-space-8)\n    var(--acx-space-8)\n    calc(var(--acx-space-12) + env(safe-area-inset-bottom, 0px));\n}\n.saq-scroll:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset-inset);\n}\n.saq-inner,\n.acx-content {\n  max-width: var(--acx-reader-measure);\n  margin: var(--acx-space-0) auto;\n  font: var(--acx-text-body);\n  color: var(--acx-text);\n  zoom: var(--acx-zoom, 1);\n  transform-origin: top center;\n}\n\n/* Empty State (§6) */\n.saq-empty-state {\n  text-align: center;\n  padding: var(--acx-space-12) var(--acx-space-6);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-lg);\n  color: var(--acx-text-muted);\n}\n.saq-empty-title {\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-2);\n  font: var(--acx-text-h2);\n  letter-spacing: var(--acx-tracking-tight);\n  color: var(--acx-text);\n}\n.saq-empty-sub {\n  margin: var(--acx-space-0);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n\n/* ── Floating Launcher (§6, §9) ─────────────────────────────────────────── */\n.saq-launcher {\n  position: fixed;\n  left: 50%;\n  bottom: calc(var(--acx-space-4) + env(safe-area-inset-bottom, 0px));\n  z-index: var(--acx-z-launcher);\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: var(--acx-space-2);\n  height: var(--acx-control-h-lg);\n  min-width: var(--acx-control-h-lg);\n  padding: var(--acx-space-0) var(--acx-space-4);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-surface-raised);\n  color: var(--acx-text);\n  box-shadow: var(--acx-shadow-2);\n  cursor: pointer;\n  font: var(--acx-text-ui);\n  white-space: nowrap;\n  transform: translate(-50%, var(--acx-space-2));\n  opacity: 0;\n  pointer-events: none;\n  transition:\n    color var(--acx-duration-fast) var(--acx-ease-standard),\n    background-color var(--acx-duration-fast) var(--acx-ease-standard),\n    border-color var(--acx-duration-fast) var(--acx-ease-standard),\n    box-shadow var(--acx-duration-fast) var(--acx-ease-standard),\n    opacity var(--acx-duration-base) var(--acx-ease-standard),\n    transform var(--acx-duration-base) var(--acx-ease-standard);\n  will-change: transform, opacity;\n  contain: layout paint;\n}\n.saq-launcher.is-shown {\n  transform: translateX(-50%);\n  opacity: 1;\n  pointer-events: auto;\n}\n.saq-launcher:active {\n  background: var(--acx-surface-sunken);\n  border-color: var(--acx-accent-active);\n  transform: translate(-50%, 1px) scale(0.98);\n}\n.saq-launcher:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n}\n.saq-launcher svg {\n  width: var(--acx-icon-mark);\n  height: var(--acx-icon-mark);\n  color: var(--acx-accent);\n  flex: none;\n}\n\n/* Launcher Position Variants */\n.saq-launcher[data-pos=\"bottom-left\"] {\n  left: calc(var(--acx-space-4) + env(safe-area-inset-left, 0px));\n  right: auto;\n}\n.saq-launcher[data-pos=\"bottom-right\"] {\n  left: auto;\n  right: calc(var(--acx-space-4) + env(safe-area-inset-right, 0px));\n}\n.saq-launcher[data-pos=\"top-left\"] {\n  top: calc(var(--acx-space-4) + env(safe-area-inset-top, 0px));\n  bottom: auto;\n  left: calc(var(--acx-space-4) + env(safe-area-inset-left, 0px));\n  right: auto;\n}\n.saq-launcher[data-pos=\"top-right\"] {\n  top: calc(var(--acx-space-4) + env(safe-area-inset-top, 0px));\n  bottom: auto;\n  left: auto;\n  right: calc(var(--acx-space-4) + env(safe-area-inset-right, 0px));\n}\n.saq-launcher[data-pos=\"bottom-left\"],\n.saq-launcher[data-pos=\"bottom-right\"] {\n  transform: translateY(var(--acx-space-2));\n}\n.saq-launcher[data-pos=\"top-left\"],\n.saq-launcher[data-pos=\"top-right\"] {\n  transform: translateY(calc(var(--acx-space-2) * -1));\n}\n.saq-launcher[data-pos=\"bottom-left\"].is-shown,\n.saq-launcher[data-pos=\"bottom-right\"].is-shown,\n.saq-launcher[data-pos=\"top-left\"].is-shown,\n.saq-launcher[data-pos=\"top-right\"].is-shown {\n  transform: none;\n}\n\n/* ── Question Card & Metadata (§5, §6, §7) ──────────────────────────────── */\n.saq-block {\n  position: relative;\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-6);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-lg);\n  padding: var(--acx-space-6);\n  scroll-margin-top: var(--acx-anchor-offset);\n  content-visibility: auto;\n  contain-intrinsic-size: auto 180px;\n}\n.saq-qheader {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--acx-space-2);\n  margin-bottom: var(--acx-space-3);\n  padding-bottom: var(--acx-space-3);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-qlabel {\n  margin: var(--acx-space-0);\n  min-width: var(--acx-qnum-col);\n  font: var(--acx-text-mono-caption);\n  color: var(--acx-text-muted);\n}\n.saq-qtype,\n.saq-marks {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  font-variant-numeric: tabular-nums;\n}\n.saq-status {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  margin-left: auto;\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-status svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n.saq-status.correct {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-status.incorrect {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n.saq-feedback {\n  margin-top: var(--acx-space-4);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  font: var(--acx-text-small);\n  color: var(--acx-text);\n}\n.saq-feedback-title {\n  font: var(--acx-text-caption);\n  letter-spacing: var(--acx-tracking-overline);\n  text-transform: uppercase;\n  margin-bottom: var(--acx-space-1);\n  color: var(--acx-text-muted);\n}\n\n/* Read-only controls enforcement in Reader */\n#saq-sheet input,\n#saq-sheet textarea,\n#saq-sheet select,\n#saq-sheet button:not(.saq-btn):not(.saq-launcher):not(.saq-grip):not(.saq-dropdown-item):not(.saq-qrail-pill):not(.saq-rail-btn):not(.saq-lightbox-close-btn):not(.saq-qselect-cb):not(.saq-option):not(.saq-btn-apply):not([data-act]) {\n  pointer-events: none !important;\n  cursor: default !important;\n}\n#saq-sheet legend,\n#saq-sheet .choices-legend {\n  display: none !important;\n}\n\n/* @extension-only-start */\n/* Interactive controls pointer-events overrides */\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet textarea.saq-import-textarea,\n#saq-sheet button.saq-option,\n#saq-sheet .saq-option,\n#saq-sheet .saq-options-interactive button,\n#saq-sheet .saq-options-interactive .saq-option,\n#saq-sheet button.saq-btn,\n#saq-sheet button.saq-btn-clear,\n#saq-sheet button.saq-btn-apply-ai,\n#saq-sheet .saq-dropdown-item,\n#saq-sheet button.saq-dropdown-item,\n#saq-sheet .saq-qrail-pill,\n#saq-sheet button.saq-qrail-pill,\n#saq-sheet .saq-qselect-cb,\n#saq-sheet button.saq-qselect-cb,\n#saq-sheet .saq-rail-btn,\n#saq-sheet button.saq-rail-btn,\n#saq-sheet .saq-lightbox button,\n#saq-sheet .saq-lightbox-backdrop,\n#saq-sheet button[data-act],\n#saq-sheet .saq-opt-text,\n#saq-sheet .saq-opt-text *,\n#saq-sheet .saq-stem,\n#saq-sheet .saq-stem * {\n  pointer-events: auto !important;\n}\n#saq-sheet input.saq-num-input,\n#saq-sheet input.saq-text-input,\n#saq-sheet textarea.saq-import-textarea {\n  cursor: text !important;\n}\n/* @extension-only-end */\n\n/* ── Content Styling (§7) ───────────────────────────────────────────────── */\n.saq-stem {\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-4);\n  font: var(--acx-text-body-medium);\n  color: var(--acx-text);\n  overflow-wrap: anywhere;\n}\n.saq-stem-empty {\n  color: var(--acx-text-muted);\n  font: var(--acx-text-small);\n}\n.saq-stem h1 {\n  font: var(--acx-text-h1);\n  letter-spacing: var(--acx-tracking-tight);\n  margin: var(--acx-space-8) var(--acx-space-0) var(--acx-space-3);\n  scroll-margin-top: var(--acx-anchor-offset);\n}\n.saq-stem h2 {\n  font: var(--acx-text-h2);\n  letter-spacing: var(--acx-tracking-tight);\n  margin: var(--acx-space-8) var(--acx-space-0) var(--acx-space-3);\n  scroll-margin-top: var(--acx-anchor-offset);\n}\n.saq-stem h3,\n.saq-stem h4,\n.saq-stem h5,\n.saq-stem h6 {\n  font: var(--acx-text-h3);\n  margin: var(--acx-space-6) var(--acx-space-0) var(--acx-space-2);\n  scroll-margin-top: var(--acx-anchor-offset);\n}\n.saq-stem h1:first-child,\n.saq-stem h2:first-child,\n.saq-stem h3:first-child {\n  margin-top: var(--acx-space-0);\n}\n.saq-stem p {\n  font: var(--acx-text-body);\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-4);\n  text-wrap: pretty;\n  hyphens: manual;\n}\n.saq-stem p:last-child {\n  margin-bottom: var(--acx-space-0);\n}\n/* ── Mathematics Rendering (KaTeX & MathML Core) ───────────────────────────── */\n.katex {\n  font: normal 1.15em KaTeX_Main, \"Cambria Math\", \"Latin Modern Math\", serif;\n  line-height: 1.2;\n  text-indent: 0;\n  text-rendering: auto;\n  color: inherit;\n}\n\n.katex * {\n  border-color: currentColor;\n}\n\n.katex-display {\n  display: block;\n  margin: var(--acx-space-4) var(--acx-space-0);\n  text-align: center;\n  overflow-x: auto;\n  overflow-y: hidden;\n  max-width: 100%;\n  -webkit-overflow-scrolling: touch;\n  padding: var(--acx-space-1) var(--acx-space-0);\n}\n\n.katex-display > .katex {\n  display: block;\n  text-align: center;\n  white-space: nowrap;\n}\n\nmath {\n  font-family: \"KaTeX_Main\", \"Cambria Math\", \"Latin Modern Math\", \"STIX Two Math\", serif;\n  font-size: 1.05em;\n  color: inherit;\n}\n\n.math-plain {\n  font-family: \"Cambria Math\", \"Times New Roman\", serif;\n  font-style: italic;\n  color: inherit;\n}\n.saq-stem pre {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  padding: var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  overflow-x: auto;\n  font: var(--acx-text-mono);\n  tab-size: 2;\n  white-space: pre;\n  margin: var(--acx-space-4) var(--acx-space-0);\n}\n.saq-stem pre:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset-inset);\n}\n.saq-stem code {\n  font-family: var(--acx-font-mono);\n  font-size: 0.92em;\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  padding: var(--acx-space-0) var(--acx-space-1);\n  border-radius: var(--acx-radius-sm);\n}\n.saq-stem pre code {\n  background: transparent;\n  color: inherit;\n  padding: var(--acx-space-0);\n  font-size: inherit;\n}\n/* ── Responsive Table Container (§6) ────────────────────────────────────────── */\n.saq-table-wrap {\n  display: block;\n  width: 100%;\n  max-width: 100%;\n  overflow-x: auto;\n  -webkit-overflow-scrolling: touch;\n  margin: var(--acx-space-4) var(--acx-space-0);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface);\n}\n\n.saq-table,\n.saq-stem table {\n  display: table;\n  width: 100%;\n  border-collapse: collapse;\n  margin: var(--acx-space-0);\n  font: var(--acx-text-small);\n  color: var(--acx-text);\n  border: none;\n}\n\n.saq-table caption,\n.saq-stem table caption {\n  caption-side: top;\n  text-align: left;\n  font: var(--acx-text-caption);\n  font-weight: var(--acx-weight-medium);\n  color: var(--acx-text-muted);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-table th,\n.saq-table td,\n.saq-stem th,\n.saq-stem td {\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  border-right: var(--acx-border-width) solid var(--acx-border-subtle);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  text-align: left;\n  font-variant-numeric: tabular-nums;\n  vertical-align: top;\n}\n\n.saq-table th:last-child,\n.saq-table td:last-child,\n.saq-stem th:last-child,\n.saq-stem td:last-child {\n  border-right: none;\n}\n\n.saq-table tr:last-child td,\n.saq-stem tbody tr:last-child td {\n  border-bottom: none;\n}\n\n.saq-table th,\n.saq-stem th {\n  font: var(--acx-text-caption);\n  font-weight: var(--acx-weight-semibold);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  white-space: nowrap;\n}\n\n.saq-table tbody tr:hover td {\n  background: var(--acx-surface-hover);\n}\n\n.saq-table td[align=\"right\"],\n.saq-table th[align=\"right\"],\n.saq-stem td[align=\"right\"],\n.saq-stem th[align=\"right\"] {\n  text-align: right;\n}\n\n.saq-table td[align=\"center\"],\n.saq-table th[align=\"center\"],\n.saq-stem td[align=\"center\"],\n.saq-stem th[align=\"center\"] {\n  text-align: center;\n}\n.saq-stem ul,\n.saq-stem ol {\n  padding-inline-start: var(--acx-space-5);\n  margin: var(--acx-space-0) var(--acx-space-0) var(--acx-space-4);\n}\n.saq-stem li {\n  margin-bottom: var(--acx-space-1);\n}\n.saq-stem li::marker {\n  color: var(--acx-text-muted);\n}\n.saq-stem blockquote {\n  border-inline-start: var(--acx-border-width-strong) solid var(--acx-border-strong);\n  margin: var(--acx-space-4) var(--acx-space-0);\n  padding-inline-start: var(--acx-space-4);\n  color: var(--acx-text-muted);\n}\n.saq-stem img,\n.saq-stem svg {\n  max-width: 100%;\n  height: auto;\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n  display: block;\n  margin: var(--acx-space-2) var(--acx-space-0);\n  cursor: zoom-in;\n  transition: outline var(--acx-duration-fast) var(--acx-ease-standard),\n              box-shadow var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-stem img:hover,\n.saq-stem svg:hover {\n  outline: 2px solid var(--acx-accent);\n  outline-offset: 2px;\n  box-shadow: var(--acx-shadow-2);\n}\n.saq-stem .saq-svg-wrap {\n  display: inline-block;\n  cursor: zoom-in;\n}\n.saq-btn-xs {\n  height: 24px;\n  min-width: 24px;\n  padding: 0 var(--acx-space-2);\n  font-size: 11px;\n  gap: var(--acx-space-1);\n}\n.saq-btn-xs svg {\n  width: 12px;\n  height: 12px;\n}\n\n/* ── Image Lightbox Modal ────────────────────────────────────────────────── */\n.saq-lightbox {\n  position: fixed;\n  inset: 0;\n  z-index: 1000;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: var(--acx-space-6);\n  opacity: 0;\n  visibility: hidden;\n  transition: opacity var(--acx-duration-fast) var(--acx-ease-standard),\n              visibility var(--acx-duration-fast) var(--acx-ease-standard);\n  pointer-events: none;\n}\n.saq-lightbox.is-open {\n  opacity: 1;\n  visibility: visible;\n  pointer-events: auto;\n}\n.saq-lightbox[hidden] {\n  display: none !important;\n}\n.saq-lightbox-backdrop {\n  position: absolute;\n  inset: 0;\n  background: rgba(0, 0, 0, 0.78);\n  backdrop-filter: blur(4px);\n  cursor: pointer;\n}\n.saq-lightbox-card {\n  position: relative;\n  z-index: 2;\n  max-width: min(92vw, 1100px);\n  max-height: min(90vh, 850px);\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-lg);\n  box-shadow: var(--acx-shadow-3);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  animation: acx-lightbox-pop var(--acx-duration-fast) var(--acx-ease-spring);\n}\n@keyframes acx-lightbox-pop {\n  from {\n    transform: scale(0.96);\n    opacity: 0;\n  }\n  to {\n    transform: scale(1);\n    opacity: 1;\n  }\n}\n.saq-lightbox-topbar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: var(--acx-space-2) var(--acx-space-4);\n  background: var(--acx-surface);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n  gap: var(--acx-space-3);\n}\n.saq-lightbox-title {\n  font: var(--acx-text-ui);\n  font-weight: 600;\n  color: var(--acx-text);\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.saq-lightbox-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  flex: none;\n}\n.saq-lightbox-stage {\n  padding: var(--acx-space-4);\n  background: var(--acx-surface-sunken);\n  overflow: auto;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  min-height: 240px;\n  max-height: calc(85vh - 70px);\n}\n.saq-lightbox-viewport {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100%;\n  height: 100%;\n  transform-origin: center center;\n  transition: transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n.saq-lightbox-img {\n  max-width: 100%;\n  max-height: 70vh;\n  object-fit: contain;\n  border-radius: var(--acx-radius-sm);\n  box-shadow: var(--acx-shadow-2);\n  background: #ffffff;\n}\n.saq-lightbox-svg-wrap svg {\n  max-width: 100%;\n  max-height: 70vh;\n  background: #ffffff;\n  padding: var(--acx-space-3);\n  border-radius: var(--acx-radius-sm);\n  box-shadow: var(--acx-shadow-2);\n}\n.saq-lightbox-caption {\n  margin-top: var(--acx-space-3);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n  text-align: center;\n}\n.saq-stem figure {\n  margin: var(--acx-space-4) var(--acx-space-0);\n}\n.saq-stem figcaption {\n  margin-top: var(--acx-space-2);\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n.saq-stem a {\n  color: var(--acx-accent);\n  text-decoration: underline;\n  text-underline-offset: var(--acx-focus-offset);\n  text-decoration-thickness: var(--acx-border-width);\n}\n.saq-stem a:focus-visible {\n  outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);\n  outline-offset: var(--acx-focus-offset);\n  border-radius: var(--acx-radius-sm);\n}\n\n/* ── Options (§7) ───────────────────────────────────────────────────────── */\n.saq-options {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n  margin-top: var(--acx-space-3);\n}\n.saq-option {\n  display: flex;\n  align-items: flex-start;\n  gap: var(--acx-space-3);\n  min-height: var(--acx-control-h-md);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  font: var(--acx-text-body);\n  color: var(--acx-text);\n}\n.saq-option.selected {\n  background: var(--acx-accent-subtle);\n  border-color: var(--acx-accent);\n}\n.saq-option.correct {\n  background: var(--acx-success-bg);\n  border-color: var(--acx-success);\n}\n.saq-option.incorrect {\n  background: var(--acx-error-bg);\n  border-color: var(--acx-error);\n}\n.saq-opt-letter {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: var(--acx-opt-marker-size);\n  height: var(--acx-opt-marker-size);\n  flex: none;\n  border-radius: var(--acx-radius-sm);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  font: var(--acx-text-mono-caption);\n  color: var(--acx-text);\n}\n.saq-option.selected .saq-opt-letter {\n  background: var(--acx-accent);\n  border-color: var(--acx-accent);\n  color: var(--acx-text-on-accent);\n}\n.saq-option.correct .saq-opt-letter {\n  background: var(--acx-success);\n  border-color: var(--acx-success);\n  color: var(--acx-text-on-accent);\n}\n.saq-option.incorrect .saq-opt-letter {\n  background: var(--acx-error);\n  border-color: var(--acx-error);\n  color: var(--acx-text-on-accent);\n}\n.saq-opt-text {\n  flex: 1;\n  min-width: var(--acx-space-0);\n  overflow-wrap: anywhere;\n}\n.saq-opt-text p {\n  margin: var(--acx-space-0);\n}\n.saq-opt-badge {\n  flex: none;\n  align-self: center;\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n.saq-opt-badge svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n}\n.saq-opt-badge.is-selected {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  border-color: var(--acx-accent);\n}\n.saq-opt-badge.is-correct {\n  background: var(--acx-success-bg);\n  color: var(--acx-success);\n  border-color: var(--acx-success-border);\n}\n.saq-opt-badge.is-incorrect {\n  background: var(--acx-error-bg);\n  color: var(--acx-error);\n  border-color: var(--acx-error-border);\n}\n\n/* Legacy / Review DOM Fallbacks inside Reader */\n#saq-sheet .evaluated-answer .header {\n  display: flex;\n  align-items: baseline;\n  justify-content: space-between;\n  gap: var(--acx-space-3);\n  margin-bottom: var(--acx-space-3);\n  font: var(--acx-text-ui);\n}\n#saq-sheet .feedback {\n  margin-top: var(--acx-space-4);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  font: var(--acx-text-small);\n  color: var(--acx-text);\n}\n#saq-sheet .feedback .title {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-1);\n  margin-bottom: var(--acx-space-1);\n  font: var(--acx-text-caption);\n  letter-spacing: var(--acx-tracking-overline);\n  text-transform: uppercase;\n  color: var(--acx-text-muted);\n}\n#saq-sheet .textarea-wrapper,\n#saq-sheet .form-field {\n  border: var(--acx-space-0) !important;\n  background: transparent !important;\n  box-shadow: var(--acx-shadow-none) !important;\n  padding: var(--acx-space-0) !important;\n}\n#saq-sheet textarea,\n#saq-sheet input[type=text],\n#saq-sheet input[type=number] {\n  width: 100%;\n  box-sizing: border-box;\n  font: var(--acx-text-ui-regular) !important;\n  color: var(--acx-text);\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  height: var(--acx-control-h-md);\n  padding: var(--acx-space-0) var(--acx-space-3);\n  outline: none;\n  box-shadow: var(--acx-shadow-none);\n}\n#saq-sheet textarea {\n  min-height: var(--acx-textarea-min-h);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  resize: vertical;\n}\n\n/* ── Responsive Breakpoints (§9): Tablet (640–1023px) & Narrow (< 640px) ── */\n@media (max-width: 1023px) {\n  #saq-sheet {\n    width: var(--acx-sheet-w-tablet);\n    height: var(--acx-sheet-h-tablet-vh);\n    height: var(--acx-sheet-h-tablet);\n  }\n  .saq-scroll {\n    padding:\n      var(--acx-space-6)\n      var(--acx-space-6)\n      calc(var(--acx-space-12) + env(safe-area-inset-bottom, 0px));\n  }\n}\n\n@media (max-width: 639px) {\n  #saq-sheet {\n    width: var(--acx-sheet-w-narrow);\n    height: var(--acx-sheet-h-narrow-vh);\n    height: var(--acx-sheet-h-narrow);\n    border-left: none;\n    border-right: none;\n  }\n  .saq-scroll {\n    padding:\n      var(--acx-space-6)\n      var(--acx-space-4)\n      calc(var(--acx-space-12) + env(safe-area-inset-bottom, 0px));\n  }\n  .saq-inner,\n  .acx-content {\n    max-width: none;\n  }\n  .saq-header {\n    padding-inline: var(--acx-space-4);\n    gap: var(--acx-space-1);\n  }\n  .saq-btn-export span,\n  .saq-btn-secondary span {\n    display: none;\n  }\n  .saq-btn-export {\n    width: var(--acx-target-min);\n    padding: var(--acx-space-0);\n  }\n  .saq-btn-secondary {\n    width: var(--acx-control-h-md);\n    padding: var(--acx-space-0);\n  }\n  .saq-block {\n    padding: var(--acx-space-4);\n  }\n  .saq-clock {\n    display: none !important;\n  }\n  /* @extension-only-start */\n  .saq-workflow-bar {\n    padding: var(--acx-space-2) var(--acx-space-4);\n  }\n  .saq-step-label {\n    display: none;\n  }\n  .saq-step-btn {\n    padding: var(--acx-space-1);\n  }\n  .saq-workflow-action-wrap {\n    width: 100%;\n    justify-content: flex-start;\n  }\n  .saq-btn-cta {\n    flex: 1;\n  }\n  .saq-import-panel {\n    left: var(--acx-space-4);\n    right: var(--acx-space-4);\n    width: auto;\n  }\n  /* @extension-only-end */\n}\n\n/* ── Fine-Pointer Hover States (§8) ─────────────────────────────────────── */\n@media (hover: hover) {\n  .saq-grip:hover::before {\n    background: var(--acx-text-muted);\n  }\n  .saq-btn:hover {\n    background: var(--acx-accent-subtle);\n    border-color: var(--acx-border-strong);\n    color: var(--acx-text);\n  }\n  .saq-btn-primary:hover {\n    background: var(--acx-accent-hover);\n    border-color: var(--acx-accent-hover);\n    color: var(--acx-text-on-accent);\n  }\n  .saq-btn-export:hover {\n    background: var(--acx-accent-subtle);\n    color: var(--acx-text);\n  }\n  .saq-launcher:hover {\n    border-color: var(--acx-accent);\n    background: var(--acx-surface-raised);\n  }\n  .saq-stem a:hover {\n    color: var(--acx-accent-hover);\n    text-decoration-thickness: var(--acx-border-width-strong);\n  }\n}\n\n/* ── Keyframes & Reduced Motion (§8) ────────────────────────────────────── */\n@keyframes acx-spin {\n  to { transform: rotate(360deg); }\n}\n@keyframes acx-dialog-enter {\n  from {\n    opacity: 0;\n    transform: translateY(var(--acx-space-2));\n  }\n}\n\n@media (prefers-reduced-motion: reduce) {\n  :host, :root {\n    --acx-duration-fast: 0.01ms;\n    --acx-duration-base: 0.01ms;\n    --acx-duration-slow: 0.01ms;\n    --acx-duration-spin: 0.01ms;\n  }\n  .saq-card {\n    animation: none !important;\n  }\n  .saq-spinner {\n    animation: none !important;\n    border-color: var(--acx-accent);\n  }\n  #saq-sheet {\n    transform: none;\n    opacity: 0;\n    transition: opacity var(--acx-duration-base) var(--acx-ease-standard);\n  }\n  #saq-sheet.is-open {\n    opacity: 1;\n  }\n  .saq-launcher,\n  .saq-launcher.is-shown {\n    transform: translateX(-50%);\n  }\n  .saq-launcher[data-pos=\"bottom-left\"],\n  .saq-launcher[data-pos=\"bottom-right\"],\n  .saq-launcher[data-pos=\"top-left\"],\n  .saq-launcher[data-pos=\"top-right\"] {\n    transform: none;\n  }\n}\n\n/* ── Forced Colors / High Contrast Mode (§10) ───────────────────────────── */\n@media (forced-colors: active) {\n  #saq-sheet,\n  .saq-card,\n  .saq-block,\n  .saq-btn,\n  .saq-launcher,\n  .saq-option,\n  .saq-status,\n  .saq-opt-badge,\n  .saq-count-pill,\n  .saq-qtype,\n  .saq-marks {\n    border: var(--acx-border-width) solid ButtonText;\n    background: Canvas;\n    color: CanvasText;\n  }\n  .saq-option.selected,\n  .saq-btn:focus-visible,\n  .saq-launcher:focus-visible {\n    outline: var(--acx-border-width-strong) solid Highlight;\n  }\n}\n\n/* ── Compact Density (§5) ───────────────────────────────────────────────── */\n#saq-sheet.saq-compact .saq-block {\n  padding: var(--acx-space-4);\n  margin-bottom: var(--acx-space-4);\n}\n#saq-sheet.saq-compact .saq-qheader {\n  margin-bottom: var(--acx-space-2);\n  padding-bottom: var(--acx-space-2);\n}\n\n/* @extension-only-start */\n/* ── Programming Assignment Reader Styles ─────────────────────────────── */\n.saq-pa-container {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-4);\n}\n\n.saq-pa-actions {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding-bottom: var(--acx-space-3);\n  margin-bottom: var(--acx-space-3);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-pa-section-title {\n  font: var(--acx-text-h3);\n  color: var(--acx-text);\n  margin-top: var(--acx-space-4);\n  margin-bottom: var(--acx-space-2);\n}\n\n.saq-test-cases-grid {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n  margin-top: var(--acx-space-2);\n}\n\n.saq-test-case-card {\n  background: var(--acx-surface);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-3) var(--acx-space-4);\n}\n\n.saq-test-case-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  margin-bottom: var(--acx-space-2);\n  font: var(--acx-text-caption);\n  color: var(--acx-text-muted);\n}\n\n.saq-test-case-io {\n  display: grid;\n  grid-template-columns: repeat(3, minmax(0, 1fr));\n  gap: var(--acx-space-3);\n}\n\n@media (max-width: 900px) {\n  .saq-test-case-io {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n}\n\n@media (max-width: 600px) {\n  .saq-test-case-io {\n    grid-template-columns: 1fr;\n  }\n}\n\n.saq-tc-col {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-1);\n}\n\n.saq-tc-label {\n  font: var(--acx-text-caption);\n  color: var(--acx-text-subtle);\n  text-transform: uppercase;\n  letter-spacing: var(--acx-tracking-overline);\n}\n\n.saq-tc-pre {\n  margin: var(--acx-space-0);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-mono);\n  color: var(--acx-text);\n  overflow-x: auto;\n  white-space: pre-wrap;\n  overflow-wrap: anywhere;\n  word-break: normal;\n}\n\n.saq-tc-empty,\n.saq-tc-unavailable {\n  color: var(--acx-text-muted);\n  font-family: var(--acx-font-ui);\n  font-style: italic;\n}\n\n.saq-tc-actual-raw {\n  margin-top: var(--acx-space-3);\n}\n\n/* ── Code Import Modal Dialog ─────────────────────────────────────────── */\n.saq-modal-scrim {\n  position: fixed;\n  inset: 0;\n  background: var(--acx-overlay-scrim);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 2147483647;\n  padding: var(--acx-space-4);\n  backdrop-filter: blur(2px);\n  pointer-events: auto !important;\n  cursor: default;\n}\n\n.saq-modal-dialog {\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-lg);\n  box-shadow: var(--acx-shadow-3);\n  width: min(580px, 100vw - 32px);\n  max-height: calc(100dvh - 64px);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  pointer-events: auto !important;\n  position: relative;\n}\n\n.saq-modal-dialog button,\n.saq-modal-dialog input,\n.saq-modal-dialog textarea,\n.saq-modal-dialog select,\n.saq-modal-dialog pre,\n.saq-modal-dialog a {\n  pointer-events: auto !important;\n}\n\n.saq-modal-dialog button {\n  cursor: pointer;\n}\n\n.saq-modal-dialog button:disabled {\n  pointer-events: none !important;\n  cursor: not-allowed !important;\n}\n\n.saq-modal-dialog textarea,\n.saq-modal-dialog pre {\n  cursor: text;\n}\n\n.saq-modal-dialog.saq-modal-wide {\n  width: min(680px, 100vw - 32px);\n}\n\n.saq-modal-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-bottom: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-modal-title {\n  font: var(--acx-text-h3);\n  color: var(--acx-text);\n  margin: 0;\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-target {\n  color: var(--acx-accent);\n}\n\n.saq-modal-body {\n  padding: var(--acx-space-4);\n  overflow-y: auto;\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n}\n\n.saq-modal-desc {\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n  line-height: 1.45;\n}\n\n.saq-modal-desc code {\n  font: var(--acx-text-mono);\n  background: var(--acx-surface-sunken);\n  padding: 1px 4px;\n  border-radius: var(--acx-radius-xs);\n  border: 1px solid var(--acx-border);\n}\n\n.saq-modal-warning {\n  background: var(--acx-warning-bg);\n  border: var(--acx-border-width) solid var(--acx-warning);\n  color: var(--acx-warning);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  font: var(--acx-text-small);\n}\n\n.saq-modal-meta {\n  font: var(--acx-text-micro);\n  font-family: var(--acx-font-mono, monospace);\n  color: var(--acx-text-muted);\n  background: var(--acx-surface-sunken);\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid var(--acx-border);\n  align-self: flex-start;\n}\n\n.saq-modal-parse-panel {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-block-select-wrap {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n\n.saq-field-label {\n  font: var(--acx-text-small);\n  font-weight: 500;\n  color: var(--acx-text-subtle);\n}\n\n.saq-select {\n  flex: 1;\n  padding: var(--acx-space-1) var(--acx-space-2);\n  font: var(--acx-text-small);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-sm);\n}\n\n.saq-modal-notice {\n  font: var(--acx-text-small);\n  color: var(--acx-text-subtle);\n}\n\n.saq-modal-textarea {\n  width: 100%;\n  min-height: 160px;\n  max-height: 280px;\n  resize: vertical;\n  font: var(--acx-text-mono);\n  font-size: 13px;\n  line-height: 1.45;\n  color: var(--acx-text);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-3);\n  box-sizing: border-box;\n  tab-size: 2;\n}\n\n.saq-modal-target-card {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: var(--acx-space-2) var(--acx-space-4);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-small);\n}\n\n.saq-code-target-row {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n\n.saq-code-target-label {\n  font-weight: 500;\n  color: var(--acx-text-muted);\n}\n\n.acx-badge {\n  display: inline-flex;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 1px 6px;\n  border-radius: var(--acx-radius-sm);\n  line-height: 1.3;\n  letter-spacing: 0.02em;\n}\n\n.acx-badge-neutral {\n  background: var(--acx-surface-raised);\n  color: var(--acx-text-muted);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n.acx-badge-primary {\n  background: rgba(47, 75, 219, 0.18);\n  color: #8ea2ff;\n  border: var(--acx-border-width) solid rgba(47, 75, 219, 0.35);\n}\n\n.acx-badge-success {\n  background: rgba(46, 160, 67, 0.18);\n  color: #3fb950;\n  border: var(--acx-border-width) solid rgba(46, 160, 67, 0.35);\n}\n\n.saq-modal-diff-panel {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-diff-hdr {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-2);\n}\n\n.saq-modal-diff-title-wrap {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  flex: 1 1 auto;\n  min-width: 0;\n}\n\n.saq-modal-diff-title {\n  font: var(--acx-text-small);\n  font-weight: 600;\n  color: var(--acx-text);\n  flex-shrink: 0;\n}\n\n.saq-modal-diff-summary {\n  font: var(--acx-text-micro);\n  color: var(--acx-text-muted);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.saq-modal-diff-tabs {\n  display: inline-flex;\n  align-items: center;\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  padding: 2px;\n  gap: 2px;\n  flex-shrink: 0;\n}\n\n.saq-diff-tab {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: var(--acx-space-1) var(--acx-space-2);\n  font: var(--acx-text-micro);\n  font-weight: 500;\n  color: var(--acx-text-muted);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-xs);\n  cursor: pointer;\n  transition: all var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-diff-tab.is-active {\n  background: var(--acx-surface);\n  color: var(--acx-text);\n  box-shadow: var(--acx-shadow-1);\n}\n\n.saq-modal-diff-pre {\n  display: block;\n  font: var(--acx-text-mono);\n  font-size: 12px;\n  line-height: 1.5;\n  background: var(--acx-surface-sunken);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  padding: var(--acx-space-2) 0;\n  max-height: 200px;\n  overflow-x: auto;\n  overflow-y: auto;\n  white-space: pre;\n  margin: 0;\n  box-sizing: border-box;\n}\n\n.saq-diff-line {\n  display: block;\n  padding: 1px var(--acx-space-3);\n  font-family: inherit;\n  font-size: inherit;\n  line-height: 1.5;\n  white-space: pre-wrap;\n  word-break: break-all;\n}\n\n.saq-diff-line.diff-add {\n  background: rgba(46, 160, 67, 0.15);\n  color: #3fb950;\n}\n\n.saq-diff-line.diff-remove {\n  background: rgba(248, 81, 73, 0.15);\n  color: #f85149;\n}\n\n.saq-diff-line.diff-same {\n  color: var(--acx-text-muted);\n}\n\n.saq-modal-footer {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-3) var(--acx-space-4);\n  border-top: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface);\n}\n\n.saq-modal-footer-notice {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  font: var(--acx-text-micro);\n  color: var(--acx-text-muted);\n  line-height: 1.4;\n  flex: 1 1 auto;\n}\n\n.saq-modal-footer-notice strong {\n  color: var(--acx-text);\n}\n\n.saq-modal-footer-actions {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  flex-shrink: 0;\n}\n\n.saq-pa-editor-context {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n}\n\n.saq-pa-subregion {\n  padding: var(--acx-space-2) 0;\n  border-top: 1px dashed var(--acx-border);\n}\n\n.saq-pa-subregion:first-of-type {\n  border-top: none;\n  padding-top: 0;\n}\n\n/* ── Programming Assignment Launcher & Fast Action Menu ─────────────────── */\n.saq-launcher-pa {\n  padding: 0 !important;\n  overflow: visible !important;\n}\n\n.saq-launcher-split {\n  display: inline-flex;\n  align-items: stretch;\n  height: 100%;\n  border-radius: var(--acx-radius-full);\n}\n\n.saq-launcher-main {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  height: 100%;\n  padding: 0 var(--acx-space-3) 0 var(--acx-space-4);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-full) 0 0 var(--acx-radius-full);\n  font: var(--acx-text-ui);\n  color: var(--acx-text);\n  cursor: pointer;\n  white-space: nowrap;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-main svg {\n  width: var(--acx-icon-mark);\n  height: var(--acx-icon-mark);\n  color: var(--acx-accent);\n  flex: none;\n}\n\n.saq-launcher-toggle {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 32px;\n  height: 100%;\n  padding: 0;\n  background: transparent;\n  border: none;\n  border-left: var(--acx-border-width) solid var(--acx-border);\n  border-radius: 0 var(--acx-radius-full) var(--acx-radius-full) 0;\n  color: var(--acx-text-muted);\n  cursor: pointer;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-toggle svg {\n  width: var(--acx-icon-sm);\n  height: var(--acx-icon-sm);\n  flex: none;\n  transition: transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-toggle[aria-expanded=\"true\"] svg {\n  transform: rotate(180deg);\n}\n\n.saq-launcher-main:hover,\n.saq-launcher-main:focus-visible,\n.saq-launcher-toggle:hover,\n.saq-launcher-toggle:focus-visible {\n  background: var(--acx-surface-sunken);\n  color: var(--acx-accent);\n  outline: none;\n}\n\n.saq-launcher-menu {\n  position: absolute;\n  bottom: calc(100% + var(--acx-space-2));\n  right: 0;\n  z-index: 100;\n  min-width: 220px;\n  background: var(--acx-surface-raised);\n  border: var(--acx-border-width) solid var(--acx-border-strong);\n  border-radius: var(--acx-radius-md);\n  box-shadow: var(--acx-shadow-3);\n  padding: var(--acx-space-1);\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n  pointer-events: auto !important;\n}\n\n.saq-launcher[data-pos^=\"top\"] .saq-launcher-menu {\n  bottom: auto;\n  top: calc(100% + var(--acx-space-2));\n}\n\n.saq-launcher-menu[hidden] {\n  display: none !important;\n}\n\n.saq-launcher-menu-hdr {\n  font: var(--acx-text-caption);\n  font-weight: 600;\n  text-transform: uppercase;\n  letter-spacing: var(--acx-tracking-overline);\n  color: var(--acx-text-muted);\n  padding: var(--acx-space-1) var(--acx-space-3);\n  user-select: none;\n}\n\n.saq-launcher-menu-item {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  width: 100%;\n  height: 32px;\n  padding: 0 var(--acx-space-3);\n  background: transparent;\n  border: none;\n  border-radius: var(--acx-radius-sm);\n  font: var(--acx-text-ui);\n  font-size: 13px;\n  color: var(--acx-text);\n  cursor: pointer !important;\n  pointer-events: auto !important;\n  text-align: left;\n  user-select: none;\n  transition: background-color var(--acx-duration-fast) var(--acx-ease-standard),\n              color var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-menu-item svg {\n  width: 16px;\n  height: 16px;\n  flex: none;\n  color: var(--acx-text-muted);\n}\n\n.saq-launcher-menu-item:hover,\n.saq-launcher-menu-item:focus-visible {\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  outline: none;\n}\n\n.saq-launcher-menu-item:hover svg,\n.saq-launcher-menu-item:focus-visible svg {\n  color: var(--acx-accent);\n}\n\n.saq-launcher-menu-divider {\n  height: 1px;\n  background: var(--acx-border);\n  margin: var(--acx-space-1) 0;\n}\n\n/* ── Launcher Toast Feedback ────────────────────────────────────────────── */\n.saq-launcher-toast {\n  position: fixed;\n  left: 50%;\n  bottom: calc(var(--acx-space-4) + var(--acx-control-h-lg) + var(--acx-space-2) + env(safe-area-inset-bottom, 0px));\n  transform: translateX(-50%) translateY(8px);\n  z-index: var(--acx-z-dialog);\n  display: inline-flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  padding: var(--acx-space-2) var(--acx-space-4);\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-brand-night-900);\n  color: var(--acx-brand-paper-0);\n  font: var(--acx-text-ui);\n  font-size: 13px;\n  box-shadow: var(--acx-shadow-3);\n  pointer-events: none;\n  opacity: 0;\n  transition: opacity var(--acx-duration-fast) var(--acx-ease-standard),\n              transform var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-launcher-toast.is-visible {\n  opacity: 1;\n  transform: translateX(-50%) translateY(0);\n  pointer-events: auto;\n}\n\n.saq-launcher-toast svg {\n  width: 16px;\n  height: 16px;\n  flex: none;\n  color: var(--acx-success);\n}\n\n.saq-launcher-toast[data-tone=\"error\"] svg {\n  color: var(--acx-error);\n}\n\n.saq-launcher-toast[data-tone=\"warn\"] svg {\n  color: var(--acx-warning);\n}\n\n/* ── Programming Header Pill ────────────────────────────────────────────── */\n.saq-lang-pill {\n  display: inline-flex;\n  align-items: center;\n  padding: 2px 8px;\n  border-radius: var(--acx-radius-full);\n  background: var(--acx-accent-subtle);\n  color: var(--acx-accent);\n  font: var(--acx-text-mono-caption);\n  font-size: 11px;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n/* ── Undo Import Button ─────────────────────────────────────────────────── */\n.saq-undo-btn {\n  background: var(--acx-surface-sunken) !important;\n  border-color: var(--acx-border-strong) !important;\n}\n\n.saq-undo-btn:hover {\n  border-color: var(--acx-accent) !important;\n  color: var(--acx-accent) !important;\n}\n\n/* ── Modal Language Mismatch Confirmation ───────────────────────────────── */\n.saq-modal-mismatch-confirm {\n  margin-top: var(--acx-space-3);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-warning-bg);\n  border: var(--acx-border-width) solid var(--acx-warning-border);\n}\n\n.saq-modal-mismatch-confirm .saq-checkbox-label {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n  font: var(--acx-text-small);\n  color: var(--acx-warning);\n  cursor: pointer;\n}\n\n.saq-modal-mismatch-confirm input[type=\"checkbox\"] {\n  width: 16px;\n  height: 16px;\n  accent-color: var(--acx-accent);\n  cursor: pointer;\n}\n\n/* ── Status Bar Interactive Action Button ───────────────────────────────── */\n.saq-status-action-btn {\n  display: inline-flex;\n  align-items: center;\n  margin-left: var(--acx-space-2);\n  padding: 2px 8px;\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid currentColor;\n  background: transparent;\n  color: inherit;\n  font: var(--acx-text-caption);\n  font-weight: 600;\n  cursor: pointer;\n  text-decoration: underline;\n  transition: opacity var(--acx-duration-fast) var(--acx-ease-standard);\n}\n\n.saq-status-action-btn:hover {\n  opacity: 0.8;\n}\n\n\n\n/* ── Programming Assignment Single-Window Layout ───────────────────────────── */\n#saq-sheet.saq-programming-mode {\n  width: min(1080px, calc(100vw - 32px));\n}\n\n#saq-sheet.saq-programming-mode .saq-scroll {\n  background: var(--acx-surface);\n  padding: var(--acx-space-6) var(--acx-space-8) calc(var(--acx-space-8) + env(safe-area-inset-bottom, 0px));\n}\n\n#saq-sheet.saq-programming-mode .saq-inner,\n#saq-sheet.saq-programming-mode .acx-content {\n  max-width: 100%;\n}\n\n.saq-block-programming {\n  background: transparent !important;\n  border: none !important;\n  border-radius: 0 !important;\n  padding: 0 !important;\n  margin: 0 !important;\n  box-shadow: none !important;\n  content-visibility: visible !important;\n  contain-intrinsic-size: none !important;\n}\n\n.saq-pa-qheader {\n  display: flex !important;\n  align-items: center !important;\n  justify-content: space-between !important;\n  padding-bottom: var(--acx-space-3) !important;\n  margin-bottom: var(--acx-space-4) !important;\n  border-bottom: var(--acx-border-width) solid var(--acx-border) !important;\n}\n\n.saq-pa-qheader .saq-qlabel {\n  font: var(--acx-text-h2) !important;\n  font-weight: 700 !important;\n  color: var(--acx-text) !important;\n  letter-spacing: var(--acx-tracking-tight) !important;\n}\n\n.saq-pa-qheader .saq-lang-badge {\n  font: var(--acx-text-mono-caption) !important;\n  color: var(--acx-accent) !important;\n  background: var(--acx-accent-subtle) !important;\n  border: var(--acx-border-width) solid var(--acx-accent) !important;\n  padding: var(--acx-space-1) var(--acx-space-2) !important;\n  border-radius: var(--acx-radius-sm) !important;\n  letter-spacing: 0.04em !important;\n}\n\n.saq-pa-section-hdr {\n  display: flex !important;\n  align-items: center !important;\n  justify-content: space-between !important;\n  margin-top: var(--acx-space-6) !important;\n  margin-bottom: var(--acx-space-3) !important;\n}\n\n.saq-pa-section-hdr .saq-pa-section-title {\n  font: var(--acx-text-h3) !important;\n  font-weight: 700 !important;\n  color: var(--acx-text) !important;\n  margin: 0 !important;\n}\n/* ── Simplified Answers Paste UI (Normal Assessments) ───────────────────── */\n.saq-answers-input-root {\n  display: flex;\n  flex-direction: column;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-3);\n  background: var(--acx-surface);\n  border-radius: var(--acx-radius-md);\n  border: var(--acx-border-width) solid var(--acx-border);\n}\n\n.saq-answers-textarea {\n  width: 100%;\n  min-height: 120px;\n  padding: var(--acx-space-3);\n  font: var(--acx-text-mono);\n  font-size: 13px;\n  line-height: 20px;\n  border-radius: var(--acx-radius-sm);\n  border: var(--acx-border-width) solid var(--acx-border);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n  resize: vertical;\n  box-sizing: border-box;\n}\n\n.saq-answers-meta-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  font: var(--acx-text-small);\n  color: var(--acx-text-muted);\n}\n/* @extension-only-end */\n@media print {\n  :host {\n    display: block !important;\n    position: static !important;\n  }\n  #saq-backdrop {\n    display: none !important;\n  }\n  #saq-sheet {\n    position: static !important;\n    width: 100% !important;\n    height: auto !important;\n    min-height: var(--acx-space-0) !important;\n    max-height: none !important;\n    transform: none !important;\n    box-shadow: var(--acx-shadow-none) !important;\n    border-radius: var(--acx-radius-none) !important;\n    border: var(--acx-space-0) !important;\n    background: var(--acx-brand-paper-0) !important;\n    color: var(--acx-brand-ink-900) !important;\n    pointer-events: auto !important;\n  }\n  .saq-grip,\n  .saq-header,\n  .saq-status-bar,\n  .saq-warn {\n    display: none !important;\n  }\n  .saq-scroll {\n    overflow: visible !important;\n    height: auto !important;\n    padding: var(--acx-space-0) !important;\n    background: var(--acx-brand-paper-0) !important;\n  }\n  .saq-inner,\n  .acx-content {\n    max-width: none !important;\n  }\n  .saq-block {\n    break-inside: avoid;\n    background: var(--acx-brand-paper-0) !important;\n    color: var(--acx-brand-ink-900) !important;\n    border: var(--acx-border-width) solid var(--acx-brand-paper-200) !important;\n    box-shadow: var(--acx-shadow-none) !important;\n  }\n}\n\n\n/* ── CodeMirror Programming Assignment Editor ─────────────────────────────── */\n/* @extension-only-start */\n.saq-programming-header .saq-title { flex: none; }\n.saq-sync-status {\n  padding: var(--acx-space-1) var(--acx-space-2);\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-sm);\n  color: var(--acx-text-muted);\n  font: var(--acx-text-caption);\n  white-space: nowrap;\n}\n.saq-code-editor-root {\n  display: flex;\n  flex-direction: column;\n  max-width: 100%;\n  margin: var(--acx-space-4) 0;\n  overflow: hidden;\n  border: var(--acx-border-width) solid var(--acx-border);\n  border-radius: var(--acx-radius-md);\n  background: var(--acx-surface-sunken);\n  color: var(--acx-text);\n}\n.saq-code-editor-header,\n.saq-code-editor-footer {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--acx-space-3);\n  padding: var(--acx-space-2) var(--acx-space-3);\n  background: var(--acx-surface);\n}\n.saq-code-editor-header { border-bottom: var(--acx-border-width) solid var(--acx-border); }\n.saq-code-editor-footer { border-top: var(--acx-border-width) solid var(--acx-border); }\n.saq-code-editor-heading,\n.saq-code-editor-tools,\n.saq-editor-footer-actions {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-2);\n}\n.saq-code-editor-title { color: var(--acx-text); font: var(--acx-text-ui); font-weight: 700; }\n.saq-editor-language-hint,\n.saq-editor-help,\n.saq-editor-footer-status { color: var(--acx-text-muted); font: var(--acx-text-small); }\n.saq-editor-help { margin: var(--acx-space-2) var(--acx-space-3); }\n.saq-continuous-editor-stage {\n  min-height: var(--acx-editor-min-height);\n  max-height: var(--acx-editor-max-height);\n  overflow: auto;\n  overscroll-behavior: contain;\n  background: var(--acx-surface-sunken);\n}\n.saq-cm-host { min-width: 0; width: 100%; }\n#saq-sheet .saq-code-editor-root .cm-editor,\n#saq-sheet .saq-code-editor-root .cm-content { pointer-events: auto !important; cursor: text !important; }\n#saq-sheet .saq-programming-header .saq-btn[hidden] { display: none !important; }\n.saq-programming-header {\n  display: flex !important;\n  align-items: center !important;\n  justify-content: space-between !important;\n  flex-wrap: nowrap !important;\n  height: var(--acx-header-h) !important;\n  min-height: var(--acx-header-h) !important;\n  padding-inline: var(--acx-space-6) !important;\n  background: var(--acx-surface) !important;\n  border-bottom: var(--acx-border-width) solid var(--acx-border) !important;\n  flex-shrink: 0 !important;\n}\n.saq-header-left {\n  display: flex;\n  align-items: center;\n  gap: var(--acx-space-3);\n  min-width: 0;\n  flex-shrink: 0;\n  white-space: nowrap;\n}\n.saq-programming-header .saq-actions {\n  display: flex !important;\n  align-items: center !important;\n  gap: var(--acx-space-2) !important;\n  margin-left: auto !important;\n  flex: 0 0 auto !important;\n  flex-wrap: nowrap !important;\n  justify-content: flex-end !important;\n  white-space: nowrap !important;\n}\n.saq-programming-header .saq-actions .saq-btn { white-space: nowrap; flex-shrink: 0; }\n/* @extension-only-end */\n\n/* ── Embedded KaTeX Layout Rules ───────────────────────────────────────────── */\n.katex{font:normal 1.21em KaTeX_Main,math,Times New Roman,serif;line-height:1.2;position:relative;text-indent:0;text-rendering:auto}.katex *{-ms-high-contrast-adjust:none!important;border-color:currentColor}.katex .katex-version:after{content:\"0.19.0\"}.katex .katex-mathml{border:0;-webkit-clip-path:inset(50%);clip-path:inset(50%);height:1px;overflow:hidden;padding:0;position:absolute;width:1px}.katex .katex-html>.katex-newline{display:block}.katex .katex-base{position:relative;white-space:nowrap;width:-webkit-min-content;width:-moz-min-content;width:min-content}.katex .katex-base,.katex .katex-strut{display:inline-block}.katex .textbf{font-weight:700}.katex .textit{font-style:italic}.katex .textrm{font-family:KaTeX_Main}.katex .textsf{font-family:KaTeX_SansSerif}.katex .texttt{font-family:KaTeX_Typewriter}.katex .mathnormal{font-family:KaTeX_Math;font-style:italic}.katex .mathit{font-family:KaTeX_Main;font-style:italic}.katex .mathrm{font-style:normal}.katex .mathbf{font-family:KaTeX_Main;font-weight:700}.katex .boldsymbol{font-family:KaTeX_Math;font-style:italic;font-weight:700}.katex .amsrm,.katex .mathbb,.katex .textbb{font-family:KaTeX_AMS}.katex .mathcal{font-family:KaTeX_Caligraphic}.katex .mathfrak,.katex .textfrak{font-family:KaTeX_Fraktur}.katex .mathboldfrak,.katex .textboldfrak{font-family:KaTeX_Fraktur;font-weight:700}.katex .mathtt{font-family:KaTeX_Typewriter}.katex .mathscr,.katex .textscr{font-family:KaTeX_Script}.katex .mathsf,.katex .textsf{font-family:KaTeX_SansSerif}.katex .mathboldsf,.katex .textboldsf{font-family:KaTeX_SansSerif;font-weight:700}.katex .mathitsf,.katex .mathsfit,.katex .textitsf{font-family:KaTeX_SansSerif;font-style:italic}.katex .mainrm{font-family:KaTeX_Main;font-style:normal}.katex .vlist-t{border-collapse:collapse;display:inline-table;table-layout:fixed}.katex .vlist-r{display:table-row}.katex .vlist{display:table-cell;position:relative;vertical-align:bottom}.katex .vlist>span{display:block;height:0;position:relative}.katex .vlist>span>span{display:inline-block}.katex .vlist>span>.pstrut{overflow:hidden;width:0}.katex .vlist-t2{margin-right:-2px}.katex .vlist-s{display:table-cell;font-size:1px;min-width:2px;vertical-align:bottom;width:2px}.katex .katex-vbox{align-items:baseline;display:inline-flex;flex-direction:column}.katex .katex-thinbox{display:inline-flex;flex-direction:row;max-width:0;width:0}.katex .msupsub{text-align:left}.katex .mfrac>span>span{text-align:center}.katex .mfrac .frac-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .katex-hdashline,.katex .katex-hline,.katex .katex-overline .overline-line,.katex .katex-rule,.katex .katex-underline .underline-line,.katex .mfrac .frac-line{min-height:1px}.katex .mspace{display:inline-block}.katex .katex-smash{display:inline;line-height:0}.katex .clap,.katex .llap,.katex .rlap{position:relative;width:0}.katex .clap>.katex-inner,.katex .llap>.katex-inner,.katex .rlap>.katex-inner{position:absolute}.katex .clap>.katex-fix,.katex .llap>.katex-fix,.katex .rlap>.katex-fix{display:inline-block}.katex .llap>.katex-inner{right:0}.katex .clap>.katex-inner,.katex .rlap>.katex-inner{left:0}.katex .clap>.katex-inner>span{margin-left:-50%;margin-right:50%}.katex .katex-rule{border:0 solid;display:inline-block;position:relative}.katex .katex-hline,.katex .katex-overline .overline-line,.katex .katex-underline .underline-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .katex-hdashline{border-bottom-style:dashed;display:inline-block;width:100%}.katex .sqrt>.katex-root{margin-left:.2777777778em;margin-right:-.5555555556em}.katex .fontsize-ensurer.reset-size1.size1,.katex .katex-sizing.reset-size1.size1{font-size:1em}.katex .fontsize-ensurer.reset-size1.size2,.katex .katex-sizing.reset-size1.size2{font-size:1.2em}.katex .fontsize-ensurer.reset-size1.size3,.katex .katex-sizing.reset-size1.size3{font-size:1.4em}.katex .fontsize-ensurer.reset-size1.size4,.katex .katex-sizing.reset-size1.size4{font-size:1.6em}.katex .fontsize-ensurer.reset-size1.size5,.katex .katex-sizing.reset-size1.size5{font-size:1.8em}.katex .fontsize-ensurer.reset-size1.size6,.katex .katex-sizing.reset-size1.size6{font-size:2em}.katex .fontsize-ensurer.reset-size1.size7,.katex .katex-sizing.reset-size1.size7{font-size:2.4em}.katex .fontsize-ensurer.reset-size1.size8,.katex .katex-sizing.reset-size1.size8{font-size:2.88em}.katex .fontsize-ensurer.reset-size1.size9,.katex .katex-sizing.reset-size1.size9{font-size:3.456em}.katex .fontsize-ensurer.reset-size1.size10,.katex .katex-sizing.reset-size1.size10{font-size:4.148em}.katex .fontsize-ensurer.reset-size1.size11,.katex .katex-sizing.reset-size1.size11{font-size:4.976em}.katex .fontsize-ensurer.reset-size2.size1,.katex .katex-sizing.reset-size2.size1{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size2.size2,.katex .katex-sizing.reset-size2.size2{font-size:1em}.katex .fontsize-ensurer.reset-size2.size3,.katex .katex-sizing.reset-size2.size3{font-size:1.1666666667em}.katex .fontsize-ensurer.reset-size2.size4,.katex .katex-sizing.reset-size2.size4{font-size:1.3333333333em}.katex .fontsize-ensurer.reset-size2.size5,.katex .katex-sizing.reset-size2.size5{font-size:1.5em}.katex .fontsize-ensurer.reset-size2.size6,.katex .katex-sizing.reset-size2.size6{font-size:1.6666666667em}.katex .fontsize-ensurer.reset-size2.size7,.katex .katex-sizing.reset-size2.size7{font-size:2em}.katex .fontsize-ensurer.reset-size2.size8,.katex .katex-sizing.reset-size2.size8{font-size:2.4em}.katex .fontsize-ensurer.reset-size2.size9,.katex .katex-sizing.reset-size2.size9{font-size:2.88em}.katex .fontsize-ensurer.reset-size2.size10,.katex .katex-sizing.reset-size2.size10{font-size:3.4566666667em}.katex .fontsize-ensurer.reset-size2.size11,.katex .katex-sizing.reset-size2.size11{font-size:4.1466666667em}.katex .fontsize-ensurer.reset-size3.size1,.katex .katex-sizing.reset-size3.size1{font-size:.7142857143em}.katex .fontsize-ensurer.reset-size3.size2,.katex .katex-sizing.reset-size3.size2{font-size:.8571428571em}.katex .fontsize-ensurer.reset-size3.size3,.katex .katex-sizing.reset-size3.size3{font-size:1em}.katex .fontsize-ensurer.reset-size3.size4,.katex .katex-sizing.reset-size3.size4{font-size:1.1428571429em}.katex .fontsize-ensurer.reset-size3.size5,.katex .katex-sizing.reset-size3.size5{font-size:1.2857142857em}.katex .fontsize-ensurer.reset-size3.size6,.katex .katex-sizing.reset-size3.size6{font-size:1.4285714286em}.katex .fontsize-ensurer.reset-size3.size7,.katex .katex-sizing.reset-size3.size7{font-size:1.7142857143em}.katex .fontsize-ensurer.reset-size3.size8,.katex .katex-sizing.reset-size3.size8{font-size:2.0571428571em}.katex .fontsize-ensurer.reset-size3.size9,.katex .katex-sizing.reset-size3.size9{font-size:2.4685714286em}.katex .fontsize-ensurer.reset-size3.size10,.katex .katex-sizing.reset-size3.size10{font-size:2.9628571429em}.katex .fontsize-ensurer.reset-size3.size11,.katex .katex-sizing.reset-size3.size11{font-size:3.5542857143em}.katex .fontsize-ensurer.reset-size4.size1,.katex .katex-sizing.reset-size4.size1{font-size:.625em}.katex .fontsize-ensurer.reset-size4.size2,.katex .katex-sizing.reset-size4.size2{font-size:.75em}.katex .fontsize-ensurer.reset-size4.size3,.katex .katex-sizing.reset-size4.size3{font-size:.875em}.katex .fontsize-ensurer.reset-size4.size4,.katex .katex-sizing.reset-size4.size4{font-size:1em}.katex .fontsize-ensurer.reset-size4.size5,.katex .katex-sizing.reset-size4.size5{font-size:1.125em}.katex .fontsize-ensurer.reset-size4.size6,.katex .katex-sizing.reset-size4.size6{font-size:1.25em}.katex .fontsize-ensurer.reset-size4.size7,.katex .katex-sizing.reset-size4.size7{font-size:1.5em}.katex .fontsize-ensurer.reset-size4.size8,.katex .katex-sizing.reset-size4.size8{font-size:1.8em}.katex .fontsize-ensurer.reset-size4.size9,.katex .katex-sizing.reset-size4.size9{font-size:2.16em}.katex .fontsize-ensurer.reset-size4.size10,.katex .katex-sizing.reset-size4.size10{font-size:2.5925em}.katex .fontsize-ensurer.reset-size4.size11,.katex .katex-sizing.reset-size4.size11{font-size:3.11em}.katex .fontsize-ensurer.reset-size5.size1,.katex .katex-sizing.reset-size5.size1{font-size:.5555555556em}.katex .fontsize-ensurer.reset-size5.size2,.katex .katex-sizing.reset-size5.size2{font-size:.6666666667em}.katex .fontsize-ensurer.reset-size5.size3,.katex .katex-sizing.reset-size5.size3{font-size:.7777777778em}.katex .fontsize-ensurer.reset-size5.size4,.katex .katex-sizing.reset-size5.size4{font-size:.8888888889em}.katex .fontsize-ensurer.reset-size5.size5,.katex .katex-sizing.reset-size5.size5{font-size:1em}.katex .fontsize-ensurer.reset-size5.size6,.katex .katex-sizing.reset-size5.size6{font-size:1.1111111111em}.katex .fontsize-ensurer.reset-size5.size7,.katex .katex-sizing.reset-size5.size7{font-size:1.3333333333em}.katex .fontsize-ensurer.reset-size5.size8,.katex .katex-sizing.reset-size5.size8{font-size:1.6em}.katex .fontsize-ensurer.reset-size5.size9,.katex .katex-sizing.reset-size5.size9{font-size:1.92em}.katex .fontsize-ensurer.reset-size5.size10,.katex .katex-sizing.reset-size5.size10{font-size:2.3044444444em}.katex .fontsize-ensurer.reset-size5.size11,.katex .katex-sizing.reset-size5.size11{font-size:2.7644444444em}.katex .fontsize-ensurer.reset-size6.size1,.katex .katex-sizing.reset-size6.size1{font-size:.5em}.katex .fontsize-ensurer.reset-size6.size2,.katex .katex-sizing.reset-size6.size2{font-size:.6em}.katex .fontsize-ensurer.reset-size6.size3,.katex .katex-sizing.reset-size6.size3{font-size:.7em}.katex .fontsize-ensurer.reset-size6.size4,.katex .katex-sizing.reset-size6.size4{font-size:.8em}.katex .fontsize-ensurer.reset-size6.size5,.katex .katex-sizing.reset-size6.size5{font-size:.9em}.katex .fontsize-ensurer.reset-size6.size6,.katex .katex-sizing.reset-size6.size6{font-size:1em}.katex .fontsize-ensurer.reset-size6.size7,.katex .katex-sizing.reset-size6.size7{font-size:1.2em}.katex .fontsize-ensurer.reset-size6.size8,.katex .katex-sizing.reset-size6.size8{font-size:1.44em}.katex .fontsize-ensurer.reset-size6.size9,.katex .katex-sizing.reset-size6.size9{font-size:1.728em}.katex .fontsize-ensurer.reset-size6.size10,.katex .katex-sizing.reset-size6.size10{font-size:2.074em}.katex .fontsize-ensurer.reset-size6.size11,.katex .katex-sizing.reset-size6.size11{font-size:2.488em}.katex .fontsize-ensurer.reset-size7.size1,.katex .katex-sizing.reset-size7.size1{font-size:.4166666667em}.katex .fontsize-ensurer.reset-size7.size2,.katex .katex-sizing.reset-size7.size2{font-size:.5em}.katex .fontsize-ensurer.reset-size7.size3,.katex .katex-sizing.reset-size7.size3{font-size:.5833333333em}.katex .fontsize-ensurer.reset-size7.size4,.katex .katex-sizing.reset-size7.size4{font-size:.6666666667em}.katex .fontsize-ensurer.reset-size7.size5,.katex .katex-sizing.reset-size7.size5{font-size:.75em}.katex .fontsize-ensurer.reset-size7.size6,.katex .katex-sizing.reset-size7.size6{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size7.size7,.katex .katex-sizing.reset-size7.size7{font-size:1em}.katex .fontsize-ensurer.reset-size7.size8,.katex .katex-sizing.reset-size7.size8{font-size:1.2em}.katex .fontsize-ensurer.reset-size7.size9,.katex .katex-sizing.reset-size7.size9{font-size:1.44em}.katex .fontsize-ensurer.reset-size7.size10,.katex .katex-sizing.reset-size7.size10{font-size:1.7283333333em}.katex .fontsize-ensurer.reset-size7.size11,.katex .katex-sizing.reset-size7.size11{font-size:2.0733333333em}.katex .fontsize-ensurer.reset-size8.size1,.katex .katex-sizing.reset-size8.size1{font-size:.3472222222em}.katex .fontsize-ensurer.reset-size8.size2,.katex .katex-sizing.reset-size8.size2{font-size:.4166666667em}.katex .fontsize-ensurer.reset-size8.size3,.katex .katex-sizing.reset-size8.size3{font-size:.4861111111em}.katex .fontsize-ensurer.reset-size8.size4,.katex .katex-sizing.reset-size8.size4{font-size:.5555555556em}.katex .fontsize-ensurer.reset-size8.size5,.katex .katex-sizing.reset-size8.size5{font-size:.625em}.katex .fontsize-ensurer.reset-size8.size6,.katex .katex-sizing.reset-size8.size6{font-size:.6944444444em}.katex .fontsize-ensurer.reset-size8.size7,.katex .katex-sizing.reset-size8.size7{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size8.size8,.katex .katex-sizing.reset-size8.size8{font-size:1em}.katex .fontsize-ensurer.reset-size8.size9,.katex .katex-sizing.reset-size8.size9{font-size:1.2em}.katex .fontsize-ensurer.reset-size8.size10,.katex .katex-sizing.reset-size8.size10{font-size:1.4402777778em}.katex .fontsize-ensurer.reset-size8.size11,.katex .katex-sizing.reset-size8.size11{font-size:1.7277777778em}.katex .fontsize-ensurer.reset-size9.size1,.katex .katex-sizing.reset-size9.size1{font-size:.2893518519em}.katex .fontsize-ensurer.reset-size9.size2,.katex .katex-sizing.reset-size9.size2{font-size:.3472222222em}.katex .fontsize-ensurer.reset-size9.size3,.katex .katex-sizing.reset-size9.size3{font-size:.4050925926em}.katex .fontsize-ensurer.reset-size9.size4,.katex .katex-sizing.reset-size9.size4{font-size:.462962963em}.katex .fontsize-ensurer.reset-size9.size5,.katex .katex-sizing.reset-size9.size5{font-size:.5208333333em}.katex .fontsize-ensurer.reset-size9.size6,.katex .katex-sizing.reset-size9.size6{font-size:.5787037037em}.katex .fontsize-ensurer.reset-size9.size7,.katex .katex-sizing.reset-size9.size7{font-size:.6944444444em}.katex .fontsize-ensurer.reset-size9.size8,.katex .katex-sizing.reset-size9.size8{font-size:.8333333333em}.katex .fontsize-ensurer.reset-size9.size9,.katex .katex-sizing.reset-size9.size9{font-size:1em}.katex .fontsize-ensurer.reset-size9.size10,.katex .katex-sizing.reset-size9.size10{font-size:1.2002314815em}.katex .fontsize-ensurer.reset-size9.size11,.katex .katex-sizing.reset-size9.size11{font-size:1.4398148148em}.katex .fontsize-ensurer.reset-size10.size1,.katex .katex-sizing.reset-size10.size1{font-size:.2410800386em}.katex .fontsize-ensurer.reset-size10.size2,.katex .katex-sizing.reset-size10.size2{font-size:.2892960463em}.katex .fontsize-ensurer.reset-size10.size3,.katex .katex-sizing.reset-size10.size3{font-size:.337512054em}.katex .fontsize-ensurer.reset-size10.size4,.katex .katex-sizing.reset-size10.size4{font-size:.3857280617em}.katex .fontsize-ensurer.reset-size10.size5,.katex .katex-sizing.reset-size10.size5{font-size:.4339440694em}.katex .fontsize-ensurer.reset-size10.size6,.katex .katex-sizing.reset-size10.size6{font-size:.4821600771em}.katex .fontsize-ensurer.reset-size10.size7,.katex .katex-sizing.reset-size10.size7{font-size:.5785920926em}.katex .fontsize-ensurer.reset-size10.size8,.katex .katex-sizing.reset-size10.size8{font-size:.6943105111em}.katex .fontsize-ensurer.reset-size10.size9,.katex .katex-sizing.reset-size10.size9{font-size:.8331726133em}.katex .fontsize-ensurer.reset-size10.size10,.katex .katex-sizing.reset-size10.size10{font-size:1em}.katex .fontsize-ensurer.reset-size10.size11,.katex .katex-sizing.reset-size10.size11{font-size:1.1996142719em}.katex .fontsize-ensurer.reset-size11.size1,.katex .katex-sizing.reset-size11.size1{font-size:.2009646302em}.katex .fontsize-ensurer.reset-size11.size2,.katex .katex-sizing.reset-size11.size2{font-size:.2411575563em}.katex .fontsize-ensurer.reset-size11.size3,.katex .katex-sizing.reset-size11.size3{font-size:.2813504823em}.katex .fontsize-ensurer.reset-size11.size4,.katex .katex-sizing.reset-size11.size4{font-size:.3215434084em}.katex .fontsize-ensurer.reset-size11.size5,.katex .katex-sizing.reset-size11.size5{font-size:.3617363344em}.katex .fontsize-ensurer.reset-size11.size6,.katex .katex-sizing.reset-size11.size6{font-size:.4019292605em}.katex .fontsize-ensurer.reset-size11.size7,.katex .katex-sizing.reset-size11.size7{font-size:.4823151125em}.katex .fontsize-ensurer.reset-size11.size8,.katex .katex-sizing.reset-size11.size8{font-size:.578778135em}.katex .fontsize-ensurer.reset-size11.size9,.katex .katex-sizing.reset-size11.size9{font-size:.6945337621em}.katex .fontsize-ensurer.reset-size11.size10,.katex .katex-sizing.reset-size11.size10{font-size:.8336012862em}.katex .fontsize-ensurer.reset-size11.size11,.katex .katex-sizing.reset-size11.size11{font-size:1em}.katex .delimsizing.size1{font-family:KaTeX_Size1}.katex .delimsizing.size2{font-family:KaTeX_Size2}.katex .delimsizing.size3{font-family:KaTeX_Size3}.katex .delimsizing.size4{font-family:KaTeX_Size4}.katex .delimsizing.mult .delim-size1>span{font-family:KaTeX_Size1}.katex .delimsizing.mult .delim-size4>span{font-family:KaTeX_Size4}.katex .nulldelimiter{display:inline-block;width:.12em}.katex .delimcenter,.katex .op-symbol{position:relative}.katex .op-symbol.small-op{font-family:KaTeX_Size1}.katex .op-symbol.large-op{font-family:KaTeX_Size2}.katex .katex-accent>.vlist-t,.katex .op-limits>.vlist-t{text-align:center}.katex .katex-accent .accent-body{position:relative}.katex .katex-accent .accent-body:not(.accent-full){width:0}.katex .katex-overlay{display:block}.katex .mtable .vertical-separator{display:inline-block;min-width:1px}.katex .mtable .arraycolsep{display:inline-block}.katex .mtable .col-align-c>.vlist-t{text-align:center}.katex .mtable .col-align-l>.vlist-t{text-align:left}.katex .mtable .col-align-r>.vlist-t{text-align:right}.katex .svg-align{text-align:left}.katex svg{fill:currentColor;stroke:currentColor;display:block;height:inherit;position:absolute;width:100%}.katex svg path{stroke:none}.katex svg{fill-rule:nonzero;fill-opacity:1;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1}.katex img{border-style:none;max-height:none;max-width:none;min-height:0;min-width:0}.katex .katex-stretchy{display:block;overflow:hidden;position:relative;width:100%}.katex .katex-stretchy:after,.katex .katex-stretchy:before{content:\"\"}.katex .hide-tail{overflow:hidden;position:relative;width:100%}.katex .halfarrow-left{left:0;overflow:hidden;position:absolute;width:50.2%}.katex .halfarrow-right{overflow:hidden;position:absolute;right:0;width:50.2%}.katex .brace-left{left:0;overflow:hidden;position:absolute;width:25.1%}.katex .brace-center{left:25%;overflow:hidden;position:absolute;width:50%}.katex .brace-right{overflow:hidden;position:absolute;right:0;width:25.1%}.katex .x-arrow-pad{padding:0 .5em}.katex .cd-arrow-pad{padding:0 .55556em 0 .27778em}.katex .mover,.katex .munder,.katex .x-arrow{text-align:center}.katex .boxpad{padding:0 .3em}.katex .fbox,.katex .fcolorbox{border:.04em solid;box-sizing:border-box}.katex .cancel-pad{padding:0 .2em}.katex .cancel-lap{margin-left:-.2em;margin-right:-.2em}.katex .katex-sout{border-bottom-style:solid;border-bottom-width:.08em}.katex .angl{border-right:.049em solid;border-top:.049em solid;box-sizing:border-box;margin-right:.03889em}.katex .anglpad{padding:0 .03889em}.katex .reflectbox{display:inline-block;transform:scaleX(-1)}.katex .eqn-num:before{content:\"(\" counter(katexEqnNo) \")\";counter-increment:katexEqnNo}.katex .mml-eqn-num:before{content:\"(\" counter(mmlEqnNo) \")\";counter-increment:mmlEqnNo}.katex .mtr-glue{width:50%}.katex .cd-vert-arrow{display:inline-block;position:relative}.katex .cd-label-left{display:inline-block;position:absolute;right:calc(50% + .3em);text-align:left}.katex .cd-label-right{display:inline-block;left:calc(50% + .3em);position:absolute;text-align:right}.katex-display{display:block;margin:1em 0;text-align:center}.katex-display>.katex{display:block;text-align:center;white-space:nowrap}.katex-display>.katex>.katex-html{display:block;position:relative}.katex-display>.katex>.katex-html>.katex-tag{position:absolute;right:0}.katex-display.leqno>.katex>.katex-html>.katex-tag{left:0;right:auto}.katex-display.fleqn>.katex{padding-left:2em;text-align:left}body{counter-reset:katexEqnNo mmlEqnNo}\n";
 
   // ── [Module: src/model/types.js] ──
   /**
@@ -132,7 +132,9 @@
       index = 1,
       input = "",
       expectedOutput = "",
-      actualOutput = "",
+      actualOutput = null,
+      actualOutputAvailable = undefined,
+      executionStatusAvailable = undefined,
       explanation = "",
       raw = "",
       description = "",
@@ -145,12 +147,14 @@
       this.input = typeof input === "string" ? input : (input !== null && input !== undefined ? String(input) : "");
       this.expectedOutput = typeof expectedOutput === "string" ? expectedOutput : (expectedOutput !== null && expectedOutput !== undefined ? String(expectedOutput) : "");
       this.actualOutput = typeof actualOutput === "string" ? actualOutput : (actualOutput !== null && actualOutput !== undefined ? String(actualOutput) : "");
+      this.actualOutputAvailable = Boolean(actualOutputAvailable ?? (actualOutput !== null && actualOutput !== undefined));
+      this.executionStatusAvailable = Boolean(executionStatusAvailable ?? (status === "passed" || status === "failed"));
+      this.status = this.executionStatusAvailable && (status === "passed" || status === "failed") ? status : null;
       this.explanation = explanation || "";
       this.raw = raw || "";
       this.description = description || "";
       this.isSample = Boolean(isSample);
       this.isVisible = Boolean(isVisible);
-      this.status = status || null;
     }
   }
   
@@ -473,6 +477,15 @@
     }
   
     // If no standard kind acronym matched, check if rawTitle contains a specific non-generic title
+    // Keep descriptive assignment names intact; abbreviating them to "GA" loses the identity users need in downloads.
+    if (rawTitle && /\bgraded\s+assignment\b\s*[-:]/i.test(rawTitle)) {
+      const assignmentName = rawTitle
+        .replace(/\bweek[\s\-_:]*\d{1,2}\b/gi, "")
+        .replace(/^[\s\-_:]+|[\s\-_:]+$/g, "")
+        .trim();
+      if (assignmentName) kindPart = sanitizeFilenameSegment(assignmentName);
+    }
+  
     if (!kindPart && rawTitle && typeof rawTitle === "string") {
       const trimmedTitle = rawTitle.trim();
       if (
@@ -824,6 +837,8 @@
       testCaseBlock: ".test-case-block",
       testCaseBlockTitle: ".title, .wrapper .title",
       testCaseBlockContent: ".content",
+      testCaseActualOutput: ".test-case-actual-output, .actual-output-content, .actual-output, .test-actual-output, [data-output='actual']",
+      testCaseStatus: ".test-case-status, .execution-status, [data-execution-status]",
       testCaseItem: ".test-case-details, .test-case-block, .test-case, .test-case-item, .test-case-card, .testcase-item",
       testCaseInput: ".test-case-input, .input-content, .test-input, pre.input, .input",
       testCaseOutput: ".test-case-output, .output-content, .test-output, pre.output, .expected-output, .output",
@@ -1059,7 +1074,11 @@
       const sidebar = $(IITM_SELECTORS.decor?.sidebarContainer || "#side-nav-content", this.doc);
       if (!sidebar) return null;
   
-      const gradedRows = $$(IITM_SELECTORS.decor?.gradedAssignmentRows || "button.child-row[data-acx-graded='true']", sidebar);
+      const gradedRows = $$(IITM_SELECTORS.decor?.gradedAssignmentRows || "button.child-row[data-acx-graded='true']", sidebar)
+        .filter((row) => {
+          const title = $(IITM_SELECTORS.decor?.childTitle || ".child-title", row);
+          return !/\bsolution\b/i.test((title?.textContent || row.textContent || "").replace(/\s+/g, " ").trim());
+        });
       const selectedRow = $(IITM_SELECTORS.metadata.selectedChildRow, sidebar);
       const currentIndex = gradedRows.findIndex((row) => row === selectedRow);
       if (currentIndex < 0) return null;
@@ -1080,16 +1099,16 @@
       };
     }
   
-    /** Returns the assignment view position and a portal-native secondary button prototype. */
+    /** Returns the assignment view position and a portal-native CTA button prototype. */
     getAssignmentNavigationMount() {
       const pageType = this.detectPageType();
       const view = pageType === PortalPageType.PROGRAMMING_ASSIGNMENT
         ? this.getProgrammingView()
         : pageType === PortalPageType.ASSESSMENT
           ? this.getAssessmentView()
-          : null;
+          : $("app-pa-start-page, .pa-start-page, app-pa-instructions, .pa-instructions, app-assessment-start-page, .assessment-start-page, app-assessment-overview, .assessment-overview", this.doc);
       const parent = view?.parentElement || view?.parentNode || null;
-      const portalButton = "button.btn.btn-secondary, button.btn-secondary";
+      const portalButton = "button.btn-gradient, button.btn.btn-secondary, button.btn-secondary";
       const buttonPrototype = view?.querySelector?.(portalButton)
         || $(portalButton, parent)
         || $(portalButton, this.doc);
@@ -1603,7 +1622,7 @@
   // ── [Module: src/portal/assignment-navigation.js] ──
   /**
    * Top-of-view previous/next navigation for the currently selected graded assignment.
-   * Buttons inherit their visual treatment from IITM's native secondary button.
+   * Buttons inherit their visual treatment and hover states from IITM's native CTA button.
    */
   class GradedAssignmentNavigation {
     constructor(portal) {
@@ -1618,6 +1637,16 @@
   
       const button = prototype.cloneNode(false);
       button.classList?.remove("selected", "active", "btn-icon-only", "child-row");
+      if (typeof button.classList?.remove === "function" && typeof button.classList?.add === "function") {
+        button.classList.remove("btn-secondary", "btn-primary");
+        button.classList.remove("btn-gradient", "btn-success", "btn-outline", "btn-default");
+        button.classList.add(
+          assignment ? "btn-gradient" : "btn-outline",
+          assignment ? "btn-success" : "btn-default",
+          "btn-shape-box",
+          "btn-size-medium"
+        );
+      }
       button.removeAttribute?.("style");
       for (const attribute of [
         "aria-selected",
@@ -1634,19 +1663,26 @@
       }
       button.setAttribute?.("type", "button");
       button.setAttribute?.("data-acx-assignment-nav-button", direction);
-      button.setAttribute?.("aria-label", assignment
-        ? `${direction === "previous" ? "Previous" : "Next"} graded assignment: ${assignment.title}`
-        : `No ${direction} graded assignment`);
+      const label = direction === "previous" ? "Previous graded assignment" : "Next graded assignment";
+      button.setAttribute?.("aria-label", assignment ? `${label}: ${assignment.title}` : `No ${direction} graded assignment`);
       button.setAttribute?.("title", assignment?.title || `No ${direction} graded assignment`);
+      button.style.width = "auto";
+      if (typeof button.classList?.add === "function") button.classList.add("acx-assignment-nav-button");
       button.disabled = !assignment;
       button.setAttribute?.("aria-disabled", String(!assignment));
       button.textContent = assignment
-        ? `${direction === "previous" ? "Previous" : "Next"}: ${assignment.title}`
-        : `${direction === "previous" ? "Previous" : "Next"} graded assignment`;
+        ? direction === "previous"
+          ? `← Previous: ${assignment.title}`
+          : `Next: ${assignment.title} →`
+        : direction === "previous" ? "← Previous graded assignment" : "Next graded assignment →";
   
       button.addEventListener?.("click", (event) => {
         event.preventDefault?.();
-        if (!button.disabled) this.portal?.navigateGradedAssignment?.(direction);
+        if (!button.disabled) {
+          button.disabled = true;
+          button.setAttribute("aria-busy", "true");
+          this.portal?.navigateGradedAssignment?.(direction);
+        }
       });
       return button;
     }
@@ -1688,7 +1724,9 @@
       nav.style.flexWrap = "wrap";
       nav.style.alignItems = "center";
       nav.style.gap = "var(--acx-space-2, 8px)";
-      nav.style.marginBlockEnd = "var(--acx-space-4, 16px)";
+      nav.style.margin = "var(--acx-space-2, 8px) var(--acx-space-3, 12px) var(--acx-space-4, 16px)";
+      nav.style.padding = "var(--acx-space-1, 4px) var(--acx-space-2, 8px)";
+      nav.style.overflow = "visible";
   
       for (const direction of ["previous", "next"]) {
         const button = this.createButton(prototype, direction, state[direction]);
@@ -5635,11 +5673,67 @@
     CANCELLED: "CANCELLED",
   });
   
+  function readExecutionStatus(element) {
+    if (!element) return null;
+    const statusNode = $(IITM_SELECTORS.programming?.testCaseStatus, element);
+    const value = String(
+      element.dataset?.executionStatus ||
+      element.getAttribute?.("data-execution-status") ||
+      statusNode?.dataset?.status ||
+      statusNode?.getAttribute?.("data-status") ||
+      statusNode?.textContent ||
+      ""
+    ).trim().toLowerCase();
+    if (/^(?:passed|pass|success)$/.test(value) || element.classList?.contains?.("is-passed") || element.classList?.contains?.("passed")) {
+      return "passed";
+    }
+    if (/^(?:failed|fail|error)$/.test(value) || element.classList?.contains?.("is-failed") || element.classList?.contains?.("failed")) {
+      return "failed";
+    }
+    return null;
+  }
+  
+  function outputText(element) {
+    return String(element?.textContent ?? "").replace(/\r\n?/g, "\n");
+  }
+  
+  function testCaseDetailsSignature(detailsRoot) {
+    return outputText(detailsRoot);
+  }
+  
+  function waitForTestCaseDetailsUpdate(detailsRoot, previousSignature, timeoutMs) {
+    if (!detailsRoot || typeof detailsRoot.querySelector !== "function") {
+      return Promise.resolve(false);
+    }
+    if (testCaseDetailsSignature(detailsRoot) !== previousSignature) {
+      return Promise.resolve(true);
+    }
+  
+    if (typeof MutationObserver === "undefined") {
+      return new Promise((resolve) => setTimeout(() => resolve(true), 0));
+    }
+  
+    return new Promise((resolve) => {
+      let observer = null;
+      const finish = (updated) => {
+        clearTimeout(timer);
+        observer?.disconnect();
+        resolve(updated);
+      };
+      const timer = setTimeout(() => finish(false), timeoutMs);
+      observer = new MutationObserver(() => {
+        if (testCaseDetailsSignature(detailsRoot) !== previousSignature) finish(true);
+      });
+      observer.observe(detailsRoot, { childList: true, characterData: true, subtree: true });
+    });
+  }
+  
   class ProgrammingAssignmentExtractor {
     constructor(doc = typeof document !== "undefined" ? document : null, options = {}) {
       this.doc = doc;
       this.options = {
         tabSwitchTimeoutMs: 3000,
+        testCaseSwitchTimeoutMs: 1500,
         navigationTimeoutMs: 4000,
         walker: null,
         ...options,
@@ -6151,13 +6245,25 @@
           ) || pills[0];
   
         const testCases = [];
+        const detailsRoot = $(IITM_SELECTORS.programming?.testCaseDetails || ".test-case-details", container) || container;
         for (let idx = 0; idx < pills.length; idx++) {
           const pill = pills[idx];
+          let detailsReady = true;
           if (pills.length > 1 && typeof pill.click === "function") {
-            try {
-              pill.click();
-              await new Promise((r) => setTimeout(r, 20));
-            } catch {}
+            const isSelected = pill.classList?.contains?.("is-selected") || pill.getAttribute?.("aria-selected") === "true";
+            if (!isSelected) {
+              const previousSignature = testCaseDetailsSignature(detailsRoot);
+              try {
+                pill.click();
+                detailsReady = await waitForTestCaseDetailsUpdate(
+                  detailsRoot,
+                  previousSignature,
+                  this.options.testCaseSwitchTimeoutMs
+                );
+              } catch {
+                detailsReady = false;
+              }
+            }
           }
   
           const pillText = (pill.textContent || "").replace(/\s+/g, " ").trim() || `Case ${idx + 1}`;
@@ -6168,33 +6274,41 @@
             ? "failed"
             : null;
   
-          const detailsRoot = $(IITM_SELECTORS.programming?.testCaseDetails || ".test-case-details", container) || container;
-          const blocks = $$(IITM_SELECTORS.programming?.testCaseBlock || ".test-case-block", detailsRoot);
+          const blocks = detailsReady
+            ? $$(IITM_SELECTORS.programming?.testCaseBlock || ".test-case-block", detailsRoot)
+            : [];
   
           let input = "";
           let expectedOutput = "";
           let actualOutput = "";
+          let actualOutputAvailable = false;
   
           for (const block of blocks) {
             const titleEl = $(IITM_SELECTORS.programming?.testCaseBlockTitle || ".title, .wrapper .title", block);
             const contentEl = $(IITM_SELECTORS.programming?.testCaseBlockContent || ".content", block);
             const titleText = (titleEl?.textContent || "").toLowerCase();
-            const val = (contentEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+            const val = outputText(contentEl);
   
             if (titleText.includes("input")) {
-              input = val;
+              input = val.trim();
             } else if (titleText.includes("expected")) {
-              expectedOutput = val;
+              expectedOutput = val.trim();
             } else if (titleText.includes("actual")) {
               actualOutput = val;
+              actualOutputAvailable = Boolean(contentEl);
             }
           }
   
-          if (!input && !expectedOutput) {
+          if (detailsReady && !input && !expectedOutput) {
             const inEl = $(IITM_SELECTORS.programming?.testCaseInput, detailsRoot);
             const outEl = $(IITM_SELECTORS.programming?.testCaseOutput, detailsRoot);
-            input = (inEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
-            expectedOutput = (outEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+            const actualEl = $(IITM_SELECTORS.programming?.testCaseActualOutput, detailsRoot);
+            input = outputText(inEl).trim();
+            expectedOutput = outputText(outEl).trim();
+            if (actualEl) {
+              actualOutput = outputText(actualEl);
+              actualOutputAvailable = true;
+            }
           }
   
           testCases.push(
@@ -6205,18 +6319,28 @@
               input,
               expectedOutput,
               actualOutput,
+              actualOutputAvailable,
               isSample,
               isVisible: true,
-              status,
+              status: status || readExecutionStatus(detailsRoot),
             })
           );
         }
   
-        // Restore initial pill selection
+        // Restore initial pill selection and wait for its scoped detail panel to settle.
         if (initialPill && typeof initialPill.click === "function") {
-          try {
-            initialPill.click();
-          } catch {}
+          const initialIsSelected = initialPill.classList?.contains?.("is-selected") || initialPill.getAttribute?.("aria-selected") === "true";
+          if (!initialIsSelected) {
+            const previousSignature = testCaseDetailsSignature(detailsRoot);
+            try {
+              initialPill.click();
+              await waitForTestCaseDetailsUpdate(
+                detailsRoot,
+                previousSignature,
+                this.options.testCaseSwitchTimeoutMs
+              );
+            } catch {}
+          }
         }
   
         if (testCases.length > 0 && testCases.some((tc) => tc.input || tc.expectedOutput)) {
@@ -6244,27 +6368,34 @@
           let input = "";
           let expectedOutput = "";
           let actualOutput = "";
+          let actualOutputAvailable = false;
   
           if (blocks.length > 0) {
             for (const block of blocks) {
               const titleEl = $(IITM_SELECTORS.programming?.testCaseBlockTitle || ".title, .wrapper .title", block);
               const contentEl = $(IITM_SELECTORS.programming?.testCaseBlockContent || ".content", block);
               const titleText = (titleEl?.textContent || "").toLowerCase();
-              const val = (contentEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+              const val = outputText(contentEl);
   
               if (titleText.includes("input")) {
-                input = val;
+                input = val.trim();
               } else if (titleText.includes("expected")) {
-                expectedOutput = val;
+                expectedOutput = val.trim();
               } else if (titleText.includes("actual")) {
                 actualOutput = val;
+                actualOutputAvailable = Boolean(contentEl);
               }
             }
           } else {
             const inEl = $(IITM_SELECTORS.programming?.testCaseInput || ".input, pre.input, .test-input", itemEl);
             const outEl = $(IITM_SELECTORS.programming?.testCaseOutput || ".output, pre.output, .test-output, .expected-output", itemEl);
-            input = (inEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
-            expectedOutput = (outEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+            const actualEl = $(IITM_SELECTORS.programming?.testCaseActualOutput, itemEl);
+            input = outputText(inEl).trim();
+            expectedOutput = outputText(outEl).trim();
+            if (actualEl) {
+              actualOutput = outputText(actualEl);
+              actualOutputAvailable = true;
+            }
           }
   
           const isSample = /sample|visible/i.test(description) || idx === 0;
@@ -6277,8 +6408,10 @@
               input,
               expectedOutput,
               actualOutput,
+              actualOutputAvailable,
               isSample,
               isVisible: true,
+              status: readExecutionStatus(itemEl),
             })
           );
         }
@@ -7004,6 +7137,552 @@
       hash = Math.imul(hash, 0x01000193);
     }
     return (hash >>> 0).toString(16).padStart(8, "0");
+  }
+
+  // ── [Module: src/bridge/answer-stream.js] ──
+  /**
+   * Canonical Answer Stream Serializer & Parser for Normal (Non-Programming) Assignments.
+   * 
+   * Defines the indexed, human-readable, deterministic answer interchange protocol:
+   * - Format: `<question-number>: <answer>`
+   * - Empty answer is represented as `N:`.
+   * - Multi-select (MSQ) options are comma-separated: `2: B,C`.
+   * - Colons inside text answers are preserved (splits only on the first `:`).
+   * - Multiline text answers are supported via `N: <<<\ncontent\n>>>`.
+   * - Validates missing, duplicate, and unknown question numbers.
+   * - Backwards compatible with legacy semicolon streams and JSON answer keys.
+   */
+  
+  
+  
+  const TYPE_NAMES = Object.freeze({
+    [QuestionType.MCQ]: "MCQ",
+    [QuestionType.MSQ]: "MSQ",
+    [QuestionType.NUMERICAL]: "NUMERICAL",
+    [QuestionType.TEXT]: "TEXT",
+    [QuestionType.DESCRIPTIVE]: "DESCRIPTIVE",
+    [QuestionType.UNKNOWN]: "UNKNOWN",
+    mcq: "MCQ",
+    msq: "MSQ",
+    numerical: "NUMERICAL",
+    text: "TEXT",
+    descriptive: "DESCRIPTIVE",
+    unknown: "UNKNOWN",
+  });
+  
+  /**
+   * Validates and canonicalizes a numerical string.
+   * @param {string|number} value
+   * @returns {string|null}
+   */
+  function canonicalNumerical(value) {
+    if (typeof value !== "string" && typeof value !== "number") return null;
+    const trimmed = String(value).trim();
+    if (!/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(trimmed)) return null;
+    const negative = trimmed.startsWith("-");
+    const unsigned = negative ? trimmed.slice(1) : trimmed;
+    if (unsigned.toLowerCase().includes("e")) {
+      return trimmed;
+    }
+    let [whole, fraction = ""] = unsigned.split(".");
+    whole = whole.replace(/^0+(?=\d)/, "") || "0";
+    fraction = fraction.replace(/0+$/, "");
+    const canonical = fraction ? `${whole}.${fraction}` : whole;
+    return negative && canonical !== "0" ? `-${canonical}` : canonical;
+  }
+  
+  /**
+   * Escapes legacy semicolon records (backwards compatibility).
+   */
+  function escapeAnswerRecord(text) {
+    if (text === null || text === undefined) return "";
+    return String(text).replace(/\\/g, "\\\\").replace(/;/g, "\\;");
+  }
+  
+  /**
+   * Unescapes legacy semicolon records (backwards compatibility).
+   */
+  function unescapeAnswerRecord(text) {
+    if (!text) return "";
+    let result = "";
+    let i = 0;
+    while (i < text.length) {
+      if (text[i] === "\\" && i + 1 < text.length) {
+        const next = text[i + 1];
+        if (next === ";" || next === "\\") {
+          result += next;
+          i += 2;
+          continue;
+        }
+      }
+      result += text[i];
+      i++;
+    }
+    return result;
+  }
+  
+  /**
+   * Serializes an array of answers or question states into the canonical indexed answer stream.
+   * 
+   * Format:
+   * 1: A
+   * 2: B,C
+   * 3: 1000
+   * 4: here
+   * 5:
+   * 6: <<<
+   * multiline text
+   * >>>
+   * 
+   * @param {Array<object|string|number>|object} items Questions, Document, or Answers
+   * @param {object} [options]
+   * @returns {string} Indexed answer stream
+   */
+  function serializeAssignmentAnswers(items, options = {}) {
+    let list = [];
+    if (items && Array.isArray(items.questions)) {
+      list = items.questions;
+    } else if (Array.isArray(items)) {
+      list = items;
+    } else if (items instanceof Map) {
+      list = Array.from(items.entries()).map(([k, v]) => ({ number: k, answer: v }));
+    } else {
+      return "";
+    }
+  
+    const lines = [];
+    for (let idx = 0; idx < list.length; idx++) {
+      const item = list[idx];
+      const qNum = item && item.number !== undefined && item.number !== null
+        ? item.number
+        : (idx + 1);
+  
+      let val = item;
+      if (typeof item === "object" && item !== null && !Array.isArray(item)) {
+        if (item.answer !== undefined) val = item.answer;
+        else if (item.selection !== undefined) val = item.selection;
+        else if (item.userSelection !== undefined) val = item.userSelection;
+        else if (item.value !== undefined) val = item.value;
+        else if (item.savedAnswer !== undefined) val = item.savedAnswer;
+        else if (item.options && Array.isArray(item.options)) {
+          const selected = item.options.filter((o) => o.selected);
+          if (selected.length > 0) {
+            val = selected.map((o) => String(o.letter || "").trim().toUpperCase());
+            if (val.length === 1 && !isMsqType(item.type)) val = val[0];
+          } else {
+            val = null;
+          }
+        } else {
+          val = null;
+        }
+      }
+  
+      if (val === null || val === undefined || val === "") {
+        lines.push(`${qNum}:`);
+        continue;
+      }
+  
+      if (Array.isArray(val)) {
+        const clean = val
+          .map((v) => String(v).trim().toUpperCase())
+          .filter(Boolean)
+          .sort()
+          .join(",");
+        lines.push(`${qNum}: ${clean}`);
+        continue;
+      }
+  
+      const strVal = String(val).trim();
+      if (!strVal) {
+        lines.push(`${qNum}:`);
+        continue;
+      }
+  
+      if (strVal.includes("\n")) {
+        lines.push(`${qNum}: <<<\n${strVal}\n>>>`);
+      } else {
+        lines.push(`${qNum}: ${strVal}`);
+      }
+    }
+  
+    return lines.join("\n");
+  }
+  
+  
+  function validateQuestionAnswer(question, rawAnswer) {
+    const type = TYPE_NAMES[question.type] || String(question.type || "UNKNOWN").toUpperCase();
+    const qNum = question.number;
+  
+    if (rawAnswer === null || rawAnswer === undefined || rawAnswer === "") {
+      return { number: qNum, type, status: "missing", answer: null, reason: "No answer provided" };
+    }
+  
+    const validLetters = new Set(
+      (question.options || []).map((option) => String(option.letter || "").trim().toUpperCase())
+    );
+  
+    if (type === "MCQ") {
+      const value = String(rawAnswer).trim().toUpperCase();
+      if (!/^[A-Z]$/.test(value)) {
+        return { number: qNum, type, status: "invalid", answer: null, reason: "MCQ answer must be one option letter" };
+      }
+      if (validLetters.size > 0 && !validLetters.has(value)) {
+        return { number: qNum, type, status: "invalid", answer: null, reason: "MCQ answer must be one existing option letter" };
+      }
+      return { number: qNum, type, status: "answered", answer: value, reason: "" };
+    }
+  
+    if (type === "MSQ") {
+      let values = [];
+      if (Array.isArray(rawAnswer)) {
+        values = rawAnswer.map((v) => String(v).trim().toUpperCase()).filter(Boolean);
+      } else {
+        values = String(rawAnswer)
+          .split(/[,;\s]+/)
+          .map((v) => v.trim().toUpperCase())
+          .filter(Boolean);
+      }
+      if (values.length === 0) {
+        return { number: qNum, type, status: "invalid", answer: null, reason: "MSQ answer must contain one or more option letters" };
+      }
+      if (values.some((v) => !/^[A-Z]$/.test(v) || (validLetters.size > 0 && !validLetters.has(v)))) {
+        return { number: qNum, type, status: "invalid", answer: null, reason: "MSQ answer contains an invalid option letter" };
+      }
+      const uniqueSorted = [...new Set(values)].sort();
+      return { number: qNum, type, status: "answered", answer: uniqueSorted, reason: "" };
+    }
+  
+    if (type === "NUMERICAL") {
+      const canonical = canonicalNumerical(rawAnswer);
+      if (canonical === null) {
+        return { number: qNum, type, status: "invalid", answer: null, reason: "Numerical answer must be a plain decimal string" };
+      }
+      return { number: qNum, type, status: "answered", answer: canonical, reason: "" };
+    }
+  
+    if (!isTextType(question.type)) {
+      return {
+        number: qNum,
+        type,
+        status: "invalid",
+        answer: null,
+        reason: `Indexed answers are not supported for ${type} questions`,
+      };
+    }
+  
+    const textVal = String(rawAnswer).trim();
+    if (!textVal) {
+      return { number: qNum, type, status: "missing", answer: null, reason: "No answer provided" };
+    }
+    return { number: qNum, type, status: "answered", answer: textVal, reason: "" };
+  }
+  
+  /**
+   * Parses raw text containing indexed answers, legacy semicolon streams, or JSON.
+   * 
+   * @param {string} rawText Raw input text
+   * @param {object} [options]
+   * @param {object} [options.documentModel] Canonical AssignmentDocument model
+   * @param {number} [options.expectedCount] Expected number of logical questions
+   * @returns {{
+   *   ok: boolean,
+   *   answers: Map<number, string>|string[],
+   *   entries: Array<{ number: number, type: string, status: string, answer: any, reason: string }>,
+   *   count: number,
+   *   expectedCount?: number,
+   *   duplicates: number[],
+   *   unknowns: number[],
+   *   missing: number[],
+   *   issues: Array<{ number: number, reason: string, status?: string }>,
+   *   error?: string,
+   *   warnings?: string[],
+   *   isLegacy?: boolean
+   * }}
+   */
+  function parseAssignmentAnswers(rawText, options = {}) {
+    if (typeof rawText !== "string") {
+      return {
+        ok: false,
+        answers: [],
+        entries: [],
+        count: 0,
+        duplicates: [],
+        unknowns: [],
+        missing: [],
+        issues: [],
+        error: "Input must be a string.",
+      };
+    }
+  
+    const documentModel = options.documentModel || null;
+    const questionsList = documentModel?.questions || [];
+    const questionsMap = new Map();
+    questionsList.forEach((q, idx) => {
+      const qNum = q.number !== undefined && q.number !== null ? q.number : (idx + 1);
+      questionsMap.set(qNum, q);
+    });
+  
+    const expectedCount =
+      options.expectedCount !== undefined
+        ? options.expectedCount
+        : questionsList.length > 0
+        ? questionsList.length
+        : null;
+  
+    const trimmed = rawText.trim();
+    if (!trimmed) {
+      if (expectedCount && expectedCount > 0) {
+        return {
+          ok: false,
+          answers: [],
+          entries: [],
+          count: 0,
+          expectedCount,
+          duplicates: [],
+          unknowns: [],
+          missing: Array.from(questionsMap.keys()),
+          issues: [],
+          error: `Expected ${expectedCount} answers, received 0.`,
+        };
+      }
+      return { ok: true, answers: [], entries: [], count: 0, expectedCount: 0, duplicates: [], unknowns: [], missing: [], issues: [] };
+    }
+  
+    // 1. Check for legacy JSON format fallback
+    if (trimmed.startsWith("{") && (trimmed.includes('"acadrix"') || trimmed.includes('"answers"'))) {
+      try {
+        const parsedJson = JSON.parse(trimmed);
+        if (parsedJson && Array.isArray(parsedJson.answers)) {
+          const answersList = [];
+          const rawMap = new Map();
+          for (const item of parsedJson.answers) {
+            const num = item && item.question !== undefined ? item.question : answersList.length + 1;
+            const ans = item?.answer !== null && item?.answer !== undefined
+              ? (Array.isArray(item.answer) ? item.answer.join(",") : String(item.answer))
+              : "";
+            rawMap.set(num, ans);
+            answersList.push(ans);
+          }
+  
+          const entries = [];
+          const issues = [];
+          for (const [qNum, q] of questionsMap) {
+            const rawAns = rawMap.get(qNum);
+            const entry = validateQuestionAnswer(q, rawAns);
+            entries.push(entry);
+            if (entry.status !== "answered") {
+              issues.push({ number: qNum, reason: entry.reason, status: entry.status });
+            }
+          }
+  
+          return {
+            ok: true,
+            answers: answersList,
+            entries,
+            count: rawMap.size,
+            expectedCount: expectedCount ?? rawMap.size,
+            duplicates: [],
+            unknowns: [],
+            missing: [],
+            issues,
+            isLegacy: true,
+          };
+        }
+      } catch {}
+    }
+  
+    // 2. Check for legacy semicolon-only format fallback (e.g. "A;\nB,C;\n1000;")
+    const normalizedText = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    // Accept compact AI output such as `1: D 2: A` without changing multiline answers.
+    const indexedRecordCount = (normalizedText.match(/(?:^|\s)\d+\s*:/g) || []).length;
+    const compactIndexedText = !normalizedText.includes("\n") && indexedRecordCount > 1
+      ? normalizedText.replace(/\s+(?=\d+\s*:)/g, "\n")
+      : normalizedText;
+    const rawLines = compactIndexedText.split("\n");
+    const hasIndexedPattern = rawLines.some((l) => /^\s*\d+\s*:/.test(l));
+  
+    if (!hasIndexedPattern && rawLines.some((l) => l.trim().endsWith(";"))) {
+      const legacyAnswers = [];
+      for (let idx = 0; idx < rawLines.length; idx++) {
+        const rawLine = rawLines[idx].trim();
+        if (!rawLine) {
+          legacyAnswers.push("");
+          continue;
+        }
+        let lineText = rawLine;
+        if (lineText.endsWith(";")) {
+          let backslashCount = 0;
+          for (let j = lineText.length - 2; j >= 0 && lineText[j] === "\\"; j--) {
+            backslashCount++;
+          }
+          if (backslashCount % 2 === 0) {
+            lineText = lineText.slice(0, -1);
+          }
+        }
+        legacyAnswers.push(unescapeAnswerRecord(lineText).trim());
+      }
+  
+      const entries = [];
+      const issues = [];
+      questionsList.forEach((q, idx) => {
+        const qNum = q.number !== undefined && q.number !== null ? q.number : (idx + 1);
+        const rawAns = legacyAnswers[idx];
+        const entry = validateQuestionAnswer(q, rawAns);
+        entries.push(entry);
+        if (entry.status !== "answered") {
+          issues.push({ number: qNum, reason: entry.reason, status: entry.status });
+        }
+      });
+  
+      return {
+        ok: expectedCount === null || legacyAnswers.length === expectedCount,
+        answers: legacyAnswers,
+        entries,
+        count: legacyAnswers.length,
+        expectedCount: expectedCount ?? legacyAnswers.length,
+        duplicates: [],
+        unknowns: [],
+        missing: [],
+        issues,
+        isLegacy: true,
+        error: expectedCount !== null && legacyAnswers.length !== expectedCount
+          ? `Expected ${expectedCount} answers, received ${legacyAnswers.length}.`
+          : undefined,
+      };
+    }
+  
+    // 3. Parse Canonical Indexed Answer Stream (`N: <answer>`, `N: <<<\nmultiline\n>>>`)
+    const seenNumbers = new Set();
+    const duplicateSet = new Set();
+    const records = new Map(); // number -> answer string
+    const warnings = [];
+  
+    let inMultiline = false;
+    let multilineNum = null;
+    let multilineBuffer = [];
+  
+    for (let idx = 0; idx < rawLines.length; idx++) {
+      const line = rawLines[idx];
+      const trimmedLine = line.trim();
+  
+      if (inMultiline) {
+        if (trimmedLine === ">>>") {
+          records.set(multilineNum, multilineBuffer.join("\n"));
+          inMultiline = false;
+          multilineNum = null;
+          multilineBuffer = [];
+        } else {
+          multilineBuffer.push(line);
+        }
+        continue;
+      }
+  
+      if (!trimmedLine) {
+        continue;
+      }
+  
+      // Check multiline opening: `6: <<<`
+      const multilineOpenMatch = line.match(/^\s*(\d+)\s*:\s*<<<\s*$/);
+      if (multilineOpenMatch) {
+        const qNum = parseInt(multilineOpenMatch[1], 10);
+        if (seenNumbers.has(qNum)) {
+          duplicateSet.add(qNum);
+        }
+        seenNumbers.add(qNum);
+        multilineNum = qNum;
+        inMultiline = true;
+        multilineBuffer = [];
+        continue;
+      }
+  
+      // Standard single-line record: `1: A`, `2: B,C`, `3: 1000`, `4: colon: in: answer`, `5:`
+      const singleMatch = line.match(/^\s*(\d+)\s*:(.*)$/);
+      if (singleMatch) {
+        const qNum = parseInt(singleMatch[1], 10);
+        const rest = singleMatch[2];
+  
+        if (seenNumbers.has(qNum)) {
+          duplicateSet.add(qNum);
+        }
+        seenNumbers.add(qNum);
+  
+        const trimmedRest = rest.trim();
+        // Handle inline closed <<<...>>>
+        if (trimmedRest.startsWith("<<<") && trimmedRest.endsWith(">>>") && trimmedRest.length >= 6) {
+          const inner = trimmedRest.slice(3, -3).trim();
+          records.set(qNum, inner);
+        } else {
+          records.set(qNum, trimmedRest);
+        }
+        continue;
+      }
+  
+      warnings.push(`Unrecognized line ${idx + 1}: "${trimmedLine}"`);
+    }
+  
+    // Handle unclosed multiline block
+    if (inMultiline && multilineNum !== null) {
+      records.set(multilineNum, multilineBuffer.join("\n"));
+      warnings.push(`Unclosed multiline block for question ${multilineNum} (missing '>>>').`);
+    }
+  
+    const duplicates = Array.from(duplicateSet).sort((a, b) => a - b);
+    const unknowns = [];
+    const missing = [];
+    const entries = [];
+    const issues = [];
+  
+    if (questionsMap.size > 0) {
+      for (const qNum of records.keys()) {
+        if (!questionsMap.has(qNum)) {
+          unknowns.push(qNum);
+        }
+      }
+      unknowns.sort((a, b) => a - b);
+  
+      for (const [qNum, question] of questionsMap) {
+        if (!records.has(qNum)) {
+          missing.push(qNum);
+          const type = TYPE_NAMES[question.type] || String(question.type || "UNKNOWN");
+          const entry = { number: qNum, type, status: "missing", answer: null, reason: "No answer provided" };
+          entries.push(entry);
+          issues.push({ number: qNum, reason: entry.reason, status: entry.status });
+        } else if (duplicateSet.has(qNum)) {
+          const type = TYPE_NAMES[question.type] || String(question.type || "UNKNOWN");
+          const entry = { number: qNum, type, status: "invalid", answer: null, reason: "duplicate entries" };
+          entries.push(entry);
+          issues.push({ number: qNum, reason: entry.reason, status: entry.status });
+        } else {
+          const rawAns = records.get(qNum);
+          const entry = validateQuestionAnswer(question, rawAns);
+          entries.push(entry);
+          if (entry.status !== "answered") {
+            issues.push({ number: qNum, reason: entry.reason, status: entry.status });
+          }
+        }
+      }
+  
+      for (const unkNum of unknowns) {
+        const entry = { number: unkNum, type: "UNKNOWN", status: "invalid", answer: records.get(unkNum), reason: "unknown question" };
+        entries.push(entry);
+        issues.push({ number: unkNum, reason: entry.reason, status: entry.status });
+      }
+    }
+  
+    const answersArray = Array.from(records.values());
+  
+    return {
+      ok: issues.filter((i) => i.status === "invalid").length === 0 && unknowns.length === 0 && duplicates.length === 0,
+      answers: answersArray,
+      entries,
+      count: records.size,
+      expectedCount: expectedCount ?? records.size,
+      duplicates,
+      unknowns,
+      missing,
+      issues,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    };
   }
 
   // ── [Module: src/exporters/markdown.js] ──
@@ -8973,20 +9652,9 @@
   
   
   
-  const TYPE_NAMES = Object.freeze({
-    [QuestionType.MCQ]: "MCQ",
-    [QuestionType.MSQ]: "MSQ",
-    [QuestionType.NUMERICAL]: "NUMERICAL",
-    [QuestionType.TEXT]: "TEXT",
-    [QuestionType.DESCRIPTIVE]: "DESCRIPTIVE",
-    [QuestionType.UNKNOWN]: "UNKNOWN",
-    mcq: "MCQ",
-    msq: "MSQ",
-    numerical: "NUMERICAL",
-    text: "TEXT",
-    descriptive: "DESCRIPTIVE",
-    unknown: "UNKNOWN",
-  });
+  // TYPE_NAMES is imported from answer-stream.js to avoid a duplicate declaration
+  // when both modules are bundled into the extension target.
+  
   
   function lineStartAt(text, index) {
     return index === 0 || text[index - 1] === "\n";
@@ -9432,6 +10100,36 @@
   }
   
   /**
+   * Resolves the visible/applicable MCQ or MSQ choice without treating an AI
+   * suggestion as a user edit. Existing selections always take precedence.
+   */
+  function resolveAiOptionSelection(question, aiEntry, currentSelection, userEdited = false) {
+    const type = question?.type;
+    const isMsq = isMsqType(type);
+    const isMcq = isMcqType(type) || (!isMsq && Array.isArray(question?.options) && question.options.length > 0);
+    if (!isMcq && !isMsq) return currentSelection ?? null;
+  
+    const current = normalizeSelection(type, currentSelection);
+    const hasCurrent = isMsq ? current.length > 0 : Boolean(current);
+    if (userEdited || hasCurrent) return current;
+    if (aiEntry?.status !== "answered" || aiEntry.answer === null || aiEntry.answer === undefined) {
+      return current;
+    }
+  
+    const suggestion = normalizeSelection(type, isMsq
+      ? (Array.isArray(aiEntry.answer) ? aiEntry.answer : [aiEntry.answer])
+      : String(aiEntry.answer));
+    const validLetters = new Set((question.options || []).map((option) =>
+      String(option.letter || "").replace(/^[\s(]+|[.\s):]+$/g, "").trim().toUpperCase()
+    ));
+    const values = isMsq ? suggestion : (suggestion ? [suggestion] : []);
+    if (!values.length || validLetters.size === 0 || values.some((letter) => !letter || !validLetters.has(letter))) {
+      return current;
+    }
+    return suggestion;
+  }
+  
+  /**
    * Computes the deterministic AnswerState for a question given its AI suggestion and user selection.
    * @param {Object} params
    * @param {string} params.type - Question type (MCQ, MSQ, NUMERICAL, TEXT, etc.)
@@ -9520,7 +10218,7 @@
   /**
    * Summarizes the current answer review status across all questions.
    */
-  function summarizeReviewState(documentModel, selectionsMap = new Map(), aiEntriesMap = new Map()) {
+  function summarizeReviewState(documentModel, selectionsMap = new Map(), aiEntriesMap = new Map(), userEditedQuestions = new Set()) {
     const questions = documentModel?.questions || [];
     let ready = 0;
     let aiMatched = 0;
@@ -9547,6 +10245,15 @@
         ready++;
       } else if (state === AnswerState.AI_SUGGESTED) {
         aiSuggested++;
+        const suggestedSelection = resolveAiOptionSelection(
+          q,
+          aiEntry,
+          userSelection,
+          userEditedQuestions.has(q.number)
+        );
+        if (Array.isArray(suggestedSelection) ? suggestedSelection.length > 0 : Boolean(suggestedSelection)) {
+          ready++;
+        }
       } else if (state === AnswerState.INVALID) {
         invalid++;
         issues.push({ number: q.number, reason: "Invalid answer format or value" });
@@ -9637,12 +10344,13 @@
     }
   
     if (questionsToApply.length === 0) {
-      return { ok: true, appliedCount: 0, error: "No answers selected to apply." };
+      return { ok: false, appliedCount: 0, error: "No valid answers selected to apply." };
     }
   
     // 3. Record user's original active question for exact restoration
     const originalLogicalNumber = portal.getActiveLogicalNumber() || 1;
     let appliedCount = 0;
+    const skippedQuestions = [];
   
     try {
       for (let idx = 0; idx < questionsToApply.length; idx++) {
@@ -9694,16 +10402,21 @@
             await traverser.navigateToQuestion(chip, targetNumber, 3500, signal);
           } else {
             console.warn(`[Acadrix Applicator] Could not navigate to question ${targetNumber}`);
+            skippedQuestions.push(targetNumber);
             continue;
           }
         }
   
         // Ensure question DOM is populated
         const qRoot = portal.getCurrentQuestionElement();
-        if (!qRoot) continue;
+        if (!qRoot) {
+          skippedQuestions.push(targetNumber);
+          continue;
+        }
   
         // Apply to MCQ
         if (isMcqType(question.type)) {
+          let matchedOption = false;
           const targetLetter = String(selection).trim().toUpperCase();
           const choices = Array.from(qRoot.querySelectorAll("button.choice, [role=radio], .choice"));
           for (let i = 0; i < choices.length; i++) {
@@ -9726,15 +10439,18 @@
               if (!isChecked) {
                 ch.click();
               }
-              appliedCount++;
+              matchedOption = true;
               break;
             }
           }
+          if (matchedOption) appliedCount++;
+          else skippedQuestions.push(targetNumber);
         }
         // Apply to MSQ
         else if (isMsqType(question.type)) {
           const targetSet = new Set((selection || []).map((s) => String(s).trim().toUpperCase()));
           const choices = Array.from(qRoot.querySelectorAll("button.choice, [role=checkbox], [role=radio], .choice"));
+          const matchedOptions = new Set();
           for (let i = 0; i < choices.length; i++) {
             const ch = choices[i];
             const letterEl = ch.querySelector?.(".choice-letter, .letter");
@@ -9751,6 +10467,7 @@
               ch.classList?.contains?.("active") ||
               Boolean(ch.querySelector?.("input:checked, .checkbox.checked, .radio.checked, .choice-indicator.checked"));
             const shouldCheck = targetSet.has(letter);
+            if (shouldCheck) matchedOptions.add(letter);
   
             if (shouldCheck && !isChecked) {
               ch.click();
@@ -9758,7 +10475,8 @@
               ch.click();
             }
           }
-          appliedCount++;
+          if ([...targetSet].every((letter) => matchedOptions.has(letter))) appliedCount++;
+          else skippedQuestions.push(targetNumber);
         }
         // Apply to NUMERICAL
         else if (isNumericalType(question.type)) {
@@ -9770,6 +10488,8 @@
             input.dispatchEvent(new Event("input", { bubbles: true }));
             input.dispatchEvent(new Event("change", { bubbles: true }));
             appliedCount++;
+          } else {
+            skippedQuestions.push(targetNumber);
           }
         }
         // Apply to TEXT
@@ -9780,6 +10500,8 @@
             input.dispatchEvent(new Event("input", { bubbles: true }));
             input.dispatchEvent(new Event("change", { bubbles: true }));
             appliedCount++;
+          } else {
+            skippedQuestions.push(targetNumber);
           }
         }
       }
@@ -9792,7 +10514,15 @@
       }
     }
   
-    return { ok: true, appliedCount };
+    const uniqueSkipped = [...new Set(skippedQuestions)];
+    return {
+      ok: uniqueSkipped.length === 0,
+      appliedCount,
+      skippedQuestions: uniqueSkipped,
+      error: uniqueSkipped.length
+        ? `Could not apply answers for ${uniqueSkipped.map((number) => `Q${number}`).join(", ")}. Check that each portal question control is available.`
+        : undefined,
+    };
   }
   
   /**
@@ -34822,6 +35552,8 @@
         testCaseBlock: ".test-case-block",
         testCaseBlockTitle: ".title, .wrapper .title",
         testCaseBlockContent: ".content",
+        testCaseActualOutput: ".test-case-actual-output, .actual-output-content, .actual-output, .test-actual-output, [data-output='actual']",
+        testCaseStatus: ".test-case-status, .execution-status, [data-execution-status]",
         testCaseItem: ".test-case-details, .test-case-block, .test-case, .test-case-item, .test-case-card, .testcase-item",
         testCaseInput: ".test-case-input, .input-content, .test-input, pre.input, .input",
         testCaseOutput: ".test-case-output, .output-content, .test-output, pre.output, .expected-output, .output",
@@ -36947,6 +37679,10 @@
       index = 1,
       input = "",
       expectedOutput = "",
+      actualOutput = "",
+      actualOutputAvailable = false,
+      executionStatusAvailable = false,
+      status = null,
       description = "",
       isSample = true,
       isVisible = true,
@@ -36957,6 +37693,10 @@
       this.index = index;
       this.input = typeof input === "string" ? input : String(input || "");
       this.expectedOutput = typeof expectedOutput === "string" ? expectedOutput : String(expectedOutput || "");
+      this.actualOutput = typeof actualOutput === "string" ? actualOutput : String(actualOutput ?? "");
+      this.actualOutputAvailable = Boolean(actualOutputAvailable);
+      this.executionStatusAvailable = Boolean(executionStatusAvailable);
+      this.status = this.executionStatusAvailable && (status === "passed" || status === "failed") ? status : null;
       this.description = description || "";
       this.isSample = Boolean(isSample);
       this.isVisible = Boolean(isVisible);
@@ -38380,10 +39120,79 @@
   }
   
   /**
+   * Checks whether a stem already contains every extracted test case as structured data.
+   */
+  function stemHasStructuredTestCases(stemNodes, testCases) {
+    if (!Array.isArray(stemNodes) || !Array.isArray(testCases) || testCases.length === 0) return false;
+  
+    const normalizeValue = (value) => String(value ?? "").replace(/\r\n?/g, "\n").trim();
+    const cellText = (cell) => {
+      if (typeof cell?.text === "string") return cell.text;
+      if (typeof cell?.value === "string") return cell.value;
+      return (cell?.children || []).map(cellText).join("");
+    };
+    const matchesCase = (row, inputIndex, outputIndex, testCase) =>
+      normalizeValue(cellText(row[inputIndex])) === normalizeValue(testCase.input) &&
+      normalizeValue(cellText(row[outputIndex])) === normalizeValue(testCase.expectedOutput);
+  
+    const hasMatchingTable = (node) => {
+      if (!node || typeof node !== "object") return false;
+      const isTable = node.type === ContentType.TABLE || node.type === DocNodeType.TABLE;
+      if (isTable) {
+        const rows = Array.isArray(node.rows) ? node.rows : (node.children || []);
+        const rowCells = rows.map((row) => Array.isArray(row.cells) ? row.cells : (row.children || []));
+        const headers = (rowCells[0] || []).map((cell) => normalizeValue(cellText(cell)).toLowerCase());
+        const inputIndex = headers.findIndex((header) => /\binput\b/.test(header));
+        const outputIndex = headers.findIndex((header) => /\bexpected\s+output\b|^output$/.test(header));
+        const dataRows = rowCells.slice(1);
+        if (inputIndex >= 0 && outputIndex >= 0) {
+          const matchedRows = new Set();
+          const allCasesPresent = testCases.every((testCase) => {
+            const rowIndex = dataRows.findIndex((row, index) =>
+              !matchedRows.has(index) && matchesCase(row, inputIndex, outputIndex, testCase)
+            );
+            if (rowIndex < 0) return false;
+            matchedRows.add(rowIndex);
+            return true;
+          });
+          if (allCasesPresent) return true;
+        }
+      }
+      return (node.children || []).some(hasMatchingTable);
+    };
+  
+    const structuredCases = [];
+    const collectTestCases = (node) => {
+      if (!node || typeof node !== "object") return;
+      if (node.type === ContentType.TEST_CASE || node.type === DocNodeType.TEST_CASE) {
+        structuredCases.push(node);
+      }
+      (node.children || []).forEach(collectTestCases);
+    };
+    stemNodes.forEach(collectTestCases);
+    if (structuredCases.length >= testCases.length) {
+      const matchedCases = new Set();
+      const allCasesPresent = testCases.every((testCase) => {
+        const caseIndex = structuredCases.findIndex((candidate, index) =>
+          !matchedCases.has(index) &&
+          normalizeValue(candidate.input ?? candidate.attributes?.input) === normalizeValue(testCase.input) &&
+          normalizeValue(candidate.expectedOutput ?? candidate.attributes?.expectedOutput) === normalizeValue(testCase.expectedOutput)
+        );
+        if (caseIndex < 0) return false;
+        matchedCases.add(caseIndex);
+        return true;
+      });
+      if (allCasesPresent) return true;
+    }
+  
+    return stemNodes.some(hasMatchingTable);
+  }
+  
+  /**
    * Top-Level Normalization Pipeline.
-   * 
+   *
    * Transforms an AssignmentDocument into a validated, canonical DocRoot AST.
-   * 
+   *
    * @param {Object} assignmentDoc Canonical AssignmentDocument
    * @param {Object} [options]
    * @returns {DocRoot}
@@ -38443,39 +39252,25 @@
         const rawLang = pData.language || "javascript";
         const lang = normalizeProgrammingLanguage(rawLang) || rawLang;
   
-        if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
+        const stemAlreadyHasTestCases = stemHasStructuredTestCases(q.stem || [], pData.testCases);
+  
+        if (!stemAlreadyHasTestCases && Array.isArray(pData.testCases) && pData.testCases.length > 0) {
           normalizedStem.push(new HeadingBlock({ level: 3, text: "Test Cases" }));
-          const tcRows = [
-            new TableRowBlock({
-              cells: [
-                new TableCellBlock({ text: "Test Case", isHeader: true }),
-                new TableCellBlock({ text: "Input", isHeader: true }),
-                new TableCellBlock({ text: "Expected Output", isHeader: true }),
-              ],
-            }),
-          ];
-  
           for (const tc of pData.testCases) {
-            const desc = tc.description || `Case ${tc.index}`;
-            tcRows.push(
-              new TableRowBlock({
-                cells: [
-                  new TableCellBlock({ text: desc }),
-                  new TableCellBlock({ text: tc.input || "" }),
-                  new TableCellBlock({ text: tc.expectedOutput || "" }),
-                ],
-              })
-            );
+            normalizedStem.push(new TestCaseBlock({
+              id: tc.id,
+              index: tc.index,
+              description: tc.description,
+              input: tc.input ?? "",
+              expectedOutput: tc.expectedOutput ?? "",
+              actualOutput: tc.actualOutput ?? "",
+              actualOutputAvailable: tc.actualOutputAvailable === true,
+              executionStatusAvailable: tc.executionStatusAvailable === true,
+              status: tc.status,
+              isSample: tc.isSample,
+              isVisible: tc.isVisible,
+            }));
           }
-  
-          normalizedStem.push(
-            new TableBlock({
-              caption: "Visible Test Cases",
-              headerRows: 1,
-              widths: ["24%", "38%", "38%"],
-              rows: tcRows,
-            })
-          );
         }
   
         if (pData.currentCode || pData.starterCode) {
@@ -38829,8 +39624,6 @@
       },
     ];
   
-    // If question stem has an initial paragraph, include it in the unbreakable header stack
-    // so the title is NEVER orphaned at page bottom!
     const stemBlocks = q.stem || [];
     let remainingStem = stemBlocks;
   
@@ -38844,7 +39637,7 @@
       stack: headerStack,
     });
   
-    // Remaining stem blocks
+    // Keep the question title with its opening paragraph when possible.
     for (const block of remainingStem) {
       parts.push(renderBlock(block, options));
     }
@@ -38868,12 +39661,12 @@
             lineColor: ACX_THEME.BORDER,
           },
         ],
-        margin: [0, 10, 0, 12],
+        margin: [0, 6, 0, 8],
       });
     }
   
     return {
-      margin: [0, 4, 0, isLast ? 8 : 4],
+      margin: [0, 2, 0, isLast ? 6 : 2],
       stack: parts,
     };
   }
@@ -38899,6 +39692,9 @@
   
       case DocNodeType.CODE:
         return renderCodeBlock(block);
+  
+      case DocNodeType.TEST_CASE:
+        return renderTestCaseBlock(block);
   
       case DocNodeType.MATCHING:
         return renderMatchingTable(block);
@@ -39048,6 +39844,8 @@
   function renderCodeBlock(codeBlock) {
     const tokenLines = codeBlock.tokens || [];
     const textRuns = [];
+    const lineCount = String(codeBlock.code || "").split(/\r\n|\r|\n/).length;
+    const keepTogether = lineCount <= 12;
   
     for (let lineIdx = 0; lineIdx < tokenLines.length; lineIdx++) {
       const lineTokens = tokenLines[lineIdx];
@@ -39087,8 +39885,9 @@
     const content = textRuns.length > 0 ? textRuns : [{ text: codeBlock.code || "" }];
   
     return {
-      margin: [0, 4, 0, 6],
+      margin: [0, 1, 0, 3],
       table: {
+        dontBreakRows: keepTogether,
         widths: ["*"],
         body: [
           [
@@ -39096,7 +39895,7 @@
               text: content,
               style: "codeBlock",
               fillColor: ACX_THEME.CODE_BG,
-              margin: [8, 6, 8, 6],
+              margin: [6, 4, 6, 4],
             },
           ],
         ],
@@ -39117,15 +39916,55 @@
   /**
    * Renders a structured two-column matching question table.
    */
-  function renderMatchingTable(matching) {
+  function renderTestCaseBlock(testCase) {
+    const status = testCase.executionStatusAvailable && (testCase.status === "passed" || testCase.status === "failed")
+      ? (testCase.status === "passed" ? "Passed" : "Failed")
+      : "Execution status unavailable";
+    const title = `Test Case ${testCase.index || ""}${testCase.description ? ` — ${testCase.description}` : ""}`.trim();
+    const fields = [
+      ["Input", testCase.input ?? "", true],
+      ["Expected Output", testCase.expectedOutput ?? "", true],
+      ["Actual Output", testCase.actualOutputAvailable ? (testCase.actualOutput || "(empty output)") : "Actual output unavailable", testCase.actualOutputAvailable],
+    ];
+    const lineCount = fields.reduce((total, [, value]) => total + String(value).split("\n").length, 0);
+    const stack = [
+      {
+        columns: [
+          { text: title, bold: true, fontSize: 9, color: ACX_THEME.INK_900, width: "*" },
+          { text: status, fontSize: 8, color: testCase.status === "failed" ? ACX_THEME.ERROR : testCase.status === "passed" ? ACX_THEME.SUCCESS : ACX_THEME.INK_600, alignment: "right", width: "auto" },
+        ],
+        margin: [0, 0, 0, 3],
+      },
+    ];
+  
+    for (const [label, value, available] of fields) {
+      stack.push({ text: label, bold: true, fontSize: 8, color: ACX_THEME.INK_600, margin: [0, 2, 0, 1] });
+      if (available) {
+        stack.push(renderCodeBlock({
+          code: value,
+          tokens: tokenizeCode(value, "text"),
+        }));
+      } else {
+        stack.push({ text: value, italics: true, fontSize: 8, color: ACX_THEME.INK_600, margin: [0, 0, 0, 3] });
+      }
+    }
+  
+    return {
+      unbreakable: lineCount <= 12,
+      margin: [0, 1, 0, 3],
+      stack,
+    };
+  }
+  
+  function renderMatchingTable(block) {
     const headerRow = [
-      { text: matching.leftTitle || "List I", style: "tableHeader", margin: [6, 4, 6, 4] },
-      { text: matching.rightTitle || "List II", style: "tableHeader", margin: [6, 4, 6, 4] },
+      { text: block.leftTitle || "List I", style: "tableHeader", margin: [6, 4, 6, 4] },
+      { text: block.rightTitle || "List II", style: "tableHeader", margin: [6, 4, 6, 4] },
     ];
   
     const bodyRows = [headerRow];
   
-    for (const pair of matching.pairs || []) {
+    for (const pair of block.pairs || []) {
       bodyRows.push([
         {
           text: [
@@ -39355,8 +40194,7 @@
     }
   
     return {
-      margin: [0, 4, 0, 4],
-      dontBreakRows: true,
+      margin: [0, 2, 0, 3],
       stack: optionRows,
     };
   }
@@ -39737,6 +40575,8 @@
   
   
   
+  
+  
   // ── Default Print Stylesheet (Inlined for standalone portability) ────────────
   
   const PDF_CSS = `
@@ -39767,6 +40607,14 @@
     print-color-adjust: exact;
   }
   
+  @media print {
+    html, body { margin: 0; padding: 0; }
+    .saq-pdf-document { max-width: none; }
+    .saq-pdf-question { margin-bottom: 8pt; }
+    .saq-pdf-options { page-break-inside: auto; break-inside: auto; }
+    .saq-pdf-code-block:not(.is-compact) { page-break-inside: auto; break-inside: auto; }
+  }
+  
   .saq-pdf-document {
     max-width: 100%;
     margin: 0 auto;
@@ -39774,8 +40622,8 @@
   }
   
   .saq-pdf-header {
-    margin-bottom: 20pt;
-    padding-bottom: 10pt;
+    margin-bottom: 12pt;
+    padding-bottom: 6pt;
     border-bottom: 1.5pt solid #222222;
     page-break-after: avoid;
     break-after: avoid;
@@ -39806,7 +40654,7 @@
   }
   
   .saq-pdf-question {
-    margin-bottom: 22pt;
+    margin-bottom: 8pt;
     page-break-inside: auto;
     break-inside: auto;
   }
@@ -39823,7 +40671,7 @@
   .saq-pdf-question-meta {
     font-size: 8.5pt;
     color: #555555;
-    margin-bottom: 8pt;
+    margin-bottom: 6pt;
     page-break-after: avoid;
     break-after: avoid;
   }
@@ -39835,15 +40683,15 @@
   }
   
   .saq-pdf-stem {
-    margin-bottom: 10pt;
+    margin-bottom: 6pt;
   }
   
   .saq-pdf-paragraph {
-    margin: 0 0 8pt 0;
+    margin: 0 0 4pt 0;
   }
   
   .saq-pdf-heading {
-    margin: 12pt 0 6pt 0;
+    margin: 8pt 0 4pt 0;
     font-weight: 600;
     color: #222222;
     page-break-after: avoid;
@@ -39870,8 +40718,8 @@
     list-style: none;
     padding: 0;
     margin: 0 0 10pt 0;
-    page-break-inside: avoid;
-    break-inside: avoid;
+    page-break-inside: auto;
+    break-inside: auto;
   }
   
   .saq-pdf-option {
@@ -39927,13 +40775,68 @@
     border: 1px solid #dee2e6;
     border-radius: 3pt;
     padding: 8pt 10pt;
-    margin: 8pt 0;
+    margin: 4pt 0;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
+    word-break: normal;
     tab-size: 4;
+    orphans: 2;
+    widows: 2;
     page-break-inside: auto;
     break-inside: auto;
   }
+  
+  pre.saq-pdf-code-block.is-compact {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .saq-pdf-test-case-field > strong {
+    display: block;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  
+  .saq-pdf-token-keyword { color: #2F4BDB; font-weight: 600; }
+  .saq-pdf-token-string { color: #1A7F4B; }
+  .saq-pdf-token-comment { color: #6B707B; }
+  .saq-pdf-token-number { color: #9A6700; }
+  .saq-pdf-token-operator { color: #5B606B; }
+  .saq-pdf-token-default { color: #16181D; }
+  
+  .saq-pdf-programming-section { margin: 4pt 0; }
+  .saq-pdf-test-case {
+    margin: 3pt 0 5pt;
+    padding: 5pt;
+    border: 1px solid #dee2e6;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  .saq-pdf-test-case.is-compact {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .saq-pdf-test-case-title {
+    margin: 0 0 4pt;
+    font-size: 9pt;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  .saq-pdf-test-case-status { margin-left: 6pt; font-size: 8pt; font-weight: 400; }
+  .saq-pdf-test-case-field { margin: 3pt 0; }
+  pre.saq-pdf-test-case-value {
+    margin: 2pt 0 0;
+    padding: 4pt 6pt;
+    background: #f8f9fa;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 8pt;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  .saq-pdf-unavailable { margin: 2pt 0 0; color: #5B606B; font-style: italic; }
   
   code.saq-pdf-inline-code {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
@@ -40292,7 +41195,11 @@
         }
       }
   
-      // 4. Options
+      // 4. Programming assignment details not already represented in the extracted stem
+      const programmingHtml = this.renderProgrammingData(question);
+      if (programmingHtml) parts.push(programmingHtml);
+  
+      // 5. Options
       if (Array.isArray(question.options) && question.options.length > 0) {
         const optionsHtml = this.renderOptions(question.options);
         if (optionsHtml) {
@@ -40300,7 +41207,7 @@
         }
       }
   
-      // 5. Opt-in Interaction State
+      // 6. Opt-in Interaction State
       if (this.options.includeInteractionState) {
         const interactionHtml = this.renderInteractionState(question);
         if (interactionHtml) {
@@ -40308,7 +41215,7 @@
         }
       }
   
-      // 6. Opt-in Review / Evaluation Data
+      // 7. Opt-in Review / Evaluation Data
       if (this.options.includeReviewData && question.review) {
         const reviewHtml = this.renderReviewData(question.review);
         if (reviewHtml) {
@@ -40317,6 +41224,47 @@
       }
   
       return `    <section class="saq-pdf-question" id="question-${question.number}">\n${parts.join("\n")}\n    </section>`;
+    }
+  
+    renderProgrammingData(question) {
+      const data = question?.programmingData;
+      if (!data) return "";
+  
+      const existingText = (nodes) => (nodes || []).map((node) => {
+        const value = typeof node?.value === "string" ? node.value : "";
+        return `${value}${existingText(node?.children)}`;
+      }).join("\n");
+      const hasTestCaseSection = stemHasStructuredTestCases(question.stem, data.testCases);
+      const sections = [];
+  
+      if (Array.isArray(data.testCases) && data.testCases.length > 0 && !hasTestCaseSection) {
+        const cards = data.testCases.map((testCase, index) => {
+          const caseName = testCase.description
+            ? `Test Case ${testCase.index || index + 1} — ${testCase.description}`
+            : `Test Case ${testCase.index || index + 1}`;
+          const statusKnown = testCase.executionStatusAvailable === true && (testCase.status === "passed" || testCase.status === "failed");
+          const status = statusKnown ? (testCase.status === "passed" ? "Passed" : "Failed") : "Execution status unavailable";
+          const actualOutput = testCase.actualOutputAvailable === true
+            ? `<pre class="saq-pdf-test-case-value">${escapePdfHtml(testCase.actualOutput || "Empty output")}</pre>`
+            : `<p class="saq-pdf-unavailable">Actual output unavailable</p>`;
+          const lineCount = [testCase.input, testCase.expectedOutput, testCase.actualOutputAvailable ? testCase.actualOutput : ""]
+            .reduce((total, value) => total + String(value ?? "").split(/\r\n|\r|\n/).length, 0);
+          return `<section class="saq-pdf-test-case${lineCount <= 12 ? " is-compact" : ""}">
+            <h4 class="saq-pdf-test-case-title">${escapePdfHtml(caseName)} <span class="saq-pdf-test-case-status">${status}</span></h4>
+            <div class="saq-pdf-test-case-field"><strong>Input</strong><pre class="saq-pdf-test-case-value">${escapePdfHtml(testCase.input ?? "")}</pre></div>
+            <div class="saq-pdf-test-case-field"><strong>Expected Output</strong><pre class="saq-pdf-test-case-value">${escapePdfHtml(testCase.expectedOutput ?? "")}</pre></div>
+            <div class="saq-pdf-test-case-field"><strong>Actual Output</strong>${actualOutput}</div>
+          </section>`;
+        });
+        sections.push(`<section class="saq-pdf-programming-section"><h3 class="saq-pdf-heading">Test Cases</h3>${cards.join("\n")}</section>`);
+      }
+  
+      const code = data.currentCode || data.starterCode || "";
+      if (code && !existingText(question.stem).includes(code)) {
+        sections.push(`<section class="saq-pdf-programming-section"><h3 class="saq-pdf-heading">${data.currentCode ? "Current Code" : "Starter Code"}</h3>${this.renderCodeBlock({ value: code, attributes: { language: data.language || "text" } })}</section>`);
+      }
+  
+      return sections.join("\n");
     }
   
     /**
@@ -40516,9 +41464,23 @@
      * Renders a pre-formatted code block preserving exact whitespace, tabs, and indentation.
      */
     renderCodeBlock(node) {
-      const langAttr = node.attributes?.language ? ` class="language-${escapePdfHtml(node.attributes.language)}"` : "";
+      const language = String(node.attributes?.language || "text").toLowerCase();
+      const langAttr = node.attributes?.language ? ` class="language-${escapePdfHtml(language)}"` : "";
       const rawCode = node.value ?? "";
-      return `<pre class="saq-pdf-code-block"><code${langAttr}>${escapePdfHtml(rawCode)}</code></pre>`;
+      const supportsHighlighting = /^(?:javascript|js|typescript|ts|python|py|java|c|cpp|c\+\+|sql)$/.test(language);
+      const highlighted = supportsHighlighting
+        ? tokenizeCode(rawCode, language).map((line) => line.map((token) => {
+          const color = token.color || CODE_COLORS.DEFAULT;
+          const kind = color === CODE_COLORS.KEYWORD ? "keyword"
+            : color === CODE_COLORS.STRING ? "string"
+              : color === CODE_COLORS.COMMENT ? "comment"
+                : color === CODE_COLORS.NUMBER ? "number"
+                  : color === CODE_COLORS.OPERATOR ? "operator" : "default";
+          return `<span class="saq-pdf-token saq-pdf-token-${kind}">${escapePdfHtml(token.text)}</span>`;
+        }).join("")).join("\n")
+        : escapePdfHtml(rawCode);
+      const lineCount = rawCode.split(/\r\n|\r|\n/).length;
+      return `<pre class="saq-pdf-code-block${lineCount <= 12 ? " is-compact" : ""}"><code${langAttr}>${highlighted}</code></pre>`;
     }
   
     /**
@@ -44663,6 +45625,52 @@
   /** Shared Reader interaction behavior. */
   
   const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
+  
+  function extractImportedCode(input, prefix = "", suffix = "") {
+    const text = String(input ?? "").replace(/^\uFEFF/, "").trim();
+    if (!text) return "";
+    const blocks = [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)];
+    let code = (blocks.at(-1)?.[1] ?? text).trim();
+    if (prefix && suffix) {
+      const start = code.indexOf(prefix);
+      const end = code.lastIndexOf(suffix);
+      if (start !== -1 && end > start) code = code.slice(start + prefix.length, end);
+    }
+    return code.replace(/^\s*code:\s*/i, "").trim();
+  }
+  
+  function importProgrammingCode(reader) {
+    const editor = reader.programmingEditor;
+    if (!editor) return;
+    const pData = reader.documentModel?.questions?.[0]?.programmingData || {};
+    const prefix = editor.prefixCode ?? pData.prefixCode ?? "";
+    const suffix = editor.suffixCode ?? pData.suffixCode ?? "";
+    const readClipboard = typeof navigator !== "undefined" ? navigator.clipboard?.readText : null;
+    const fallback = () => {
+      const pasted = typeof window !== "undefined" && window.prompt
+        ? window.prompt("Paste the completed editable code:", "")
+        : null;
+      if (pasted !== null) applyImportedCode(pasted);
+    };
+    const applyImportedCode = (input) => {
+      const code = extractImportedCode(input, prefix, suffix);
+      if (!code) {
+        reader.notify?.("No code found to import", "warning", 2500);
+        return;
+      }
+      editor.setCode(code);
+      reader.notify?.("Code imported into the editor", "success", 2500);
+    };
+    if (typeof readClipboard === "function") {
+      Promise.resolve(readClipboard.call(navigator)).then((text) => {
+        if (String(text ?? "").trim()) applyImportedCode(text);
+        else fallback();
+      }).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+  
   function handleReaderKeyDown(e) {
     if (!this.sheetElement || !this.isOpen()) return;
   
@@ -44940,6 +45948,8 @@
       }).catch(() => {
         this.notify?.("Failed to copy current code", "error", 2500);
       });
+    } else if (action === "import-code") {
+      importProgrammingCode(this);
     } else if (action === "copy-prompt-context" || action === "copy-prompt") {
       const text = copyAiContext(this.documentModel);
       const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
@@ -45172,6 +46182,7 @@
     let scrollObserver = null;
     const selectedQuestions = new Set();
     const userSelections = new Map(); // questionNumber -> selection value
+    const userEditedQuestions = new Set();
     const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
     let currentZoomIndex = 2; // 1.0 default
   
@@ -45202,6 +46213,29 @@
   
     const getAiEntriesMap = () => {
       return new Map(importedEntries.map((e) => [e.number, e]));
+    };
+  
+    const resolveQuestionSelection = (question, aiEntry = getAiEntriesMap().get(question?.number)) =>
+      resolveAiOptionSelection(
+        question,
+        aiEntry,
+        userSelections.get(question?.number),
+        userEditedQuestions.has(question?.number)
+      );
+  
+    const getSelectionsForPortal = () => {
+      const selections = new Map(userSelections);
+      for (const question of reader.documentModel?.questions || []) {
+        const aiEntry = getAiEntriesMap().get(question.number);
+        const isOptionQuestion = isMsqType(question.type) || isMcqType(question.type) ||
+          (Array.isArray(question.options) && question.options.length > 0);
+        if (!isOptionQuestion) continue;
+        const selection = resolveQuestionSelection(question, aiEntry);
+        if (Array.isArray(selection) ? selection.length > 0 : Boolean(selection)) {
+          selections.set(question.number, selection);
+        }
+      }
+      return selections;
     };
   
     const inputSyncDebounceTimers = new Map();
@@ -45265,6 +46299,7 @@
      */
     const initSelectionsFromDocument = (documentModel) => {
       userSelections.clear();
+      userEditedQuestions.clear();
       selectedQuestions.clear();
       for (const [idx, q] of (documentModel?.questions || []).entries()) {
         const qNum = Number(q.number) || (idx + 1);
@@ -45472,7 +46507,7 @@
       const sheet = reader.sheetElement;
       if (!sheet) return;
       const badges = sheet.querySelectorAll("[data-ready-badge]");
-      const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap());
+      const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap(), userEditedQuestions);
   
       badges.forEach((badge) => {
         if (summary.ready > 0) {
@@ -45498,6 +46533,7 @@
       const aiEntriesMap = getAiEntriesMap();
       const aiEntry = aiEntriesMap.get(question.number) || null;
       const userSelection = userSelections.get(question.number);
+      const displaySelection = resolveQuestionSelection(question, aiEntry);
       const qNum = Number(question.number) || (index + 1);
       const isQuestionSelected = selectedQuestions.has(qNum) || selectedQuestions.has(question.number);
       const state = computeAnswerState({ type: question.type, aiEntry, userSelection });
@@ -45617,8 +46653,8 @@
         optsContainer.setAttribute("aria-label", `Question ${question.number} options`);
   
         const currentSelectedLetter =
-          typeof userSelection === "string"
-            ? userSelection.replace(/^[\s(]+|[.\s):]+$/g, "").toUpperCase()
+          typeof displaySelection === "string"
+            ? displaySelection.replace(/^[\s(]+|[.\s):]+$/g, "").toUpperCase()
             : null;
         const aiSuggestedLetter =
           aiEntry &&
@@ -45640,7 +46676,7 @@
             );
             const contentHtml = renderContentNodes(opt.content, { visualMath: true });
             const aiTagHtml = isAiSuggested
-              ? `<span class="saq-opt-ai-tag">AI Suggestion</span>`
+              ? `<span class="saq-opt-ai-tag">AI Suggested</span>`
               : "";
   
             return `
@@ -45677,7 +46713,7 @@
         optsContainer.setAttribute("aria-label", `Question ${question.number} options`);
   
         const currentSelectedSet = new Set(
-          (Array.isArray(userSelection) ? userSelection : [userSelection])
+          (Array.isArray(displaySelection) ? displaySelection : [displaySelection])
             .filter(Boolean)
             .map((s) =>
               String(s).replace(/^[\s(]+|[.\s):]+$/g, "").toUpperCase()
@@ -45700,7 +46736,7 @@
             const isAiSuggested = aiSuggestedSet.has(letter);
             const contentHtml = renderContentNodes(opt.content, { visualMath: true });
             const aiTagHtml = isAiSuggested
-              ? `<span class="saq-opt-ai-tag">AI Suggestion</span>`
+              ? `<span class="saq-opt-ai-tag">AI Suggested</span>`
               : "";
   
             return `
@@ -45831,16 +46867,30 @@
       if (result.fatal) {
         results.textContent = result.fatal;
         results.dataset.tone = "error";
+        results.setAttribute("role", "alert");
+        results.tabIndex = -1;
       } else {
         const answered = result.entries.filter((e) => e.status === "answered").length;
         const missing = result.entries.filter((e) => e.status === "missing").length;
         const invalid = result.entries.filter((e) => e.status === "invalid").length;
-        results.textContent = `✓ ${answered} answered · ${missing} missing · ${invalid} invalid`;
+        results.textContent = `${answered} answered · ${missing} missing · ${invalid} invalid`;
         results.dataset.tone = invalid > 0 ? "warn" : "success";
+        results.setAttribute("role", "status");
+        results.removeAttribute("tabindex");
       }
   
       issues.replaceChildren();
-      for (const item of result.issues || []) {
+      const issueItems = [
+        ...(result.issues || []),
+        ...(result.entries || [])
+          .filter((entry) => entry.status === "invalid")
+          .map((entry) => ({ number: entry.number, reason: entry.reason || "Invalid answer" })),
+      ];
+      const shownIssues = new Set();
+      for (const item of issueItems) {
+        const key = `${item.number}:${item.reason}`;
+        if (shownIssues.has(key)) continue;
+        shownIssues.add(key);
         const row = document.createElement("li");
         row.textContent = `Q${item.number}: ${item.reason}`;
         issues.appendChild(row);
@@ -45916,7 +46966,7 @@
       const dialog = applyDialog();
       if (!dialog || !reader.documentModel) return;
   
-      const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap());
+      const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap(), userEditedQuestions);
   
       const readyEl = dialog.querySelector("[data-summary-ready]");
       const matchedEl = dialog.querySelector("[data-summary-matched]");
@@ -45982,7 +47032,7 @@
           portal,
           traverser,
           documentModel: reader.documentModel,
-          selectionsMap: userSelections,
+          selectionsMap: getSelectionsForPortal(),
           aiEntriesMap: getAiEntriesMap(),
         });
   
@@ -46033,6 +47083,7 @@
       }
   
       userSelections.set(question.number, val);
+      userEditedQuestions.add(question.number);
   
       const block = reader.sheetElement?.querySelector(`#saq-q-${index}`);
       if (block) {
@@ -46045,7 +47096,7 @@
       syncQuestionToPortal(question, val);
     };
   
-    const applyAllAi = () => {
+    const applyAllAi = ({ notify = true } = {}) => {
       let appliedCount = 0;
       for (let index = 0; index < (reader.documentModel?.questions || []).length; index++) {
         const question = reader.documentModel.questions[index];
@@ -46055,25 +47106,46 @@
           appliedCount++;
         }
       }
-      if (appliedCount > 0) {
+      if (notify && appliedCount > 0) {
         reader.notify?.(`Applied AI suggestions to ${appliedCount} question${appliedCount === 1 ? "" : "s"}.`, "success", 3000);
-      } else {
+      } else if (notify) {
         reader.notify?.("No valid AI suggestions available to apply.", "info", 3000);
       }
     };
   
     const importAnswersFromText = (text) => {
-      const result = parseAnswerKey(text, reader.documentModel, {
-        existing: importedEntries.length ? { fp: currentFingerprint, entries: importedEntries } : null,
-      });
+      let result;
+      try {
+        result = parseAnswerKey(text, reader.documentModel, {
+          existing: importedEntries.length ? { fp: currentFingerprint, entries: importedEntries } : null,
+        });
+      } catch (error) {
+        result = {
+          ok: false,
+          fatal: `Unable to validate answers: ${error?.message || String(error)}`,
+          entries: importedEntries,
+          replaced: [],
+          issues: [],
+        };
+      }
+  
       if (result.ok) {
         importedEntries = result.entries;
         lastImportedText = text;
         currentFingerprint = assignmentFingerprint(reader.documentModel);
         enhanceAllQuestionBlocks();
-        reader.notify?.("Imported and validated AI answers.", "success", 3000);
+        // Imported valid answers become portal selections immediately; invalid and missing entries remain untouched.
+        applyAllAi({ notify: false });
+        const invalid = result.entries.filter((entry) => entry.status === "invalid").length;
+        reader.notify?.(
+          invalid ? `Answers reviewed with ${invalid} invalid entr${invalid === 1 ? "y" : "ies"}.` : "Imported and validated AI answers.",
+          invalid ? "warning" : "success",
+          3000
+        );
       }
       renderImportIssues(result);
+      if (result.fatal) importPanel()?.querySelector("[data-import-results]")?.focus?.({ preventScroll: true });
+      return result;
     };
   
     const importAnswers = () => {
@@ -46177,9 +47249,9 @@
               <span>Copy Prompt</span>
             </button>
             <div class="saq-split-btn-group" id="saq-export-split">
-              <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">
-                ${ICONS.markdown}
-                <span>Copy</span>
+              <button type="button" class="saq-btn saq-btn-primary saq-split-main" data-act="print" aria-label="Export assignment as PDF" title="Export assignment as PDF">
+                ${ICONS.print}
+                <span>Export PDF</span>
               </button>
               <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">
                 ${ICONS.chevronDown}
@@ -46398,6 +47470,7 @@
           if (!question) return;
   
           userSelections.set(question.number, input.value);
+          userEditedQuestions.add(question.number);
           const block = sheet.querySelector(`#saq-q-${index}`);
           if (block) {
             const aiEntry = getAiEntriesMap().get(question.number);
@@ -46437,6 +47510,7 @@
           const question = reader.documentModel?.questions?.[index];
           if (!question) return;
           userSelections.set(question.number, input.value);
+          userEditedQuestions.add(question.number);
           syncQuestionToPortal(question, input.value, { debounceMs: 0 });
         });
   
@@ -46484,6 +47558,7 @@
             }
             if (selectedLetter !== null && selectedLetter !== userSelections.get(question.number)) {
               userSelections.set(question.number, selectedLetter);
+              userEditedQuestions.add(question.number);
               const index = reader.documentModel.questions.indexOf(question);
               const block = sheet.querySelector(`#saq-q-${index}`);
               if (block) updateQuestionBlock(block, question, index);
@@ -46511,9 +47586,10 @@
               }
             }
             selectedLetters.sort();
-            const currentLetters = (userSelections.get(question.number) || []).slice().sort();
+            const currentLetters = (resolveQuestionSelection(question, getAiEntriesMap().get(question.number)) || []).slice().sort();
             if (JSON.stringify(selectedLetters) !== JSON.stringify(currentLetters)) {
               userSelections.set(question.number, selectedLetters);
+              userEditedQuestions.add(question.number);
               const index = reader.documentModel.questions.indexOf(question);
               const block = sheet.querySelector(`#saq-q-${index}`);
               if (block) updateQuestionBlock(block, question, index);
@@ -46526,6 +47602,7 @@
             );
             if (inputEl && inputEl.value !== undefined && inputEl.value !== userSelections.get(question.number)) {
               userSelections.set(question.number, inputEl.value);
+              userEditedQuestions.add(question.number);
               const index = reader.documentModel.questions.indexOf(question);
               const block = sheet.querySelector(`#saq-q-${index}`);
               if (block) {
@@ -46618,8 +47695,10 @@
   
           const isMsq = isMsqType(question.type);
           let newSelection;
+          const displayedSelection = resolveQuestionSelection(question, getAiEntriesMap().get(question.number));
+          userEditedQuestions.add(question.number);
           if (isMsq) {
-            let currentList = userSelections.get(question.number) || [];
+            let currentList = displayedSelection || [];
             if (!Array.isArray(currentList))
               currentList = currentList ? [String(currentList)] : [];
             currentList = currentList
@@ -46971,6 +48050,7 @@
           const question = reader.documentModel?.questions?.[index];
           if (question) {
             userSelections.set(question.number, "");
+            userEditedQuestions.add(question.number);
             const block = reader.sheetElement?.querySelector(`#saq-q-${index}`);
             if (block) {
               updateQuestionBlock(block, question, index);
@@ -47110,6 +48190,7 @@
         if (!preserveFeatureState) {
           clearAnswers();
           userSelections.clear();
+          userEditedQuestions.clear();
           selectedQuestions.clear();
           currentFingerprint = null;
         }
@@ -47272,6 +48353,7 @@
             <div class="saq-actions">
               <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-prompt-context" aria-label="Copy Prompt" title="Copy LLM-optimized prompt">${ICONS.copy}<span>Copy Prompt</span></button>
               <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-current-code" aria-label="Copy Code" title="Copy current solution code">${ICONS.code || ICONS.copy}<span>Copy Code</span></button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="import-code" aria-label="Import Code" title="Import solution code from clipboard">${ICONS.import || ICONS.copy}<span>Import Code</span></button>
               <div class="saq-dropdown-wrap">
                 <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="toggle-export-menu" aria-label="Export problem statement" aria-haspopup="menu" aria-controls="saq-export-menu" aria-expanded="false"><span>Export</span>${ICONS.chevronDown}</button>
                 <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
@@ -47301,7 +48383,7 @@
               <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
               <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
               <div class="saq-split-btn-group" id="saq-export-split">
-                <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
+              <button type="button" class="saq-btn saq-btn-primary saq-split-main" data-act="print" aria-label="Export assignment as PDF" title="Export assignment as PDF">${ICONS.print}<span>Export PDF</span></button>
                 <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
                 <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
                   <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
@@ -47540,29 +48622,50 @@
           if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
             const cards = pData.testCases.map((tc) => {
               const label = tc.description ? `Case ${tc.index} (${escapeHtml(tc.description)})` : `Case ${tc.index}`;
+              const statusAvailable = tc.executionStatusAvailable === true && (tc.status === "passed" || tc.status === "failed");
+              const statusHtml = statusAvailable && tc.status === "passed"
+                ? '<span class="acx-badge acx-badge-success">Passed</span>'
+                : statusAvailable && tc.status === "failed"
+                  ? '<span class="acx-badge acx-badge-error">Failed</span>'
+                  : '<span class="acx-badge acx-badge-neutral">Execution status unavailable</span>';
+              const actualAvailable = tc.actualOutputAvailable === true;
+              const actualOutput = actualAvailable
+                ? escapeHtml(tc.actualOutput ?? "") || '<span class="saq-tc-empty">Empty output</span>'
+                : '<span class="saq-tc-unavailable">Actual output unavailable</span>';
               if (tc.raw) {
                 return `
                   <div class="saq-test-case-card">
-                    <div class="saq-test-case-header"><span class="saq-tc-name">${escapeHtml(label)}</span></div>
+                    <div class="saq-test-case-header">
+                      <span class="saq-tc-name">${escapeHtml(label)}</span>
+                      ${statusHtml}
+                    </div>
                     <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.raw)}</pre>
+                    <div class="saq-tc-col saq-tc-actual-raw">
+                      <span class="saq-tc-label">Actual Output</span>
+                      <pre class="saq-tc-pre" tabindex="0">${actualOutput}</pre>
+                    </div>
                   </div>
                 `;
               }
               return `
-                <div class="saq-test-case-card">
+                <div class="saq-test-case-card" data-execution-status="${statusAvailable ? tc.status : "unavailable"}">
                   <div class="saq-test-case-header">
                     <span class="saq-tc-name">${escapeHtml(label)}</span>
                     ${tc.isSample ? '<span class="acx-badge acx-badge-neutral">Sample</span>' : ""}
-                    ${tc.status === "passed" ? '<span class="acx-badge acx-badge-success">Passed</span>' : tc.status === "failed" ? '<span class="acx-badge acx-badge-error">Failed</span>' : ""}
+                    ${statusHtml}
                   </div>
                   <div class="saq-test-case-io">
                     <div class="saq-tc-col">
                       <span class="saq-tc-label">Input</span>
-                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input || "")}</pre>
+                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input ?? "")}</pre>
                     </div>
                     <div class="saq-tc-col">
                       <span class="saq-tc-label">Expected Output</span>
-                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput || "")}</pre>
+                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput ?? "")}</pre>
+                    </div>
+                    <div class="saq-tc-col">
+                      <span class="saq-tc-label">Actual Output</span>
+                      <pre class="saq-tc-pre" tabindex="0">${actualOutput}</pre>
                     </div>
                   </div>
                 </div>
@@ -51697,7 +52800,7 @@
       this.config.readerTextSize = "default";
       this.config.directPdfEnabled = true;
       if (typeof window !== "undefined") {
-        window.__saqVersion = "0.3.0";
+        window.__saqVersion = "0.4.0";
         window.__saqStatus = () => ({
           assessment: Boolean(this.portal?.detectAssessment?.()),
           readerOpen: Boolean(this.reader?.isOpen?.()),
@@ -51937,6 +53040,16 @@
       }
   
       if (this.reader.isMounted() && this.activeDocument && !this.reader.isOpen()) {
+        if (this.portal.isProgrammingAssignment?.()) {
+          const editor = this.reader.programmingEditor;
+          const draft = editor?.isModified?.() ? editor.getCode?.() : null;
+          await this.refresh();
+          if (draft !== null && this.reader.programmingEditor) {
+            this.reader.programmingEditor.setCode?.(draft);
+          }
+          return;
+        }
+  
         this.launcher.setExpanded?.(true);
         this.launcher.hide();
         this.reader.show();

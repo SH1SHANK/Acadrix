@@ -6,8 +6,6 @@ const DEFAULT_TERM_ID = "2026-09";
 const DEFAULT_SUPABASE_URL = "https://aocrcrdmwmdtthrwypii.supabase.co";
 const DEFAULT_SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvY3JjcmRtd21kdHRocnd5cGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0ODg5OTYsImV4cCI6MjEwNjA2NDk5Nn0.LTTbBscGie1nfUTnjAjvuuJ2tjW0F4znDl9C5C8bAp8";
-const DEFAULT_GRADE_SYNC_SECRET = "acx_grade_sync_secret_7f8e9d0c1b2a3b4c5d6e7f8a9b0c1d2e";
-const DEFAULT_SYNC_ENDPOINT = "/functions/v1/grade-sync";
 
 // ── DOM References ────────────────────────────────────────────────────────────
 const openBtn = document.getElementById("open");
@@ -25,7 +23,6 @@ const shortcutClear = document.getElementById("shortcutClear");
 const headMenuToggle = document.getElementById("headMenuToggle");
 const headMenu = document.getElementById("headMenu");
 const clearDeadlinesBtn = document.getElementById("clearDeadlines");
-const clearGradesBtn = document.getElementById("clearGrades");
 
 const mf = typeof chrome !== "undefined" && chrome?.runtime?.getManifest
   ? chrome.runtime.getManifest()
@@ -160,14 +157,16 @@ function migrateSettings(store, callback) {
     if ("fontName" in items) {
       if (!("portalFont" in items)) {
         const rawFont = (items.fontName || "").trim();
-        updates.portalFont = /^satoshi(\s*variable)?$/i.test(rawFont) ? "satoshi" : "default";
+        updates.portalFont = /^(satoshi|outfit|inter|roboto|montserrat)(\s*variable)?$/i.test(rawFont)
+          ? rawFont.toLowerCase().replace(/\s+variable$/, "")
+          : "default";
       }
       keysToRemove.push("fontName");
     } else if (!("portalFont" in items)) {
       updates.portalFont = "default";
     }
 
-    // 2. Remove legacy hide toggles & deprecated grade keys
+    // 2. Remove legacy UI keys and obsolete stores.
     for (const key of ["hideBreadcrumb", "hideBanner", "hideSidebar", "acx:grades:v1", "acx:pending-sync:v1"]) {
       if (key in items) {
         keysToRemove.push(key);
@@ -271,7 +270,6 @@ let operationalState = {
   tab: {
     isIitm: false,
     isAssessment: false,
-    isGradesPage: false,
     isReaderOpen: false,
     version: "",
     hasRuntime: false,
@@ -313,8 +311,6 @@ function renderOperationalUI() {
     updateBadgeElement(portalBadge, "Reader Active", "info");
   } else if (tab.isAssessment) {
     updateBadgeElement(portalBadge, "Assessment Ready", "success");
-  } else if (tab.isGradesPage) {
-    updateBadgeElement(portalBadge, "Grades View", "info");
   } else if (tab.isIitm) {
     updateBadgeElement(portalBadge, "IITM Portal", "neutral");
   } else {
@@ -336,7 +332,7 @@ function renderOperationalUI() {
     }
   }
 
-  // 3. Supabase Cloud Sync Card
+  // 3. Cloud sync card
   const effectiveSyncStatus = isSyncing ? "SYNCING" : (!isOnline ? "OFFLINE" : sync.lastSyncStatus);
   if (syncBadge) {
     switch (effectiveSyncStatus) {
@@ -518,7 +514,7 @@ function renderUpcomingDeadlines(events = []) {
     if (verifiedTimestamp) {
       freshnessText = `Checked ${formatRelativeTime(verifiedTimestamp)}`;
     }
-    const sourceLabel = item.deadlineSource === "SUPABASE" ? " · via Supabase" : "";
+    const sourceLabel = item.deadlineSource === "SUPABASE" ? " · synced" : "";
     const metaDisplay = `${freshnessText}${sourceLabel}`;
 
     return {
@@ -580,17 +576,16 @@ async function refreshStorageData() {
 
   return new Promise((resolve) => {
     store.get(
-      [ACADEMIC_EVENTS_CACHE_KEY, "acx:pending-sync:v1", "acx:sync-status:v1"],
+      [ACADEMIC_EVENTS_CACHE_KEY, "acx:sync-status:v1"],
       (items = {}) => {
         const eventsCache = items[ACADEMIC_EVENTS_CACHE_KEY] || {};
         const events = Array.isArray(eventsCache.events) ? eventsCache.events : [];
-        const pending = items["acx:pending-sync:v1"] || {};
         const syncStatus = items["acx:sync-status:v1"] || {};
 
         const totalRecords = events.length;
         const courseCount = 0;
 
-        const pendingCount = Object.keys(pending).length;
+        const pendingCount = 0;
 
         operationalState.local = {
           totalRecords,
@@ -614,10 +609,10 @@ async function refreshStorageData() {
   });
 }
 
-// ── Trigger Supabase Grade Sync ────────────────────────────────────────────────
+// ── Refresh the shared academic schedule ─────────────────────────────────────
 let syncExecutionLock = false;
 
-async function executeGradeSync() {
+async function executeScheduleSync() {
   if (syncExecutionLock || operationalState.isSyncing) return;
   if (!store?.get || !store?.set) return;
 
@@ -703,10 +698,8 @@ async function executeGradeSync() {
     await refreshStorageData();
   }
 }
-const executeScheduleSync = executeGradeSync;
-
 manualSyncBtn?.addEventListener("click", () => {
-  executeGradeSync();
+  executeScheduleSync();
 });
 
 // ── Initialize Settings, Active Tab Probe & Event Listeners ────────────────────
@@ -796,18 +789,6 @@ if (store) {
     });
   });
 
-  clearGradesBtn?.addEventListener("click", () => {
-    store.remove(["acx:grades:v1", "acx:pending-sync:v1", "acx:sync-status:v1"], () => {
-      if (clearGradesBtn) {
-        clearGradesBtn.textContent = "Cleared";
-        setTimeout(() => {
-          clearGradesBtn.textContent = "Clear";
-        }, 1200);
-      }
-      refreshStorageData();
-    });
-  });
-
   chrome.storage.onChanged?.addListener((changes, areaName) => {
     if (areaName && areaName !== "local") return;
     if (changes.openShortcut && !recordingShortcut) {
@@ -841,7 +822,7 @@ if (store) {
     if (changes.notificationsEnabled && notificationsToggle) {
       notificationsToggle.checked = Boolean(changes.notificationsEnabled.newValue);
     }
-    if (changes[ACADEMIC_EVENTS_CACHE_KEY] || changes["acx:grades:v1"] || changes["acx:deadlines:v1"] || changes["acx:pending-sync:v1"] || changes["acx:sync-status:v1"]) {
+    if (changes[ACADEMIC_EVENTS_CACHE_KEY] || changes["acx:deadlines:v1"] || changes["acx:sync-status:v1"]) {
       refreshStorageData();
     }
   });
@@ -852,7 +833,6 @@ if (store) {
   selects.forEach((s) => s.closest(".row")?.remove());
   shortcutBtn?.closest(".row")?.remove();
   clearDeadlinesBtn?.closest(".row")?.remove();
-  clearGradesBtn?.closest(".row")?.remove();
 }
 
 window.addEventListener("online", () => renderOperationalUI());
@@ -872,7 +852,6 @@ window.addEventListener("offline", () => renderOperationalUI());
 
   if (!isIitm) {
     operationalState.tab.isAssessment = false;
-    operationalState.tab.isGradesPage = false;
     operationalState.tab.isReaderOpen = false;
     renderOperationalUI();
     return;
@@ -885,13 +864,11 @@ window.addEventListener("offline", () => renderOperationalUI());
         const hasRuntime = typeof window.__saqOpen === "function";
         let assessment = false;
         let readerOpen = false;
-        let gradesPage = false;
 
         if (typeof window.__saqStatus === "function") {
           const status = window.__saqStatus();
           assessment = Boolean(status?.assessment);
           readerOpen = Boolean(status?.readerOpen);
-          gradesPage = Boolean(status?.gradesPage);
         } else if (window.__unfold?.portal?.detectAssessment) {
           assessment = Boolean(window.__unfold.portal.detectAssessment());
           readerOpen = Boolean(window.__unfold?.reader?.isOpen?.());
@@ -908,7 +885,6 @@ window.addEventListener("offline", () => renderOperationalUI());
             )
           );
           assessment = hasPaginator && hasQuestion;
-          gradesPage = Boolean(document.querySelector(".desktop-container, .mobile-container, app-grades, .grades-container"));
         }
 
         return {
@@ -916,7 +892,6 @@ window.addEventListener("offline", () => renderOperationalUI());
           hasRuntime,
           assessment,
           readerOpen,
-          gradesPage,
         };
       },
     });
@@ -924,7 +899,6 @@ window.addEventListener("offline", () => renderOperationalUI());
     const info = probeResults?.[0]?.result || {};
     operationalState.tab.isAssessment = Boolean(info.assessment);
     operationalState.tab.isReaderOpen = Boolean(info.readerOpen);
-    operationalState.tab.isGradesPage = Boolean(info.gradesPage);
     operationalState.tab.hasRuntime = Boolean(info.hasRuntime);
     operationalState.tab.version = info.version || "";
 

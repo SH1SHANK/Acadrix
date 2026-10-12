@@ -5,7 +5,7 @@ import { ContentType, QuestionType } from "../src/model/types.js";
 import { ExportSession, createPdfDataUrlResourceMap } from "../src/orchestration/session.js";
 import { exportAssignmentToText } from "../src/exporters/plain-text.js";
 import { normalizeDocument } from "../src/document/normalizer.js";
-import { applyResolvedImageDataUrls } from "../src/document/compiler.js";
+import { applyResolvedImageDataUrls, compilePdfDefinition } from "../src/document/compiler.js";
 import { DocNodeType } from "../src/document/ast.js";
 
 const imageBytes = new Uint8Array([1, 2, 3]);
@@ -63,7 +63,25 @@ const documentModel = {
         language: "javascript",
         starterCode: "function area() {\n  return 0;\n}",
         currentCode: "function area() {\n  return 3;\n}",
-        testCases: [{ index: 1, description: "basic", input: "2 3", expectedOutput: "3" }],
+        testCases: [{
+          index: 1,
+          description: "basic",
+          input: "2 3",
+          expectedOutput: "3",
+          actualOutput: "3\n  4",
+          actualOutputAvailable: true,
+          status: "failed",
+          executionStatusAvailable: true,
+        }, {
+          index: 2,
+          description: "unavailable",
+          input: "0",
+          expectedOutput: "0",
+          actualOutput: "",
+          actualOutputAvailable: false,
+          status: "passed",
+          executionStatusAvailable: false,
+        }],
       },
     },
   ],
@@ -88,11 +106,91 @@ assert.equal(inferredDataUrlMap.get("https://portal.example/without-content-type
 
 const normalized = normalizeDocument(documentModel);
 const normalizedFigure = normalized.questions[0].stem.find((node) => node.type === DocNodeType.FIGURE);
+const normalizedTestCase = normalized.questions[0].stem.find((node) => node.type === DocNodeType.TEST_CASE);
 assert.ok(normalizedFigure, "figure survives semantic PDF normalization");
 assert.equal(normalizedFigure.caption, "Diagram 1: input geometry");
 assert.equal(normalizedFigure.children[0].src, source);
+assert.equal(normalizedTestCase.actualOutput, "3\n  4");
+assert.equal(normalizedTestCase.actualOutputAvailable, true);
+assert.equal(normalizedTestCase.executionStatusAvailable, true);
+assert.equal(normalizedTestCase.status, "failed");
+const unavailableTestCase = normalized.questions[0].stem.filter((node) => node.type === DocNodeType.TEST_CASE)[1];
+assert.equal(unavailableTestCase.actualOutputAvailable, false);
+assert.equal(unavailableTestCase.executionStatusAvailable, false);
+assert.equal(unavailableTestCase.status, null, "Unverified status must not survive explicit unavailability");
+
+const proseWithSimilarTerms = normalizeDocument({
+  metadata: { title: "Test case extraction fixture" },
+  questions: [{
+    number: 1,
+    type: QuestionType.PROGRAMMING,
+    stem: [{
+      type: ContentType.PARAGRAPH,
+      value: "The test cases described in the prompt compare expected output for each sample.",
+    }],
+    programmingData: {
+      language: "python",
+      testCases: [{ index: 1, input: "1", expectedOutput: "2" }],
+    },
+  }],
+});
+assert.equal(
+  proseWithSimilarTerms.questions[0].stem.filter((node) => node.type === DocNodeType.TEST_CASE).length,
+  1,
+  "Mentioning test cases and expected output in prose must not suppress structured extracted cases"
+);
 applyResolvedImageDataUrls(normalized, dataUrlMap);
 assert.equal(normalizedFigure.children[0].dataUrl, "data:image/png;base64,AQID");
+
+const semanticLongCode = Array.from({ length: 13 }, (_, index) => `  const value${index} = ${index};`).join("\n");
+const semanticLongOutput = Array.from({ length: 13 }, (_, index) => `output ${index}`).join("\n");
+const semanticLayout = compilePdfDefinition(normalizeDocument({
+  metadata: { title: "Semantic pagination fixture" },
+  questions: [{
+    number: 1,
+    type: QuestionType.PROGRAMMING,
+    stem: [{ type: ContentType.CODE_BLOCK, value: "function small() {\n  return 1;\n}", attributes: { language: "javascript" } }],
+    programmingData: {
+      language: "javascript",
+      currentCode: semanticLongCode,
+      testCases: [
+        { index: 1, input: "1", expectedOutput: "2", actualOutput: "2", actualOutputAvailable: true },
+        { index: 2, input: semanticLongOutput, expectedOutput: semanticLongOutput, actualOutput: semanticLongOutput, actualOutputAvailable: true },
+      ],
+    },
+  }],
+}));
+const findSemanticNode = (value, predicate) => {
+  if (Array.isArray(value)) {
+    for (const child of value) {
+      const match = findSemanticNode(child, predicate);
+      if (match) return match;
+    }
+  } else if (value && typeof value === "object") {
+    if (predicate(value)) return value;
+    for (const child of Object.values(value)) {
+      const match = findSemanticNode(child, predicate);
+      if (match) return match;
+    }
+  }
+  return null;
+};
+const semanticLongCodeBlock = findSemanticNode(semanticLayout.content, (node) =>
+  node.table?.dontBreakRows !== undefined && JSON.stringify(node).includes("value12")
+);
+const semanticSmallCodeBlock = findSemanticNode(semanticLayout.content, (node) =>
+  node.table?.dontBreakRows !== undefined && JSON.stringify(node).includes("small")
+);
+const semanticLongCase = findSemanticNode(semanticLayout.content, (node) =>
+  node.stack?.[0]?.columns?.[0]?.text?.includes("Test Case 2")
+);
+const semanticSmallCase = findSemanticNode(semanticLayout.content, (node) =>
+  node.stack?.[0]?.columns?.[0]?.text?.includes("Test Case 1")
+);
+assert.equal(semanticLongCodeBlock?.table?.dontBreakRows, false, "long semantic code can split across pages");
+assert.equal(semanticSmallCodeBlock?.table?.dontBreakRows, true, "small semantic code remains together");
+assert.equal(semanticLongCase?.unbreakable, false, "long semantic test cases can split across pages");
+assert.equal(semanticSmallCase?.unbreakable, true, "small semantic test cases remain together");
 const normalizedExternalSvg = normalizeDocument({
   metadata: {},
   questions: [{ number: 1, stem: [{
@@ -138,6 +236,12 @@ assert.match(exported.outputs.markdown, /!\[A labelled triangle\]\(assets\/q01-i
 assert.ok(exported.outputs.text.includes("A labelled triangle"));
 assert.match(exported.outputs.pdf.html, /data:image\/png;base64,AQID/);
 assert.match(exported.outputs.pdf.html, /Diagram 1: input geometry/);
+assert.match(exported.outputs.pdf.html, /Actual Output/);
+assert.match(exported.outputs.pdf.html, /Actual output unavailable/);
+assert.match(exported.outputs.pdf.html, /Execution status unavailable/);
+assert.ok(exported.outputs.pdf.html.includes("3\n  4"));
+assert.match(exported.outputs.pdf.html, /saq-pdf-token-keyword/);
+assert.match(exported.outputs.pdf.html, /saq-pdf-code-block is-compact/);
 assert.equal(exported.resourceStats.downloaded, 1);
 
 const readerSource = fs.readFileSync(new URL("../src/ui/reader.js", import.meta.url), "utf8");
@@ -147,6 +251,6 @@ assert.match(readerSource, /Download as Markdown/);
 assert.match(readerSource, /Download as TXT File/);
 const popup = fs.readFileSync(new URL("../extension/popup.html", import.meta.url), "utf8");
 assert.match(popup, /icons\/icon-48\.png/);
-assert.match(popup, /© 2026 civiks · MIT License/);
+assert.match(popup, /Acadrix • © made with ❤️ by sh1shank/);
 
 console.log("✓ Programming rich-content Markdown, TXT, PDF, and branding export checks passed");

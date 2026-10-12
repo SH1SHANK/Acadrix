@@ -60,6 +60,7 @@ export const EXTENSION_MODULES = [
   "src/bridge/ace-bridge.js",
   "src/extraction/programming.js",
   "src/bridge/protocol.js",
+  "src/bridge/answer-stream.js",
   "src/exporters/markdown.js",
   "src/exporters/plain-text.js",
   "src/bridge/prompt.js",

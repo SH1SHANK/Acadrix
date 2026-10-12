@@ -156,6 +156,7 @@ export class ReaderDrawer {
           <div class="saq-actions">
             <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-prompt-context" aria-label="Copy Prompt" title="Copy LLM-optimized prompt">${ICONS.copy}<span>Copy Prompt</span></button>
             <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-current-code" aria-label="Copy Code" title="Copy current solution code">${ICONS.code || ICONS.copy}<span>Copy Code</span></button>
+            <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="import-code" aria-label="Import Code" title="Import solution code from clipboard">${ICONS.import || ICONS.copy}<span>Import Code</span></button>
             <div class="saq-dropdown-wrap">
               <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="toggle-export-menu" aria-label="Export problem statement" aria-haspopup="menu" aria-controls="saq-export-menu" aria-expanded="false"><span>Export</span>${ICONS.chevronDown}</button>
               <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
@@ -185,7 +186,7 @@ export class ReaderDrawer {
             <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
             <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
             <div class="saq-split-btn-group" id="saq-export-split">
-              <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
+            <button type="button" class="saq-btn saq-btn-primary saq-split-main" data-act="print" aria-label="Export assignment as PDF" title="Export assignment as PDF">${ICONS.print}<span>Export PDF</span></button>
               <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
               <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
                 <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
@@ -424,29 +425,50 @@ export class ReaderDrawer {
         if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
           const cards = pData.testCases.map((tc) => {
             const label = tc.description ? `Case ${tc.index} (${escapeHtml(tc.description)})` : `Case ${tc.index}`;
+            const statusAvailable = tc.executionStatusAvailable === true && (tc.status === "passed" || tc.status === "failed");
+            const statusHtml = statusAvailable && tc.status === "passed"
+              ? '<span class="acx-badge acx-badge-success">Passed</span>'
+              : statusAvailable && tc.status === "failed"
+                ? '<span class="acx-badge acx-badge-error">Failed</span>'
+                : '<span class="acx-badge acx-badge-neutral">Execution status unavailable</span>';
+            const actualAvailable = tc.actualOutputAvailable === true;
+            const actualOutput = actualAvailable
+              ? escapeHtml(tc.actualOutput ?? "") || '<span class="saq-tc-empty">Empty output</span>'
+              : '<span class="saq-tc-unavailable">Actual output unavailable</span>';
             if (tc.raw) {
               return `
                 <div class="saq-test-case-card">
-                  <div class="saq-test-case-header"><span class="saq-tc-name">${escapeHtml(label)}</span></div>
+                  <div class="saq-test-case-header">
+                    <span class="saq-tc-name">${escapeHtml(label)}</span>
+                    ${statusHtml}
+                  </div>
                   <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.raw)}</pre>
+                  <div class="saq-tc-col saq-tc-actual-raw">
+                    <span class="saq-tc-label">Actual Output</span>
+                    <pre class="saq-tc-pre" tabindex="0">${actualOutput}</pre>
+                  </div>
                 </div>
               `;
             }
             return `
-              <div class="saq-test-case-card">
+              <div class="saq-test-case-card" data-execution-status="${statusAvailable ? tc.status : "unavailable"}">
                 <div class="saq-test-case-header">
                   <span class="saq-tc-name">${escapeHtml(label)}</span>
                   ${tc.isSample ? '<span class="acx-badge acx-badge-neutral">Sample</span>' : ""}
-                  ${tc.status === "passed" ? '<span class="acx-badge acx-badge-success">Passed</span>' : tc.status === "failed" ? '<span class="acx-badge acx-badge-error">Failed</span>' : ""}
+                  ${statusHtml}
                 </div>
                 <div class="saq-test-case-io">
                   <div class="saq-tc-col">
                     <span class="saq-tc-label">Input</span>
-                    <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input || "")}</pre>
+                    <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input ?? "")}</pre>
                   </div>
                   <div class="saq-tc-col">
                     <span class="saq-tc-label">Expected Output</span>
-                    <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput || "")}</pre>
+                    <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput ?? "")}</pre>
+                  </div>
+                  <div class="saq-tc-col">
+                    <span class="saq-tc-label">Actual Output</span>
+                    <pre class="saq-tc-pre" tabindex="0">${actualOutput}</pre>
                   </div>
                 </div>
               </div>

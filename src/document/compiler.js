@@ -15,7 +15,7 @@
  */
 
 import { DocNodeType, QuestionKind } from "./ast.js";
-import { CODE_COLORS } from "./tokenizer.js";
+import { CODE_COLORS, tokenizeCode } from "./tokenizer.js";
 import { setupPdfMakeFonts } from "./fonts.js";
 // Acadrix Design System Tokens (from DESIGN.md)
 export const ACX_THEME = Object.freeze({
@@ -300,8 +300,6 @@ function createQuestionDefinition(q, isLast, options, idx = 0) {
     },
   ];
 
-  // If question stem has an initial paragraph, include it in the unbreakable header stack
-  // so the title is NEVER orphaned at page bottom!
   const stemBlocks = q.stem || [];
   let remainingStem = stemBlocks;
 
@@ -315,7 +313,7 @@ function createQuestionDefinition(q, isLast, options, idx = 0) {
     stack: headerStack,
   });
 
-  // Remaining stem blocks
+  // Keep the question title with its opening paragraph when possible.
   for (const block of remainingStem) {
     parts.push(renderBlock(block, options));
   }
@@ -339,12 +337,12 @@ function createQuestionDefinition(q, isLast, options, idx = 0) {
           lineColor: ACX_THEME.BORDER,
         },
       ],
-      margin: [0, 10, 0, 12],
+      margin: [0, 6, 0, 8],
     });
   }
 
   return {
-    margin: [0, 4, 0, isLast ? 8 : 4],
+    margin: [0, 2, 0, isLast ? 6 : 2],
     stack: parts,
   };
 }
@@ -370,6 +368,9 @@ function renderBlock(block, options) {
 
     case DocNodeType.CODE:
       return renderCodeBlock(block);
+
+    case DocNodeType.TEST_CASE:
+      return renderTestCaseBlock(block);
 
     case DocNodeType.MATCHING:
       return renderMatchingTable(block);
@@ -519,6 +520,8 @@ function renderInline(inl) {
 function renderCodeBlock(codeBlock) {
   const tokenLines = codeBlock.tokens || [];
   const textRuns = [];
+  const lineCount = String(codeBlock.code || "").split(/\r\n|\r|\n/).length;
+  const keepTogether = lineCount <= 12;
 
   for (let lineIdx = 0; lineIdx < tokenLines.length; lineIdx++) {
     const lineTokens = tokenLines[lineIdx];
@@ -558,8 +561,9 @@ function renderCodeBlock(codeBlock) {
   const content = textRuns.length > 0 ? textRuns : [{ text: codeBlock.code || "" }];
 
   return {
-    margin: [0, 4, 0, 6],
+    margin: [0, 1, 0, 3],
     table: {
+      dontBreakRows: keepTogether,
       widths: ["*"],
       body: [
         [
@@ -567,7 +571,7 @@ function renderCodeBlock(codeBlock) {
             text: content,
             style: "codeBlock",
             fillColor: ACX_THEME.CODE_BG,
-            margin: [8, 6, 8, 6],
+            margin: [6, 4, 6, 4],
           },
         ],
       ],
@@ -588,15 +592,55 @@ function renderCodeBlock(codeBlock) {
 /**
  * Renders a structured two-column matching question table.
  */
-function renderMatchingTable(matching) {
+function renderTestCaseBlock(testCase) {
+  const status = testCase.executionStatusAvailable && (testCase.status === "passed" || testCase.status === "failed")
+    ? (testCase.status === "passed" ? "Passed" : "Failed")
+    : "Execution status unavailable";
+  const title = `Test Case ${testCase.index || ""}${testCase.description ? ` — ${testCase.description}` : ""}`.trim();
+  const fields = [
+    ["Input", testCase.input ?? "", true],
+    ["Expected Output", testCase.expectedOutput ?? "", true],
+    ["Actual Output", testCase.actualOutputAvailable ? (testCase.actualOutput || "(empty output)") : "Actual output unavailable", testCase.actualOutputAvailable],
+  ];
+  const lineCount = fields.reduce((total, [, value]) => total + String(value).split("\n").length, 0);
+  const stack = [
+    {
+      columns: [
+        { text: title, bold: true, fontSize: 9, color: ACX_THEME.INK_900, width: "*" },
+        { text: status, fontSize: 8, color: testCase.status === "failed" ? ACX_THEME.ERROR : testCase.status === "passed" ? ACX_THEME.SUCCESS : ACX_THEME.INK_600, alignment: "right", width: "auto" },
+      ],
+      margin: [0, 0, 0, 3],
+    },
+  ];
+
+  for (const [label, value, available] of fields) {
+    stack.push({ text: label, bold: true, fontSize: 8, color: ACX_THEME.INK_600, margin: [0, 2, 0, 1] });
+    if (available) {
+      stack.push(renderCodeBlock({
+        code: value,
+        tokens: tokenizeCode(value, "text"),
+      }));
+    } else {
+      stack.push({ text: value, italics: true, fontSize: 8, color: ACX_THEME.INK_600, margin: [0, 0, 0, 3] });
+    }
+  }
+
+  return {
+    unbreakable: lineCount <= 12,
+    margin: [0, 1, 0, 3],
+    stack,
+  };
+}
+
+function renderMatchingTable(block) {
   const headerRow = [
-    { text: matching.leftTitle || "List I", style: "tableHeader", margin: [6, 4, 6, 4] },
-    { text: matching.rightTitle || "List II", style: "tableHeader", margin: [6, 4, 6, 4] },
+    { text: block.leftTitle || "List I", style: "tableHeader", margin: [6, 4, 6, 4] },
+    { text: block.rightTitle || "List II", style: "tableHeader", margin: [6, 4, 6, 4] },
   ];
 
   const bodyRows = [headerRow];
 
-  for (const pair of matching.pairs || []) {
+  for (const pair of block.pairs || []) {
     bodyRows.push([
       {
         text: [
@@ -826,8 +870,7 @@ function renderOptions(options, renderOpts) {
   }
 
   return {
-    margin: [0, 4, 0, 4],
-    dontBreakRows: true,
+    margin: [0, 2, 0, 3],
     stack: optionRows,
   };
 }

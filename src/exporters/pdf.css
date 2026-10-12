@@ -33,6 +33,14 @@ html, body {
   print-color-adjust: exact;
 }
 
+@media print {
+  html, body { margin: 0; padding: 0; }
+  .saq-pdf-document { max-width: none; }
+  .saq-pdf-question { margin-bottom: 12pt; }
+  .saq-pdf-options { page-break-inside: auto; break-inside: auto; }
+  .saq-pdf-code-block:not(.is-compact) { page-break-inside: auto; break-inside: auto; }
+}
+
 /* ── Document Container ─────────────────────────────────────────────────── */
 
 .saq-pdf-document {
@@ -44,8 +52,8 @@ html, body {
 /* ── Assignment Header ──────────────────────────────────────────────────── */
 
 .saq-pdf-header {
-  margin-bottom: 20pt;
-  padding-bottom: 10pt;
+  margin-bottom: 12pt;
+  padding-bottom: 6pt;
   border-bottom: 1.5pt solid #222222;
   page-break-after: avoid;
   break-after: avoid;
@@ -78,7 +86,7 @@ html, body {
 /* ── Question Block & Headings ─────────────────────────────────────────── */
 
 .saq-pdf-question {
-  margin-bottom: 22pt;
+  margin-bottom: 12pt;
   page-break-inside: auto;
   break-inside: auto;
 }
@@ -95,7 +103,7 @@ html, body {
 .saq-pdf-question-meta {
   font-size: 8.5pt;
   color: #555555;
-  margin-bottom: 8pt;
+  margin-bottom: 6pt;
   page-break-after: avoid;
   break-after: avoid;
 }
@@ -113,11 +121,11 @@ html, body {
 }
 
 .saq-pdf-paragraph {
-  margin: 0 0 8pt 0;
+  margin: 0 0 4pt 0;
 }
 
 .saq-pdf-heading {
-  margin: 12pt 0 6pt 0;
+  margin: 8pt 0 4pt 0;
   font-weight: 600;
   color: #222222;
   page-break-after: avoid;
@@ -146,8 +154,8 @@ h6.saq-pdf-heading { font-size: 9pt; }
   list-style: none;
   padding: 0;
   margin: 0 0 10pt 0;
-  page-break-inside: avoid;
-  break-inside: avoid;
+  page-break-inside: auto;
+  break-inside: auto;
 }
 
 .saq-pdf-option {
@@ -209,11 +217,53 @@ pre.saq-pdf-code-block {
   padding: 8pt 10pt;
   margin: 8pt 0;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
   tab-size: 4;
   page-break-inside: auto;
   break-inside: auto;
 }
+
+pre.saq-pdf-code-block.is-compact {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.saq-pdf-token-keyword { color: #2F4BDB; font-weight: 600; }
+.saq-pdf-token-string { color: #1A7F4B; }
+.saq-pdf-token-comment { color: #6B707B; }
+.saq-pdf-token-number { color: #9A6700; }
+.saq-pdf-token-operator { color: #5B606B; }
+.saq-pdf-token-default { color: #16181D; }
+
+.saq-pdf-programming-section { margin: 4pt 0; }
+.saq-pdf-test-case {
+  margin: 4pt 0 8pt;
+  padding: 6pt;
+  border: 1px solid #dee2e6;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+.saq-pdf-test-case.is-compact {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.saq-pdf-test-case-title { margin: 0 0 4pt; font-size: 9pt; }
+.saq-pdf-test-case-status { margin-left: 6pt; font-size: 8pt; font-weight: 400; }
+.saq-pdf-test-case-field { margin: 3pt 0; }
+pre.saq-pdf-test-case-value {
+  margin: 2pt 0 0;
+  padding: 4pt 6pt;
+  background: #f8f9fa;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 8pt;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+.saq-pdf-unavailable { margin: 2pt 0 0; color: #5B606B; font-style: italic; }
 
 code.saq-pdf-inline-code {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;

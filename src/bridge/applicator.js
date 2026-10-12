@@ -19,12 +19,13 @@ import {
   isMsqType,
   isNumericalType,
   isTextType,
+  resolveAiOptionSelection,
 } from "./answer-state.js";
 
 /**
  * Summarizes the current answer review status across all questions.
  */
-export function summarizeReviewState(documentModel, selectionsMap = new Map(), aiEntriesMap = new Map()) {
+export function summarizeReviewState(documentModel, selectionsMap = new Map(), aiEntriesMap = new Map(), userEditedQuestions = new Set()) {
   const questions = documentModel?.questions || [];
   let ready = 0;
   let aiMatched = 0;
@@ -51,6 +52,15 @@ export function summarizeReviewState(documentModel, selectionsMap = new Map(), a
       ready++;
     } else if (state === AnswerState.AI_SUGGESTED) {
       aiSuggested++;
+      const suggestedSelection = resolveAiOptionSelection(
+        q,
+        aiEntry,
+        userSelection,
+        userEditedQuestions.has(q.number)
+      );
+      if (Array.isArray(suggestedSelection) ? suggestedSelection.length > 0 : Boolean(suggestedSelection)) {
+        ready++;
+      }
     } else if (state === AnswerState.INVALID) {
       invalid++;
       issues.push({ number: q.number, reason: "Invalid answer format or value" });
@@ -141,12 +151,13 @@ export async function applyAnswersToPortal({
   }
 
   if (questionsToApply.length === 0) {
-    return { ok: true, appliedCount: 0, error: "No answers selected to apply." };
+    return { ok: false, appliedCount: 0, error: "No valid answers selected to apply." };
   }
 
   // 3. Record user's original active question for exact restoration
   const originalLogicalNumber = portal.getActiveLogicalNumber() || 1;
   let appliedCount = 0;
+  const skippedQuestions = [];
 
   try {
     for (let idx = 0; idx < questionsToApply.length; idx++) {
@@ -198,16 +209,21 @@ export async function applyAnswersToPortal({
           await traverser.navigateToQuestion(chip, targetNumber, 3500, signal);
         } else {
           console.warn(`[Acadrix Applicator] Could not navigate to question ${targetNumber}`);
+          skippedQuestions.push(targetNumber);
           continue;
         }
       }
 
       // Ensure question DOM is populated
       const qRoot = portal.getCurrentQuestionElement();
-      if (!qRoot) continue;
+      if (!qRoot) {
+        skippedQuestions.push(targetNumber);
+        continue;
+      }
 
       // Apply to MCQ
       if (isMcqType(question.type)) {
+        let matchedOption = false;
         const targetLetter = String(selection).trim().toUpperCase();
         const choices = Array.from(qRoot.querySelectorAll("button.choice, [role=radio], .choice"));
         for (let i = 0; i < choices.length; i++) {
@@ -230,15 +246,18 @@ export async function applyAnswersToPortal({
             if (!isChecked) {
               ch.click();
             }
-            appliedCount++;
+            matchedOption = true;
             break;
           }
         }
+        if (matchedOption) appliedCount++;
+        else skippedQuestions.push(targetNumber);
       }
       // Apply to MSQ
       else if (isMsqType(question.type)) {
         const targetSet = new Set((selection || []).map((s) => String(s).trim().toUpperCase()));
         const choices = Array.from(qRoot.querySelectorAll("button.choice, [role=checkbox], [role=radio], .choice"));
+        const matchedOptions = new Set();
         for (let i = 0; i < choices.length; i++) {
           const ch = choices[i];
           const letterEl = ch.querySelector?.(".choice-letter, .letter");
@@ -255,6 +274,7 @@ export async function applyAnswersToPortal({
             ch.classList?.contains?.("active") ||
             Boolean(ch.querySelector?.("input:checked, .checkbox.checked, .radio.checked, .choice-indicator.checked"));
           const shouldCheck = targetSet.has(letter);
+          if (shouldCheck) matchedOptions.add(letter);
 
           if (shouldCheck && !isChecked) {
             ch.click();
@@ -262,7 +282,8 @@ export async function applyAnswersToPortal({
             ch.click();
           }
         }
-        appliedCount++;
+        if ([...targetSet].every((letter) => matchedOptions.has(letter))) appliedCount++;
+        else skippedQuestions.push(targetNumber);
       }
       // Apply to NUMERICAL
       else if (isNumericalType(question.type)) {
@@ -274,6 +295,8 @@ export async function applyAnswersToPortal({
           input.dispatchEvent(new Event("input", { bubbles: true }));
           input.dispatchEvent(new Event("change", { bubbles: true }));
           appliedCount++;
+        } else {
+          skippedQuestions.push(targetNumber);
         }
       }
       // Apply to TEXT
@@ -284,6 +307,8 @@ export async function applyAnswersToPortal({
           input.dispatchEvent(new Event("input", { bubbles: true }));
           input.dispatchEvent(new Event("change", { bubbles: true }));
           appliedCount++;
+        } else {
+          skippedQuestions.push(targetNumber);
         }
       }
     }
@@ -296,7 +321,15 @@ export async function applyAnswersToPortal({
     }
   }
 
-  return { ok: true, appliedCount };
+  const uniqueSkipped = [...new Set(skippedQuestions)];
+  return {
+    ok: uniqueSkipped.length === 0,
+    appliedCount,
+    skippedQuestions: uniqueSkipped,
+    error: uniqueSkipped.length
+      ? `Could not apply answers for ${uniqueSkipped.map((number) => `Q${number}`).join(", ")}. Check that each portal question control is available.`
+      : undefined,
+  };
 }
 
 /**

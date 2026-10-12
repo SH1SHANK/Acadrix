@@ -11,6 +11,52 @@ import {
 
 
 const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
+
+export function extractImportedCode(input, prefix = "", suffix = "") {
+  const text = String(input ?? "").replace(/^\uFEFF/, "").trim();
+  if (!text) return "";
+  const blocks = [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)];
+  let code = (blocks.at(-1)?.[1] ?? text).trim();
+  if (prefix && suffix) {
+    const start = code.indexOf(prefix);
+    const end = code.lastIndexOf(suffix);
+    if (start !== -1 && end > start) code = code.slice(start + prefix.length, end);
+  }
+  return code.replace(/^\s*code:\s*/i, "").trim();
+}
+
+function importProgrammingCode(reader) {
+  const editor = reader.programmingEditor;
+  if (!editor) return;
+  const pData = reader.documentModel?.questions?.[0]?.programmingData || {};
+  const prefix = editor.prefixCode ?? pData.prefixCode ?? "";
+  const suffix = editor.suffixCode ?? pData.suffixCode ?? "";
+  const readClipboard = typeof navigator !== "undefined" ? navigator.clipboard?.readText : null;
+  const fallback = () => {
+    const pasted = typeof window !== "undefined" && window.prompt
+      ? window.prompt("Paste the completed editable code:", "")
+      : null;
+    if (pasted !== null) applyImportedCode(pasted);
+  };
+  const applyImportedCode = (input) => {
+    const code = extractImportedCode(input, prefix, suffix);
+    if (!code) {
+      reader.notify?.("No code found to import", "warning", 2500);
+      return;
+    }
+    editor.setCode(code);
+    reader.notify?.("Code imported into the editor", "success", 2500);
+  };
+  if (typeof readClipboard === "function") {
+    Promise.resolve(readClipboard.call(navigator)).then((text) => {
+      if (String(text ?? "").trim()) applyImportedCode(text);
+      else fallback();
+    }).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
 export function handleReaderKeyDown(e) {
   if (!this.sheetElement || !this.isOpen()) return;
 
@@ -288,6 +334,8 @@ export function handleReaderActionClick(e) {
     }).catch(() => {
       this.notify?.("Failed to copy current code", "error", 2500);
     });
+  } else if (action === "import-code") {
+    importProgrammingCode(this);
   } else if (action === "copy-prompt-context" || action === "copy-prompt") {
     const text = copyAiContext(this.documentModel);
     const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);

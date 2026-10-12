@@ -302,6 +302,16 @@ export class AcadrixRuntime {
     }
 
     if (this.reader.isMounted() && this.activeDocument && !this.reader.isOpen()) {
+      if (this.portal.isProgrammingAssignment?.()) {
+        const editor = this.reader.programmingEditor;
+        const draft = editor?.isModified?.() ? editor.getCode?.() : null;
+        await this.refresh();
+        if (draft !== null && this.reader.programmingEditor) {
+          this.reader.programmingEditor.setCode?.(draft);
+        }
+        return;
+      }
+
       this.launcher.setExpanded?.(true);
       this.launcher.hide();
       this.reader.show();

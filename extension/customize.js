@@ -5,10 +5,16 @@
   const store = (() => { try { return chrome.storage?.local; } catch { return null; } })();
   if (!store) return; // not in the extension (e.g. bookmarklet) — nothing to do
 
-  // Portal font: applies Satoshi Variable to the portal when portalFont === "satoshi".
-  const satoshiFontRule = `
+  const fontStacks = {
+    satoshi: '"Satoshi Variable", "Satoshi", system-ui, sans-serif',
+    outfit: '"Outfit", system-ui, sans-serif',
+    inter: '"Inter", system-ui, sans-serif',
+    roboto: '"Roboto", system-ui, sans-serif',
+    montserrat: '"Montserrat", system-ui, sans-serif',
+  };
+  const portalFontRule = (font) => `
     body, body *:not(mat-icon):not(.material-icons):not([class*="app-icon"]):not(.icon-container):not(i):not(code):not(pre):not(kbd):not(samp):not(.ace_editor):not(.ace_editor *):not(.hljs):not(.hljs *) {
-      font-family: "Satoshi Variable", "Satoshi", system-ui, sans-serif !important;
+      font-family: ${font} !important;
     }
     /* code stays monospace: the Ace editor and highlight.js (.hljs) blocks are
        excluded above; re-assert for plain semantic code tags too. */
@@ -32,7 +38,7 @@
   };
 
   const applyFont = (portalFont, isEnabled) => {
-    setStyle("saq-cz-font", isEnabled && portalFont === "satoshi" ? satoshiFontRule : "");
+    setStyle("saq-cz-font", isEnabled && fontStacks[portalFont] ? portalFontRule(fontStacks[portalFont]) : "");
   };
 
   const defaults = { enabled: true, portalFont: "default" };

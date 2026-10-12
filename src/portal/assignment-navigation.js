@@ -1,6 +1,6 @@
 /**
  * Top-of-view previous/next navigation for the currently selected graded assignment.
- * Buttons inherit their visual treatment from IITM's native secondary button.
+ * Buttons inherit their visual treatment and hover states from IITM's native CTA button.
  */
 export class GradedAssignmentNavigation {
   constructor(portal) {
@@ -15,6 +15,16 @@ export class GradedAssignmentNavigation {
 
     const button = prototype.cloneNode(false);
     button.classList?.remove("selected", "active", "btn-icon-only", "child-row");
+    if (typeof button.classList?.remove === "function" && typeof button.classList?.add === "function") {
+      button.classList.remove("btn-secondary", "btn-primary");
+      button.classList.remove("btn-gradient", "btn-success", "btn-outline", "btn-default");
+      button.classList.add(
+        assignment ? "btn-gradient" : "btn-outline",
+        assignment ? "btn-success" : "btn-default",
+        "btn-shape-box",
+        "btn-size-medium"
+      );
+    }
     button.removeAttribute?.("style");
     for (const attribute of [
       "aria-selected",
@@ -31,19 +41,26 @@ export class GradedAssignmentNavigation {
     }
     button.setAttribute?.("type", "button");
     button.setAttribute?.("data-acx-assignment-nav-button", direction);
-    button.setAttribute?.("aria-label", assignment
-      ? `${direction === "previous" ? "Previous" : "Next"} graded assignment: ${assignment.title}`
-      : `No ${direction} graded assignment`);
+    const label = direction === "previous" ? "Previous graded assignment" : "Next graded assignment";
+    button.setAttribute?.("aria-label", assignment ? `${label}: ${assignment.title}` : `No ${direction} graded assignment`);
     button.setAttribute?.("title", assignment?.title || `No ${direction} graded assignment`);
+    button.style.width = "auto";
+    if (typeof button.classList?.add === "function") button.classList.add("acx-assignment-nav-button");
     button.disabled = !assignment;
     button.setAttribute?.("aria-disabled", String(!assignment));
     button.textContent = assignment
-      ? `${direction === "previous" ? "Previous" : "Next"}: ${assignment.title}`
-      : `${direction === "previous" ? "Previous" : "Next"} graded assignment`;
+      ? direction === "previous"
+        ? `← Previous: ${assignment.title}`
+        : `Next: ${assignment.title} →`
+      : direction === "previous" ? "← Previous graded assignment" : "Next graded assignment →";
 
     button.addEventListener?.("click", (event) => {
       event.preventDefault?.();
-      if (!button.disabled) this.portal?.navigateGradedAssignment?.(direction);
+      if (!button.disabled) {
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        this.portal?.navigateGradedAssignment?.(direction);
+      }
     });
     return button;
   }
@@ -85,7 +102,9 @@ export class GradedAssignmentNavigation {
     nav.style.flexWrap = "wrap";
     nav.style.alignItems = "center";
     nav.style.gap = "var(--acx-space-2, 8px)";
-    nav.style.marginBlockEnd = "var(--acx-space-4, 16px)";
+    nav.style.margin = "var(--acx-space-2, 8px) var(--acx-space-3, 12px) var(--acx-space-4, 16px)";
+    nav.style.padding = "var(--acx-space-1, 4px) var(--acx-space-2, 8px)";
+    nav.style.overflow = "visible";
 
     for (const direction of ["previous", "next"]) {
       const button = this.createButton(prototype, direction, state[direction]);

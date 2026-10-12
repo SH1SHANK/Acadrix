@@ -14,7 +14,7 @@
 import { QuestionType } from "../model/types.js";
 import { isMsqType, isMcqType, isNumericalType, isTextType } from "./answer-state.js";
 
-const TYPE_NAMES = Object.freeze({
+export const TYPE_NAMES = Object.freeze({
   [QuestionType.MCQ]: "MCQ",
   [QuestionType.MSQ]: "MSQ",
   [QuestionType.NUMERICAL]: "NUMERICAL",
@@ -220,6 +220,16 @@ export function validateQuestionAnswer(question, rawAnswer) {
     return { number: qNum, type, status: "answered", answer: canonical, reason: "" };
   }
 
+  if (!isTextType(question.type)) {
+    return {
+      number: qNum,
+      type,
+      status: "invalid",
+      answer: null,
+      reason: `Indexed answers are not supported for ${type} questions`,
+    };
+  }
+
   const textVal = String(rawAnswer).trim();
   if (!textVal) {
     return { number: qNum, type, status: "missing", answer: null, reason: "No answer provided" };
@@ -342,7 +352,13 @@ export function parseAssignmentAnswers(rawText, options = {}) {
   }
 
   // 2. Check for legacy semicolon-only format fallback (e.g. "A;\nB,C;\n1000;")
-  const rawLines = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const normalizedText = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  // Accept compact AI output such as `1: D 2: A` without changing multiline answers.
+  const indexedRecordCount = (normalizedText.match(/(?:^|\s)\d+\s*:/g) || []).length;
+  const compactIndexedText = !normalizedText.includes("\n") && indexedRecordCount > 1
+    ? normalizedText.replace(/\s+(?=\d+\s*:)/g, "\n")
+    : normalizedText;
+  const rawLines = compactIndexedText.split("\n");
   const hasIndexedPattern = rawLines.some((l) => /^\s*\d+\s*:/.test(l));
 
   if (!hasIndexedPattern && rawLines.some((l) => l.trim().endsWith(";"))) {

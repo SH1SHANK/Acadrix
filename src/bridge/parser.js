@@ -7,23 +7,12 @@ import {
   unescapeAnswerRecord,
   serializeAssignmentAnswers,
   parseAssignmentAnswers,
+  TYPE_NAMES,
 } from "./answer-stream.js";
 
+// TYPE_NAMES is imported from answer-stream.js to avoid a duplicate declaration
+// when both modules are bundled into the extension target.
 
-const TYPE_NAMES = Object.freeze({
-  [QuestionType.MCQ]: "MCQ",
-  [QuestionType.MSQ]: "MSQ",
-  [QuestionType.NUMERICAL]: "NUMERICAL",
-  [QuestionType.TEXT]: "TEXT",
-  [QuestionType.DESCRIPTIVE]: "DESCRIPTIVE",
-  [QuestionType.UNKNOWN]: "UNKNOWN",
-  mcq: "MCQ",
-  msq: "MSQ",
-  numerical: "NUMERICAL",
-  text: "TEXT",
-  descriptive: "DESCRIPTIVE",
-  unknown: "UNKNOWN",
-});
 
 function lineStartAt(text, index) {
   return index === 0 || text[index - 1] === "\n";

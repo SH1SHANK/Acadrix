@@ -131,6 +131,36 @@ export function normalizeSelection(type, value) {
 }
 
 /**
+ * Resolves the visible/applicable MCQ or MSQ choice without treating an AI
+ * suggestion as a user edit. Existing selections always take precedence.
+ */
+export function resolveAiOptionSelection(question, aiEntry, currentSelection, userEdited = false) {
+  const type = question?.type;
+  const isMsq = isMsqType(type);
+  const isMcq = isMcqType(type) || (!isMsq && Array.isArray(question?.options) && question.options.length > 0);
+  if (!isMcq && !isMsq) return currentSelection ?? null;
+
+  const current = normalizeSelection(type, currentSelection);
+  const hasCurrent = isMsq ? current.length > 0 : Boolean(current);
+  if (userEdited || hasCurrent) return current;
+  if (aiEntry?.status !== "answered" || aiEntry.answer === null || aiEntry.answer === undefined) {
+    return current;
+  }
+
+  const suggestion = normalizeSelection(type, isMsq
+    ? (Array.isArray(aiEntry.answer) ? aiEntry.answer : [aiEntry.answer])
+    : String(aiEntry.answer));
+  const validLetters = new Set((question.options || []).map((option) =>
+    String(option.letter || "").replace(/^[\s(]+|[.\s):]+$/g, "").trim().toUpperCase()
+  ));
+  const values = isMsq ? suggestion : (suggestion ? [suggestion] : []);
+  if (!values.length || validLetters.size === 0 || values.some((letter) => !letter || !validLetters.has(letter))) {
+    return current;
+  }
+  return suggestion;
+}
+
+/**
  * Computes the deterministic AnswerState for a question given its AI suggestion and user selection.
  * @param {Object} params
  * @param {string} params.type - Question type (MCQ, MSQ, NUMERICAL, TEXT, etc.)

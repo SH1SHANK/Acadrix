@@ -186,7 +186,11 @@ export class IitmPortalAdapter {
     const sidebar = $(IITM_SELECTORS.decor?.sidebarContainer || "#side-nav-content", this.doc);
     if (!sidebar) return null;
 
-    const gradedRows = $$(IITM_SELECTORS.decor?.gradedAssignmentRows || "button.child-row[data-acx-graded='true']", sidebar);
+    const gradedRows = $$(IITM_SELECTORS.decor?.gradedAssignmentRows || "button.child-row[data-acx-graded='true']", sidebar)
+      .filter((row) => {
+        const title = $(IITM_SELECTORS.decor?.childTitle || ".child-title", row);
+        return !/\bsolution\b/i.test((title?.textContent || row.textContent || "").replace(/\s+/g, " ").trim());
+      });
     const selectedRow = $(IITM_SELECTORS.metadata.selectedChildRow, sidebar);
     const currentIndex = gradedRows.findIndex((row) => row === selectedRow);
     if (currentIndex < 0) return null;
@@ -207,16 +211,16 @@ export class IitmPortalAdapter {
     };
   }
 
-  /** Returns the assignment view position and a portal-native secondary button prototype. */
+  /** Returns the assignment view position and a portal-native CTA button prototype. */
   getAssignmentNavigationMount() {
     const pageType = this.detectPageType();
     const view = pageType === PortalPageType.PROGRAMMING_ASSIGNMENT
       ? this.getProgrammingView()
       : pageType === PortalPageType.ASSESSMENT
         ? this.getAssessmentView()
-        : null;
+        : $("app-pa-start-page, .pa-start-page, app-pa-instructions, .pa-instructions, app-assessment-start-page, .assessment-start-page, app-assessment-overview, .assessment-overview", this.doc);
     const parent = view?.parentElement || view?.parentNode || null;
-    const portalButton = "button.btn.btn-secondary, button.btn-secondary";
+    const portalButton = "button.btn-gradient, button.btn.btn-secondary, button.btn-secondary";
     const buttonPrototype = view?.querySelector?.(portalButton)
       || $(portalButton, parent)
       || $(portalButton, this.doc);

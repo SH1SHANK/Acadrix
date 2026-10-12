@@ -527,22 +527,16 @@ await check("UI Interactions: storage.onChanged event dynamically updates popup 
 });
 
 // ── 3. Operational Status & Cloud Sync Tests ─────────────────────────────────
-await check("Operational Status: calculates local grades count, course count and pending queue badge", async () => {
+await check("Operational Status: calculates academic event count and synced state", async () => {
   const env = await setupPopupEnvironment({
     initialStorage: {
-      "acx:grades:v1": {
-        "2026-09": {
-          "CS2006": {
-            "ga1": { externalAssignmentId: "ga1", yourScore: 90 },
-            "ga2": { externalAssignmentId: "ga2", yourScore: 85 },
-          },
-          "CS2005": {
-            "ga1": { externalAssignmentId: "ga1", yourScore: 95 },
-          },
-        },
-      },
-      "acx:pending-sync:v1": {
-        "2026-09:CS2006:ga2": { key: "2026-09:CS2006:ga2" },
+      "acx:events:v2": {
+        fetchedAt: "2026-10-05T12:00:00.000Z",
+        events: [
+          { id: "event-1", title: "Week 1", event_type: "assignment", event_date: "2026-10-11" },
+          { id: "event-2", title: "Week 2", event_type: "assignment", event_date: "2026-10-18" },
+          { id: "event-3", title: "Exam", event_type: "exam", event_date: "2027-01-10" },
+        ],
       },
       "acx:sync-status:v1": {
         lastSuccessfulSync: "2026-10-05T12:00:00.000Z",
@@ -558,10 +552,9 @@ await check("Operational Status: calculates local grades count, course count and
   const syncBadge = env.elements.get("syncBadge");
   const lastSyncTime = env.elements.get("lastSyncTime");
 
-  assert(extractedCount.textContent === "3", "Must report 3 extracted grade records");
-  assert(coursesCount.textContent === "2 courses tracked", "Must report 2 courses tracked");
-  assert(pendingBadge.textContent === "1 pending", "Must report 1 pending record");
-  assert(pendingBadge.classList.contains("acx-badge-warning"), "Pending badge must have warning variant when >0");
+  assert(extractedCount.textContent === "3", "Must report 3 academic events");
+  assert(coursesCount.textContent === "0 courses tracked", "Course count must remain zero for global schedule data");
+  assert(pendingBadge.textContent === "0 pending", "Pending badge must remain zero");
   assert(syncBadge.textContent === "Synced", "Sync badge must show Synced");
   assert(syncBadge.classList.contains("acx-badge-success"), "Sync badge must have success variant");
   assert(lastSyncTime.textContent !== "Never", "Last sync time must not be Never when sync timestamp exists");
@@ -589,56 +582,29 @@ await check("Operational Status: renders failed and auth_error sync states with 
   assert(manualSyncBtn.textContent === "Retry", "Manual sync button must say Retry on failure");
 });
 
-await check("Operational Status: clear grades button removes all grade stores and updates count to 0", async () => {
-  const env = await setupPopupEnvironment({
-    initialStorage: {
-      "acx:grades:v1": {
-        "2026-09": { "CS2006": { "ga1": { yourScore: 90 } } },
-      },
-      "acx:pending-sync:v1": { "key1": {} },
-      "acx:sync-status:v1": { lastSyncStatus: "SYNCED" },
-    },
-  });
-
-  const clearGradesBtn = env.elements.get("clearGrades");
-  clearGradesBtn.click();
-  await new Promise((resolve) => setImmediate(resolve));
-
-  const stats = env.store.getStats();
-  assert(stats.removeCalls >= 1, "Must call store.remove on Clear Grades click");
-  const removedKeys = stats.removeLog.flat();
-  assert(removedKeys.includes("acx:grades:v1"), "Must remove acx:grades:v1");
-  assert(removedKeys.includes("acx:pending-sync:v1"), "Must remove acx:pending-sync:v1");
-  assert(removedKeys.includes("acx:sync-status:v1"), "Must remove acx:sync-status:v1");
-});
-
-await check("Operational Status: storage.onChanged updates grade stats dynamically", async () => {
+await check("Operational Status: storage.onChanged updates academic event stats dynamically", async () => {
   const env = await setupPopupEnvironment({});
   const listener = env.storageListeners[0];
   assert(typeof listener === "function");
 
-  // Simulate grades update in storage
-  env.store.data["acx:grades:v1"] = {
-    "2026-09": {
-      "CS2006": {
-        "ga1": { externalAssignmentId: "ga1" },
-        "ga2": { externalAssignmentId: "ga2" },
-      },
-    },
+  env.store.data["acx:events:v2"] = {
+    events: [
+      { id: "event-1", title: "Week 1", event_type: "assignment", event_date: "2026-10-11" },
+      { id: "event-2", title: "Week 2", event_type: "assignment", event_date: "2026-10-18" },
+    ],
   };
-  env.store.data["acx:pending-sync:v1"] = {};
   env.store.data["acx:sync-status:v1"] = {
     lastSuccessfulSync: "2026-10-05T14:30:00.000Z",
     lastSyncStatus: "SYNCED",
   };
 
   listener({
-    "acx:grades:v1": { newValue: env.store.data["acx:grades:v1"] },
+    "acx:events:v2": { newValue: env.store.data["acx:events:v2"] },
   }, "local");
 
   await new Promise((resolve) => setImmediate(resolve));
 
-  assert(env.elements.get("extractedCount").textContent === "2", "Extracted count must update to 2");
+  assert(env.elements.get("extractedCount").textContent === "2", "Academic event count must update to 2");
   assert(env.elements.get("pendingBadge").textContent === "0 pending", "Pending badge must show 0 pending");
   assert(env.elements.get("syncBadge").textContent === "Synced", "Sync badge must update to Synced");
 });

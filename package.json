@@ -1,6 +1,6 @@
 {
   "name": "acadrix",
-  "version": "0.3.0",
+  "version": "0.4.0-rc.1",
   "private": true,
   "description": "Acadrix — High-fidelity assignment & document extractor for the IITM Online Degree portal.",
   "type": "module",

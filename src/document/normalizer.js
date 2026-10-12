@@ -22,6 +22,7 @@ import {
   HeadingBlock,
   ParagraphBlock,
   CodeBlock,
+  TestCaseBlock,
   TableBlock,
   TableRowBlock,
   TableCellBlock,
@@ -665,10 +666,79 @@ export function normalizeStemNodes(stemNodes, matchingBlock, diagnostics) {
 }
 
 /**
+ * Checks whether a stem already contains every extracted test case as structured data.
+ */
+export function stemHasStructuredTestCases(stemNodes, testCases) {
+  if (!Array.isArray(stemNodes) || !Array.isArray(testCases) || testCases.length === 0) return false;
+
+  const normalizeValue = (value) => String(value ?? "").replace(/\r\n?/g, "\n").trim();
+  const cellText = (cell) => {
+    if (typeof cell?.text === "string") return cell.text;
+    if (typeof cell?.value === "string") return cell.value;
+    return (cell?.children || []).map(cellText).join("");
+  };
+  const matchesCase = (row, inputIndex, outputIndex, testCase) =>
+    normalizeValue(cellText(row[inputIndex])) === normalizeValue(testCase.input) &&
+    normalizeValue(cellText(row[outputIndex])) === normalizeValue(testCase.expectedOutput);
+
+  const hasMatchingTable = (node) => {
+    if (!node || typeof node !== "object") return false;
+    const isTable = node.type === ContentType.TABLE || node.type === DocNodeType.TABLE;
+    if (isTable) {
+      const rows = Array.isArray(node.rows) ? node.rows : (node.children || []);
+      const rowCells = rows.map((row) => Array.isArray(row.cells) ? row.cells : (row.children || []));
+      const headers = (rowCells[0] || []).map((cell) => normalizeValue(cellText(cell)).toLowerCase());
+      const inputIndex = headers.findIndex((header) => /\binput\b/.test(header));
+      const outputIndex = headers.findIndex((header) => /\bexpected\s+output\b|^output$/.test(header));
+      const dataRows = rowCells.slice(1);
+      if (inputIndex >= 0 && outputIndex >= 0) {
+        const matchedRows = new Set();
+        const allCasesPresent = testCases.every((testCase) => {
+          const rowIndex = dataRows.findIndex((row, index) =>
+            !matchedRows.has(index) && matchesCase(row, inputIndex, outputIndex, testCase)
+          );
+          if (rowIndex < 0) return false;
+          matchedRows.add(rowIndex);
+          return true;
+        });
+        if (allCasesPresent) return true;
+      }
+    }
+    return (node.children || []).some(hasMatchingTable);
+  };
+
+  const structuredCases = [];
+  const collectTestCases = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (node.type === ContentType.TEST_CASE || node.type === DocNodeType.TEST_CASE) {
+      structuredCases.push(node);
+    }
+    (node.children || []).forEach(collectTestCases);
+  };
+  stemNodes.forEach(collectTestCases);
+  if (structuredCases.length >= testCases.length) {
+    const matchedCases = new Set();
+    const allCasesPresent = testCases.every((testCase) => {
+      const caseIndex = structuredCases.findIndex((candidate, index) =>
+        !matchedCases.has(index) &&
+        normalizeValue(candidate.input ?? candidate.attributes?.input) === normalizeValue(testCase.input) &&
+        normalizeValue(candidate.expectedOutput ?? candidate.attributes?.expectedOutput) === normalizeValue(testCase.expectedOutput)
+      );
+      if (caseIndex < 0) return false;
+      matchedCases.add(caseIndex);
+      return true;
+    });
+    if (allCasesPresent) return true;
+  }
+
+  return stemNodes.some(hasMatchingTable);
+}
+
+/**
  * Top-Level Normalization Pipeline.
- * 
+ *
  * Transforms an AssignmentDocument into a validated, canonical DocRoot AST.
- * 
+ *
  * @param {Object} assignmentDoc Canonical AssignmentDocument
  * @param {Object} [options]
  * @returns {DocRoot}
@@ -728,39 +798,25 @@ export function normalizeDocument(assignmentDoc, options = {}) {
       const rawLang = pData.language || "javascript";
       const lang = normalizeProgrammingLanguage(rawLang) || rawLang;
 
-      if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
+      const stemAlreadyHasTestCases = stemHasStructuredTestCases(q.stem || [], pData.testCases);
+
+      if (!stemAlreadyHasTestCases && Array.isArray(pData.testCases) && pData.testCases.length > 0) {
         normalizedStem.push(new HeadingBlock({ level: 3, text: "Test Cases" }));
-        const tcRows = [
-          new TableRowBlock({
-            cells: [
-              new TableCellBlock({ text: "Test Case", isHeader: true }),
-              new TableCellBlock({ text: "Input", isHeader: true }),
-              new TableCellBlock({ text: "Expected Output", isHeader: true }),
-            ],
-          }),
-        ];
-
         for (const tc of pData.testCases) {
-          const desc = tc.description || `Case ${tc.index}`;
-          tcRows.push(
-            new TableRowBlock({
-              cells: [
-                new TableCellBlock({ text: desc }),
-                new TableCellBlock({ text: tc.input || "" }),
-                new TableCellBlock({ text: tc.expectedOutput || "" }),
-              ],
-            })
-          );
+          normalizedStem.push(new TestCaseBlock({
+            id: tc.id,
+            index: tc.index,
+            description: tc.description,
+            input: tc.input ?? "",
+            expectedOutput: tc.expectedOutput ?? "",
+            actualOutput: tc.actualOutput ?? "",
+            actualOutputAvailable: tc.actualOutputAvailable === true,
+            executionStatusAvailable: tc.executionStatusAvailable === true,
+            status: tc.status,
+            isSample: tc.isSample,
+            isVisible: tc.isVisible,
+          }));
         }
-
-        normalizedStem.push(
-          new TableBlock({
-            caption: "Visible Test Cases",
-            headerRows: 1,
-            widths: ["24%", "38%", "38%"],
-            rows: tcRows,
-          })
-        );
       }
 
       if (pData.currentCode || pData.starterCode) {

@@ -75,11 +75,67 @@ export const ExtractionState = Object.freeze({
   CANCELLED: "CANCELLED",
 });
 
+function readExecutionStatus(element) {
+  if (!element) return null;
+  const statusNode = $(IITM_SELECTORS.programming?.testCaseStatus, element);
+  const value = String(
+    element.dataset?.executionStatus ||
+    element.getAttribute?.("data-execution-status") ||
+    statusNode?.dataset?.status ||
+    statusNode?.getAttribute?.("data-status") ||
+    statusNode?.textContent ||
+    ""
+  ).trim().toLowerCase();
+  if (/^(?:passed|pass|success)$/.test(value) || element.classList?.contains?.("is-passed") || element.classList?.contains?.("passed")) {
+    return "passed";
+  }
+  if (/^(?:failed|fail|error)$/.test(value) || element.classList?.contains?.("is-failed") || element.classList?.contains?.("failed")) {
+    return "failed";
+  }
+  return null;
+}
+
+function outputText(element) {
+  return String(element?.textContent ?? "").replace(/\r\n?/g, "\n");
+}
+
+function testCaseDetailsSignature(detailsRoot) {
+  return outputText(detailsRoot);
+}
+
+function waitForTestCaseDetailsUpdate(detailsRoot, previousSignature, timeoutMs) {
+  if (!detailsRoot || typeof detailsRoot.querySelector !== "function") {
+    return Promise.resolve(false);
+  }
+  if (testCaseDetailsSignature(detailsRoot) !== previousSignature) {
+    return Promise.resolve(true);
+  }
+
+  if (typeof MutationObserver === "undefined") {
+    return new Promise((resolve) => setTimeout(() => resolve(true), 0));
+  }
+
+  return new Promise((resolve) => {
+    let observer = null;
+    const finish = (updated) => {
+      clearTimeout(timer);
+      observer?.disconnect();
+      resolve(updated);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    observer = new MutationObserver(() => {
+      if (testCaseDetailsSignature(detailsRoot) !== previousSignature) finish(true);
+    });
+    observer.observe(detailsRoot, { childList: true, characterData: true, subtree: true });
+  });
+}
+
 export class ProgrammingAssignmentExtractor {
   constructor(doc = typeof document !== "undefined" ? document : null, options = {}) {
     this.doc = doc;
     this.options = {
       tabSwitchTimeoutMs: 3000,
+      testCaseSwitchTimeoutMs: 1500,
       navigationTimeoutMs: 4000,
       walker: null,
       ...options,
@@ -591,13 +647,25 @@ export class ProgrammingAssignmentExtractor {
         ) || pills[0];
 
       const testCases = [];
+      const detailsRoot = $(IITM_SELECTORS.programming?.testCaseDetails || ".test-case-details", container) || container;
       for (let idx = 0; idx < pills.length; idx++) {
         const pill = pills[idx];
+        let detailsReady = true;
         if (pills.length > 1 && typeof pill.click === "function") {
-          try {
-            pill.click();
-            await new Promise((r) => setTimeout(r, 20));
-          } catch {}
+          const isSelected = pill.classList?.contains?.("is-selected") || pill.getAttribute?.("aria-selected") === "true";
+          if (!isSelected) {
+            const previousSignature = testCaseDetailsSignature(detailsRoot);
+            try {
+              pill.click();
+              detailsReady = await waitForTestCaseDetailsUpdate(
+                detailsRoot,
+                previousSignature,
+                this.options.testCaseSwitchTimeoutMs
+              );
+            } catch {
+              detailsReady = false;
+            }
+          }
         }
 
         const pillText = (pill.textContent || "").replace(/\s+/g, " ").trim() || `Case ${idx + 1}`;
@@ -608,33 +676,41 @@ export class ProgrammingAssignmentExtractor {
           ? "failed"
           : null;
 
-        const detailsRoot = $(IITM_SELECTORS.programming?.testCaseDetails || ".test-case-details", container) || container;
-        const blocks = $$(IITM_SELECTORS.programming?.testCaseBlock || ".test-case-block", detailsRoot);
+        const blocks = detailsReady
+          ? $$(IITM_SELECTORS.programming?.testCaseBlock || ".test-case-block", detailsRoot)
+          : [];
 
         let input = "";
         let expectedOutput = "";
         let actualOutput = "";
+        let actualOutputAvailable = false;
 
         for (const block of blocks) {
           const titleEl = $(IITM_SELECTORS.programming?.testCaseBlockTitle || ".title, .wrapper .title", block);
           const contentEl = $(IITM_SELECTORS.programming?.testCaseBlockContent || ".content", block);
           const titleText = (titleEl?.textContent || "").toLowerCase();
-          const val = (contentEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+          const val = outputText(contentEl);
 
           if (titleText.includes("input")) {
-            input = val;
+            input = val.trim();
           } else if (titleText.includes("expected")) {
-            expectedOutput = val;
+            expectedOutput = val.trim();
           } else if (titleText.includes("actual")) {
             actualOutput = val;
+            actualOutputAvailable = Boolean(contentEl);
           }
         }
 
-        if (!input && !expectedOutput) {
+        if (detailsReady && !input && !expectedOutput) {
           const inEl = $(IITM_SELECTORS.programming?.testCaseInput, detailsRoot);
           const outEl = $(IITM_SELECTORS.programming?.testCaseOutput, detailsRoot);
-          input = (inEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
-          expectedOutput = (outEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+          const actualEl = $(IITM_SELECTORS.programming?.testCaseActualOutput, detailsRoot);
+          input = outputText(inEl).trim();
+          expectedOutput = outputText(outEl).trim();
+          if (actualEl) {
+            actualOutput = outputText(actualEl);
+            actualOutputAvailable = true;
+          }
         }
 
         testCases.push(
@@ -645,18 +721,28 @@ export class ProgrammingAssignmentExtractor {
             input,
             expectedOutput,
             actualOutput,
+            actualOutputAvailable,
             isSample,
             isVisible: true,
-            status,
+            status: status || readExecutionStatus(detailsRoot),
           })
         );
       }
 
-      // Restore initial pill selection
+      // Restore initial pill selection and wait for its scoped detail panel to settle.
       if (initialPill && typeof initialPill.click === "function") {
-        try {
-          initialPill.click();
-        } catch {}
+        const initialIsSelected = initialPill.classList?.contains?.("is-selected") || initialPill.getAttribute?.("aria-selected") === "true";
+        if (!initialIsSelected) {
+          const previousSignature = testCaseDetailsSignature(detailsRoot);
+          try {
+            initialPill.click();
+            await waitForTestCaseDetailsUpdate(
+              detailsRoot,
+              previousSignature,
+              this.options.testCaseSwitchTimeoutMs
+            );
+          } catch {}
+        }
       }
 
       if (testCases.length > 0 && testCases.some((tc) => tc.input || tc.expectedOutput)) {
@@ -684,27 +770,34 @@ export class ProgrammingAssignmentExtractor {
         let input = "";
         let expectedOutput = "";
         let actualOutput = "";
+        let actualOutputAvailable = false;
 
         if (blocks.length > 0) {
           for (const block of blocks) {
             const titleEl = $(IITM_SELECTORS.programming?.testCaseBlockTitle || ".title, .wrapper .title", block);
             const contentEl = $(IITM_SELECTORS.programming?.testCaseBlockContent || ".content", block);
             const titleText = (titleEl?.textContent || "").toLowerCase();
-            const val = (contentEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+            const val = outputText(contentEl);
 
             if (titleText.includes("input")) {
-              input = val;
+              input = val.trim();
             } else if (titleText.includes("expected")) {
-              expectedOutput = val;
+              expectedOutput = val.trim();
             } else if (titleText.includes("actual")) {
               actualOutput = val;
+              actualOutputAvailable = Boolean(contentEl);
             }
           }
         } else {
           const inEl = $(IITM_SELECTORS.programming?.testCaseInput || ".input, pre.input, .test-input", itemEl);
           const outEl = $(IITM_SELECTORS.programming?.testCaseOutput || ".output, pre.output, .test-output, .expected-output", itemEl);
-          input = (inEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
-          expectedOutput = (outEl?.textContent ?? "").replace(/\r\n/g, "\n").trim();
+          const actualEl = $(IITM_SELECTORS.programming?.testCaseActualOutput, itemEl);
+          input = outputText(inEl).trim();
+          expectedOutput = outputText(outEl).trim();
+          if (actualEl) {
+            actualOutput = outputText(actualEl);
+            actualOutputAvailable = true;
+          }
         }
 
         const isSample = /sample|visible/i.test(description) || idx === 0;
@@ -717,8 +810,10 @@ export class ProgrammingAssignmentExtractor {
             input,
             expectedOutput,
             actualOutput,
+            actualOutputAvailable,
             isSample,
             isVisible: true,
+            status: readExecutionStatus(itemEl),
           })
         );
       }

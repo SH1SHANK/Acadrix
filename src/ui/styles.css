@@ -1741,6 +1741,8 @@ button.saq-option.is-ai-suggested:not(.is-selected):not(.selected) {
     box-shadow var(--acx-duration-fast) var(--acx-ease-standard),
     opacity var(--acx-duration-base) var(--acx-ease-standard),
     transform var(--acx-duration-base) var(--acx-ease-standard);
+  will-change: transform, opacity;
+  contain: layout paint;
 }
 .saq-launcher.is-shown {
   transform: translateX(-50%);
@@ -1750,6 +1752,7 @@ button.saq-option.is-ai-suggested:not(.is-selected):not(.selected) {
 .saq-launcher:active {
   background: var(--acx-surface-sunken);
   border-color: var(--acx-accent-active);
+  transform: translate(-50%, 1px) scale(0.98);
 }
 .saq-launcher:focus-visible {
   outline: var(--acx-border-width-strong) solid var(--acx-focus-ring);
@@ -2712,8 +2715,14 @@ math {
 
 .saq-test-case-io {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--acx-space-3);
+}
+
+@media (max-width: 900px) {
+  .saq-test-case-io {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 600px) {
@@ -2745,7 +2754,19 @@ math {
   color: var(--acx-text);
   overflow-x: auto;
   white-space: pre-wrap;
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.saq-tc-empty,
+.saq-tc-unavailable {
+  color: var(--acx-text-muted);
+  font-family: var(--acx-font-ui);
+  font-style: italic;
+}
+
+.saq-tc-actual-raw {
+  margin-top: var(--acx-space-3);
 }
 
 /* ── Code Import Modal Dialog ─────────────────────────────────────────── */

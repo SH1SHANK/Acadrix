@@ -63,7 +63,9 @@ export class TestCaseNode {
     index = 1,
     input = "",
     expectedOutput = "",
-    actualOutput = "",
+    actualOutput = null,
+    actualOutputAvailable = undefined,
+    executionStatusAvailable = undefined,
     explanation = "",
     raw = "",
     description = "",
@@ -76,12 +78,14 @@ export class TestCaseNode {
     this.input = typeof input === "string" ? input : (input !== null && input !== undefined ? String(input) : "");
     this.expectedOutput = typeof expectedOutput === "string" ? expectedOutput : (expectedOutput !== null && expectedOutput !== undefined ? String(expectedOutput) : "");
     this.actualOutput = typeof actualOutput === "string" ? actualOutput : (actualOutput !== null && actualOutput !== undefined ? String(actualOutput) : "");
+    this.actualOutputAvailable = Boolean(actualOutputAvailable ?? (actualOutput !== null && actualOutput !== undefined));
+    this.executionStatusAvailable = Boolean(executionStatusAvailable ?? (status === "passed" || status === "failed"));
+    this.status = this.executionStatusAvailable && (status === "passed" || status === "failed") ? status : null;
     this.explanation = explanation || "";
     this.raw = raw || "";
     this.description = description || "";
     this.isSample = Boolean(isSample);
     this.isVisible = Boolean(isVisible);
-    this.status = status || null;
   }
 }
 
@@ -404,6 +408,15 @@ export function buildExportFilename(meta = {}, ext = "pdf") {
   }
 
   // If no standard kind acronym matched, check if rawTitle contains a specific non-generic title
+  // Keep descriptive assignment names intact; abbreviating them to "GA" loses the identity users need in downloads.
+  if (rawTitle && /\bgraded\s+assignment\b\s*[-:]/i.test(rawTitle)) {
+    const assignmentName = rawTitle
+      .replace(/\bweek[\s\-_:]*\d{1,2}\b/gi, "")
+      .replace(/^[\s\-_:]+|[\s\-_:]+$/g, "")
+      .trim();
+    if (assignmentName) kindPart = sanitizeFilenameSegment(assignmentName);
+  }
+
   if (!kindPart && rawTitle && typeof rawTitle === "string") {
     const trimmedTitle = rawTitle.trim();
     if (

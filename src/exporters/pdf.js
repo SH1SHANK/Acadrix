@@ -13,6 +13,8 @@ import { compilePdfDocument } from "../document/compiler.js";
 import { postProcessPdf } from "../document/post-processor.js";
 import { validatePdfCompilation } from "../document/validator.js";
 import { DocNodeType, QuestionKind } from "../document/ast.js";
+import { CODE_COLORS, tokenizeCode } from "../document/tokenizer.js";
+import { stemHasStructuredTestCases } from "../document/normalizer.js";
 
 // ── Default Print Stylesheet (Inlined for standalone portability) ────────────
 
@@ -44,6 +46,14 @@ html, body {
   print-color-adjust: exact;
 }
 
+@media print {
+  html, body { margin: 0; padding: 0; }
+  .saq-pdf-document { max-width: none; }
+  .saq-pdf-question { margin-bottom: 8pt; }
+  .saq-pdf-options { page-break-inside: auto; break-inside: auto; }
+  .saq-pdf-code-block:not(.is-compact) { page-break-inside: auto; break-inside: auto; }
+}
+
 .saq-pdf-document {
   max-width: 100%;
   margin: 0 auto;
@@ -51,8 +61,8 @@ html, body {
 }
 
 .saq-pdf-header {
-  margin-bottom: 20pt;
-  padding-bottom: 10pt;
+  margin-bottom: 12pt;
+  padding-bottom: 6pt;
   border-bottom: 1.5pt solid #222222;
   page-break-after: avoid;
   break-after: avoid;
@@ -83,7 +93,7 @@ html, body {
 }
 
 .saq-pdf-question {
-  margin-bottom: 22pt;
+  margin-bottom: 8pt;
   page-break-inside: auto;
   break-inside: auto;
 }
@@ -100,7 +110,7 @@ html, body {
 .saq-pdf-question-meta {
   font-size: 8.5pt;
   color: #555555;
-  margin-bottom: 8pt;
+  margin-bottom: 6pt;
   page-break-after: avoid;
   break-after: avoid;
 }
@@ -112,15 +122,15 @@ html, body {
 }
 
 .saq-pdf-stem {
-  margin-bottom: 10pt;
+  margin-bottom: 6pt;
 }
 
 .saq-pdf-paragraph {
-  margin: 0 0 8pt 0;
+  margin: 0 0 4pt 0;
 }
 
 .saq-pdf-heading {
-  margin: 12pt 0 6pt 0;
+  margin: 8pt 0 4pt 0;
   font-weight: 600;
   color: #222222;
   page-break-after: avoid;
@@ -147,8 +157,8 @@ h6.saq-pdf-heading { font-size: 9pt; }
   list-style: none;
   padding: 0;
   margin: 0 0 10pt 0;
-  page-break-inside: avoid;
-  break-inside: avoid;
+  page-break-inside: auto;
+  break-inside: auto;
 }
 
 .saq-pdf-option {
@@ -204,13 +214,68 @@ pre.saq-pdf-code-block {
   border: 1px solid #dee2e6;
   border-radius: 3pt;
   padding: 8pt 10pt;
-  margin: 8pt 0;
+  margin: 4pt 0;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
   tab-size: 4;
+  orphans: 2;
+  widows: 2;
   page-break-inside: auto;
   break-inside: auto;
 }
+
+pre.saq-pdf-code-block.is-compact {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.saq-pdf-test-case-field > strong {
+  display: block;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+.saq-pdf-token-keyword { color: #2F4BDB; font-weight: 600; }
+.saq-pdf-token-string { color: #1A7F4B; }
+.saq-pdf-token-comment { color: #6B707B; }
+.saq-pdf-token-number { color: #9A6700; }
+.saq-pdf-token-operator { color: #5B606B; }
+.saq-pdf-token-default { color: #16181D; }
+
+.saq-pdf-programming-section { margin: 4pt 0; }
+.saq-pdf-test-case {
+  margin: 3pt 0 5pt;
+  padding: 5pt;
+  border: 1px solid #dee2e6;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+.saq-pdf-test-case.is-compact {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.saq-pdf-test-case-title {
+  margin: 0 0 4pt;
+  font-size: 9pt;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+.saq-pdf-test-case-status { margin-left: 6pt; font-size: 8pt; font-weight: 400; }
+.saq-pdf-test-case-field { margin: 3pt 0; }
+pre.saq-pdf-test-case-value {
+  margin: 2pt 0 0;
+  padding: 4pt 6pt;
+  background: #f8f9fa;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 8pt;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+.saq-pdf-unavailable { margin: 2pt 0 0; color: #5B606B; font-style: italic; }
 
 code.saq-pdf-inline-code {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
@@ -574,7 +639,11 @@ ${metaBlock}
       }
     }
 
-    // 4. Options
+    // 4. Programming assignment details not already represented in the extracted stem
+    const programmingHtml = this.renderProgrammingData(question);
+    if (programmingHtml) parts.push(programmingHtml);
+
+    // 5. Options
     if (Array.isArray(question.options) && question.options.length > 0) {
       const optionsHtml = this.renderOptions(question.options);
       if (optionsHtml) {
@@ -582,7 +651,7 @@ ${metaBlock}
       }
     }
 
-    // 5. Opt-in Interaction State
+    // 6. Opt-in Interaction State
     if (this.options.includeInteractionState) {
       const interactionHtml = this.renderInteractionState(question);
       if (interactionHtml) {
@@ -590,7 +659,7 @@ ${metaBlock}
       }
     }
 
-    // 6. Opt-in Review / Evaluation Data
+    // 7. Opt-in Review / Evaluation Data
     if (this.options.includeReviewData && question.review) {
       const reviewHtml = this.renderReviewData(question.review);
       if (reviewHtml) {
@@ -599,6 +668,47 @@ ${metaBlock}
     }
 
     return `    <section class="saq-pdf-question" id="question-${question.number}">\n${parts.join("\n")}\n    </section>`;
+  }
+
+  renderProgrammingData(question) {
+    const data = question?.programmingData;
+    if (!data) return "";
+
+    const existingText = (nodes) => (nodes || []).map((node) => {
+      const value = typeof node?.value === "string" ? node.value : "";
+      return `${value}${existingText(node?.children)}`;
+    }).join("\n");
+    const hasTestCaseSection = stemHasStructuredTestCases(question.stem, data.testCases);
+    const sections = [];
+
+    if (Array.isArray(data.testCases) && data.testCases.length > 0 && !hasTestCaseSection) {
+      const cards = data.testCases.map((testCase, index) => {
+        const caseName = testCase.description
+          ? `Test Case ${testCase.index || index + 1} — ${testCase.description}`
+          : `Test Case ${testCase.index || index + 1}`;
+        const statusKnown = testCase.executionStatusAvailable === true && (testCase.status === "passed" || testCase.status === "failed");
+        const status = statusKnown ? (testCase.status === "passed" ? "Passed" : "Failed") : "Execution status unavailable";
+        const actualOutput = testCase.actualOutputAvailable === true
+          ? `<pre class="saq-pdf-test-case-value">${escapePdfHtml(testCase.actualOutput || "Empty output")}</pre>`
+          : `<p class="saq-pdf-unavailable">Actual output unavailable</p>`;
+        const lineCount = [testCase.input, testCase.expectedOutput, testCase.actualOutputAvailable ? testCase.actualOutput : ""]
+          .reduce((total, value) => total + String(value ?? "").split(/\r\n|\r|\n/).length, 0);
+        return `<section class="saq-pdf-test-case${lineCount <= 12 ? " is-compact" : ""}">
+          <h4 class="saq-pdf-test-case-title">${escapePdfHtml(caseName)} <span class="saq-pdf-test-case-status">${status}</span></h4>
+          <div class="saq-pdf-test-case-field"><strong>Input</strong><pre class="saq-pdf-test-case-value">${escapePdfHtml(testCase.input ?? "")}</pre></div>
+          <div class="saq-pdf-test-case-field"><strong>Expected Output</strong><pre class="saq-pdf-test-case-value">${escapePdfHtml(testCase.expectedOutput ?? "")}</pre></div>
+          <div class="saq-pdf-test-case-field"><strong>Actual Output</strong>${actualOutput}</div>
+        </section>`;
+      });
+      sections.push(`<section class="saq-pdf-programming-section"><h3 class="saq-pdf-heading">Test Cases</h3>${cards.join("\n")}</section>`);
+    }
+
+    const code = data.currentCode || data.starterCode || "";
+    if (code && !existingText(question.stem).includes(code)) {
+      sections.push(`<section class="saq-pdf-programming-section"><h3 class="saq-pdf-heading">${data.currentCode ? "Current Code" : "Starter Code"}</h3>${this.renderCodeBlock({ value: code, attributes: { language: data.language || "text" } })}</section>`);
+    }
+
+    return sections.join("\n");
   }
 
   /**
@@ -798,9 +908,23 @@ ${metaBlock}
    * Renders a pre-formatted code block preserving exact whitespace, tabs, and indentation.
    */
   renderCodeBlock(node) {
-    const langAttr = node.attributes?.language ? ` class="language-${escapePdfHtml(node.attributes.language)}"` : "";
+    const language = String(node.attributes?.language || "text").toLowerCase();
+    const langAttr = node.attributes?.language ? ` class="language-${escapePdfHtml(language)}"` : "";
     const rawCode = node.value ?? "";
-    return `<pre class="saq-pdf-code-block"><code${langAttr}>${escapePdfHtml(rawCode)}</code></pre>`;
+    const supportsHighlighting = /^(?:javascript|js|typescript|ts|python|py|java|c|cpp|c\+\+|sql)$/.test(language);
+    const highlighted = supportsHighlighting
+      ? tokenizeCode(rawCode, language).map((line) => line.map((token) => {
+        const color = token.color || CODE_COLORS.DEFAULT;
+        const kind = color === CODE_COLORS.KEYWORD ? "keyword"
+          : color === CODE_COLORS.STRING ? "string"
+            : color === CODE_COLORS.COMMENT ? "comment"
+              : color === CODE_COLORS.NUMBER ? "number"
+                : color === CODE_COLORS.OPERATOR ? "operator" : "default";
+        return `<span class="saq-pdf-token saq-pdf-token-${kind}">${escapePdfHtml(token.text)}</span>`;
+      }).join("")).join("\n")
+      : escapePdfHtml(rawCode);
+    const lineCount = rawCode.split(/\r\n|\r|\n/).length;
+    return `<pre class="saq-pdf-code-block${lineCount <= 12 ? " is-compact" : ""}"><code${langAttr}>${highlighted}</code></pre>`;
   }
 
   /**

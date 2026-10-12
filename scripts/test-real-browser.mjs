@@ -581,12 +581,13 @@ function buildFixtureHtml() {
 
         // Step 5c: Verify Release 2 answer-key import in real Chrome.
         const importDoc = {
-          metadata: { title: "Import Fixture", totalQuestions: 4 },
+          metadata: { title: "Import Fixture", totalQuestions: 5 },
           questions: [
-            { number: 1, type: "single_choice", label: "Question 1", stem: [{ type: "text", value: "One" }], options: [{ letter: "A", content: [{ type: "text", value: "A" }] }, { letter: "B", content: [{ type: "text", value: "B" }] }] },
-            { number: 2, type: "multiple_choice", label: "Question 2", stem: [{ type: "text", value: "Many" }], options: [{ letter: "A", content: [{ type: "text", value: "A" }] }, { letter: "B", content: [{ type: "text", value: "B" }] }, { letter: "C", content: [{ type: "text", value: "C" }] }] },
+            { number: 1, type: "MCQ", label: "Question 1", stem: [{ type: "text", value: "One" }], options: [{ letter: "A", content: [{ type: "text", value: "A" }] }, { letter: "B", content: [{ type: "text", value: "B" }] }] },
+            { number: 2, type: "MSQ", label: "Question 2", stem: [{ type: "text", value: "Many" }], options: [{ letter: "A", content: [{ type: "text", value: "A" }] }, { letter: "B", content: [{ type: "text", value: "B" }] }, { letter: "C", content: [{ type: "text", value: "C" }] }] },
             { number: 3, type: "numerical", label: "Question 3", stem: [{ type: "text", value: "Number" }], options: [] },
-            { number: 4, type: "text", label: "Question 4", stem: [{ type: "text", value: "Text" }], options: [] }
+            { number: 4, type: "text", label: "Question 4", stem: [{ type: "text", value: "Text" }], options: [] },
+            { number: 5, type: "descriptive", label: "Question 5", stem: [{ type: "text", value: "Describe" }], options: [] }
           ]
         };
         runtime.reader.build(importDoc, { onDismiss: () => runtime.close() });
@@ -604,17 +605,27 @@ function buildFixtureHtml() {
         await sleep(10);
         const testImportPanel = importSheet.querySelector("#saq-import-panel");
         const importTextarea = testImportPanel.querySelector("textarea");
-        const importAnswers = [
-          { question: 1, type: "MCQ", answer: "B" },
-          { question: 2, type: "MSQ", answer: ["C", "A"] },
-          { question: 3, type: "NUMERICAL", answer: "42.50" },
-          { question: 4, type: "TEXT", answer: "<img onerror=alert(1)>" }
-        ];
-        importTextarea.value = JSON.stringify({ acadrix: 1, fp: importFp, answers: importAnswers });
+        importTextarea.value = "1: B\\n2: A,C\\n3: 42.50\\n4: <img onerror=alert(1)>\\n5: prose unsupported for a descriptive question";
         testImportPanel.querySelector("[data-act='import-submit']").click();
         await sleep(20);
         const importBadges = Array.from(importSheet.querySelectorAll("[data-acx-ai-answer]"));
         const hostileBadge = importBadges.find((badge) => badge.textContent.includes("<img"));
+        const initialQ1 = importSheet.querySelector("#saq-q-0");
+        const initialQ2 = importSheet.querySelector("#saq-q-1");
+        const initialSuggestionsSelected = Boolean(
+          initialQ1?.querySelector(".saq-option[data-letter='B']")?.classList.contains("is-selected") &&
+          initialQ2?.querySelector(".saq-option[data-letter='A']")?.classList.contains("is-selected") &&
+          initialQ2?.querySelector(".saq-option[data-letter='C']")?.classList.contains("is-selected")
+        );
+        const initialSuggestionsLabeled = Boolean(
+          initialQ1?.querySelector(".saq-option[data-letter='B'] .saq-opt-ai-tag")?.textContent === "AI Suggested" &&
+          initialQ2?.querySelector(".saq-option[data-letter='A'] .saq-opt-ai-tag")?.textContent === "AI Suggested" &&
+          initialQ1?.querySelector(".saq-status-badge")?.textContent === "AI Suggested" &&
+          initialQ2?.querySelector(".saq-status-badge")?.textContent === "AI Suggested"
+        );
+        const validProtocolVisible = testImportPanel.querySelector("[data-import-results]")?.textContent.includes("4 answered");
+        const readyOptionSuggestionCount = importSheet.querySelector("[data-ready-badge]")?.textContent;
+        const portalSelectionUnchanged = document.querySelector(".choice[aria-checked='true'] .choice-letter")?.textContent.trim() === "A";
 
         const focusInImportPanel = testImportPanel.contains(shadow.activeElement);
         testImportPanel.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
@@ -626,6 +637,15 @@ function buildFixtureHtml() {
           badgeCount: importBadges.length,
           badges: importBadges.map((badge) => badge.textContent),
           hostileTextInert: Boolean(hostileBadge && !hostileBadge.querySelector("img") && hostileBadge.textContent.includes("<img onerror=alert(1)>")),
+          indexedProtocolValidated: Boolean(validProtocolVisible),
+          unsupportedTypeErrorVisible: Boolean(
+            testImportPanel.querySelector("[data-import-results]")?.textContent.includes("1 invalid") &&
+            Array.from(testImportPanel.querySelectorAll("[data-import-issues] li")).some((item) => item.textContent.includes("Q5") && item.textContent.includes("not supported"))
+          ),
+          initialSuggestionsSelected,
+          initialSuggestionsLabeled,
+          readyOptionSuggestionCount,
+          portalSelectionUnchanged,
           focusInImportPanel,
           panelClosedAfterEscape: testImportPanel.hasAttribute("hidden"),
           readerOpenAfterEscape: importSheet.classList.contains("is-open")
@@ -1090,16 +1110,22 @@ async function runRealBrowserTests() {
     assert(s5b.readerStillOpenAfterFirstEsc === true, "First Escape must NOT close Reader drawer");
   });
 
-  await check("Real-Browser Check 6c: AI answer import renders accessible, inert inline badges and closes before the Reader", () => {
+  await check("Real-Browser Check 6c: Indexed AI answers validate, render selected AI Suggested options, and remain Reader-only", () => {
     const s5c = report.steps.step5c;
     assert(s5c && s5c.hasImportButton === true, "Import AI button must be present in Reader header");
     assert(s5c.hasDialogAndName === true, "Import panel must expose role=dialog and an accessible name");
     assert(s5c.fingerprintCaptured === true, "Import test must obtain the prompt fingerprint");
-    assert(s5c.badgeCount === 4, `Expected four imported answer badges, got ${s5c.badgeCount}`);
+    assert(s5c.badgeCount === 5, `Expected five imported answer badges, got ${s5c.badgeCount}`);
     assert(s5c.badges.some((b) => b.includes("AI: B")), "MCQ badge must render its answer");
     assert(s5c.badges.some((b) => b.includes("AI: A, C")), "MSQ badge must render sorted answers");
     assert(s5c.badges.some((b) => b.includes("AI: 42.5")), "Numerical badge must render canonical decimal");
     assert(s5c.hostileTextInert === true, "Hostile TEXT answer must remain inert visible text");
+    assert(s5c.indexedProtocolValidated === true, "Indexed answers must validate against question types and option letters");
+    assert(s5c.unsupportedTypeErrorVisible === true, "Unsupported indexed question types must be visibly reported");
+    assert(s5c.initialSuggestionsSelected === true, "Valid MCQ/MSQ suggestions must be selected immediately in Reader");
+    assert(s5c.initialSuggestionsLabeled === true, "Suggested options and question state must be labeled AI Suggested");
+    assert(s5c.readyOptionSuggestionCount === "2", "Validated MCQ/MSQ suggestions must be counted ready for explicit application");
+    assert(s5c.portalSelectionUnchanged === true, "Validation and review must not mutate IITM form controls");
     assert(s5c.focusInImportPanel === true, "Opening import must move focus into the dialog");
     assert(s5c.panelClosedAfterEscape === true, "Escape must close the import panel");
     assert(s5c.readerOpenAfterEscape === true, "Escape must leave the Reader open");

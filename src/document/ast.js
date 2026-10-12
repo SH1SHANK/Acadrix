@@ -187,6 +187,10 @@ export class TestCaseBlock extends DocNode {
     index = 1,
     input = "",
     expectedOutput = "",
+    actualOutput = "",
+    actualOutputAvailable = false,
+    executionStatusAvailable = false,
+    status = null,
     description = "",
     isSample = true,
     isVisible = true,
@@ -197,6 +201,10 @@ export class TestCaseBlock extends DocNode {
     this.index = index;
     this.input = typeof input === "string" ? input : String(input || "");
     this.expectedOutput = typeof expectedOutput === "string" ? expectedOutput : String(expectedOutput || "");
+    this.actualOutput = typeof actualOutput === "string" ? actualOutput : String(actualOutput ?? "");
+    this.actualOutputAvailable = Boolean(actualOutputAvailable);
+    this.executionStatusAvailable = Boolean(executionStatusAvailable);
+    this.status = this.executionStatusAvailable && (status === "passed" || status === "failed") ? status : null;
     this.description = description || "";
     this.isSample = Boolean(isSample);
     this.isVisible = Boolean(isVisible);

@@ -854,7 +854,7 @@ await check("Test 17: Starter vs Current code — immutability contract and prov
   // Simulate replacing editable code without changing the starter template.
   const importedCode = "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"42\");\n    }\n}";
   pData.currentCode = importedCode;
-  pData.provenance = { source: "editor", detail: "Student-edited code", timestamp: Date.now() };
+  pData.provenance = { source: "imported", detail: "Imported code", timestamp: Date.now() };
   pData.status = { isModified: true, lastVerified: null };
 
   // starterCode must remain unchanged
@@ -1342,12 +1342,12 @@ await check("Test 23: Requirement 20 Test Fixture (Question tab + Test Cases tab
               return [
                 {
                   textContent: "Case 1",
-                  classList: { contains: (c) => c === "is-selected" && activePill === "Case 1" },
+                  classList: { contains: (c) => (c === "is-selected" && activePill === "Case 1") || (c === "is-passed" && activePill === "Case 1") },
                   click: () => { activePill = "Case 1"; },
                 },
                 {
                   textContent: "Case 2",
-                  classList: { contains: (c) => c === "is-selected" && activePill === "Case 2" },
+                  classList: { contains: (c) => (c === "is-selected" && activePill === "Case 2") || (c === "is-failed" && activePill === "Case 2") },
                   click: () => { activePill = "Case 2"; },
                 },
               ];
@@ -1357,18 +1357,32 @@ await check("Test 23: Requirement 20 Test Fixture (Question tab + Test Cases tab
                 return [
                   { querySelector: (sub) => (sub.includes("title") ? { textContent: "Input" } : { textContent: "20000 1 2020-12-27 2021-08-27" }) },
                   { querySelector: (sub) => (sub.includes("title") ? { textContent: "Expected Output" } : { textContent: "48600 204452 320" }) },
+                  { querySelector: (sub) => (sub.includes("title") ? { textContent: "Actual Output" } : { textContent: "48600\n204452\n320\n" }) },
                 ];
               } else {
                 return [
                   { querySelector: (sub) => (sub.includes("title") ? { textContent: "Input" } : { textContent: "50000 2 2019-01-01 2020-01-01" }) },
                   { querySelector: (sub) => (sub.includes("title") ? { textContent: "Expected Output" } : { textContent: "100000 500000 700" }) },
+                  { querySelector: (sub) => (sub.includes("title") ? { textContent: "Actual Output" } : { textContent: "wrong\noutput" }) },
                 ];
               }
             }
             return [];
           },
           querySelector: (s) => {
-            if (s.includes("testCaseDetails") || s.includes("test-case-details")) return { querySelector: () => null, querySelectorAll: () => [] };
+            if (s.includes("testCaseDetails") || s.includes("test-case-details")) {
+              const values = activePill === "Case 1"
+                ? [["Input", "20000 1 2020-12-27 2021-08-27"], ["Expected Output", "48600 204452 320"], ["Actual Output", "48600\n204452\n320\n"]]
+                : [["Input", "50000 2 2019-01-01 2020-01-01"], ["Expected Output", "100000 500000 700"], ["Actual Output", "wrong\noutput"]];
+              const blocks = values.map(([title, value]) => ({
+                querySelector: (selector) => selector.includes("title") ? { textContent: title } : { textContent: value },
+              }));
+              return {
+                get textContent() { return values.flat().join(" "); },
+                querySelector: () => null,
+                querySelectorAll: (selector) => selector.includes("testCaseBlock") || selector.includes("test-case-block") ? blocks : [],
+              };
+            }
             return null;
           },
         } : null;
@@ -1439,6 +1453,13 @@ await check("Test 23: Requirement 20 Test Fixture (Question tab + Test Cases tab
   assert.ok(qNode.stem.length > 0, "question != empty");
   assert.ok(qNode.programmingData.images.length > 0, "images.length > 0");
   assert.ok(qNode.programmingData.testCases.length > 0, "testCases.length > 0");
+  assert.equal(qNode.programmingData.testCases[0].actualOutput, "48600\n204452\n320\n", "Actual output preserves multiline whitespace");
+  assert.equal(qNode.programmingData.testCases[0].actualOutputAvailable, true);
+  assert.equal(qNode.programmingData.testCases[0].status, "passed");
+  assert.equal(qNode.programmingData.testCases[0].executionStatusAvailable, true);
+  assert.equal(qNode.programmingData.testCases[1].status, "failed");
+  assert.equal(qNode.programmingData.testCases[1].actualOutputAvailable, true);
+  assert.equal(qNode.programmingData.testCases[1].executionStatusAvailable, true);
   assert.ok(qNode.programmingData.currentCode !== null, "currentCode != null");
   assert.ok(qNode.programmingData.returnInstructions.length > 0, "returnInstructions != null");
 });
@@ -2799,127 +2820,6 @@ function parseHtmlIntoMockElement(html, parent) {
   }
 }
 
-// ── Test 21.1: Candidate Code Scoring ─────────────────────────────────────────
-await check("Test 21.1: scoreCandidateBlock candidate scoring hierarchy and precedence", async () => {
-  // 1. Structured JSON contract (100 base, 105 with valid syntax + lineCount)
-  const structuredNoLines = { isStructured: true, isValid: false, lineCount: 0 };
-  const structuredValid = { isStructured: true, isValid: true, lineCount: 10 };
-  assert.equal(scoreCandidateBlock(structuredNoLines, "python").score, 100);
-  assert.equal(scoreCandidateBlock(structuredValid, "python").score, 105);
-  assert.equal(scoreCandidateBlock(structuredValid, "python").reason, "Structured solution contract");
-
-  // 2. Exact language match (80 base, 85 with valid syntax + lineCount)
-  const exactNoLines = { language: "python", rawLanguage: "python", isFenced: true, isValid: false, lineCount: 0 };
-  const exactValid = { language: "python", rawLanguage: "python", isFenced: true, isValid: true, lineCount: 5 };
-  assert.equal(scoreCandidateBlock(exactNoLines, "python").score, 80);
-  assert.equal(scoreCandidateBlock(exactValid, "python").score, 85);
-  assert.equal(scoreCandidateBlock(exactValid, "python").reason, "Matching python block");
-
-  // 3. Compatible language mode (60 base, 65 with valid syntax + lineCount)
-  const compatNoLines = { language: "sh", rawLanguage: "sh", isFenced: true, isValid: false, lineCount: 0 };
-  const compatValid = { language: "sh", rawLanguage: "sh", isFenced: true, isValid: true, lineCount: 4 };
-  assert.equal(scoreCandidateBlock(compatNoLines, "bash").score, 60);
-  assert.equal(scoreCandidateBlock(compatValid, "bash").score, 65);
-  assert.equal(scoreCandidateBlock(compatValid, "bash").reason, "Compatible sh syntax");
-
-  // 4. Generic markdown fence without language (50 base, 55 with valid syntax + lineCount)
-  const genericNoLines = { language: null, rawLanguage: "", isFenced: true, isValid: false, lineCount: 0 };
-  const genericValid = { language: null, rawLanguage: "", isFenced: true, isValid: true, lineCount: 6 };
-  assert.equal(scoreCandidateBlock(genericNoLines, "python").score, 50);
-  assert.equal(scoreCandidateBlock(genericValid, "python").score, 55);
-  assert.equal(scoreCandidateBlock(genericValid, "python").reason, "Generic fenced code block");
-
-  // 5. Plain code without markdown fence (40 base, 45 with valid syntax + lineCount)
-  const plainNoLines = { language: null, rawLanguage: "", isFenced: false, code: "print('hello')", isValid: false, lineCount: 0 };
-  const plainValid = { language: null, rawLanguage: "", isFenced: false, code: "print('hello')", isValid: true, lineCount: 1 };
-  assert.equal(scoreCandidateBlock(plainNoLines, "python").score, 40);
-  assert.equal(scoreCandidateBlock(plainValid, "python").score, 45);
-  assert.equal(scoreCandidateBlock(plainValid, "python").reason, "Plain code block");
-
-  // 6. Explicit language mismatch (20 base, 25 with valid syntax + lineCount)
-  const mismatchNoLines = { language: "javascript", rawLanguage: "javascript", isFenced: true, isValid: false, lineCount: 0 };
-  const mismatchValid = { language: "javascript", rawLanguage: "javascript", isFenced: true, isValid: true, lineCount: 3 };
-  assert.equal(scoreCandidateBlock(mismatchNoLines, "python").score, 20);
-  assert.equal(scoreCandidateBlock(mismatchValid, "python").score, 25);
-  assert.ok(scoreCandidateBlock(mismatchValid, "python").reason.includes("Language mismatch"));
-});
-
-// ── Test 21.2: Auto-Selection, Mismatch Confirmation & Preview ────────────────
-await check("Test 21.2: parseImportedCode and analyzeAiResponse auto-selection and mismatch confirmation", async () => {
-  // Multiple blocks in LLM response: Bash setup + Python solution + JavaScript explanation
-  const multiResponse = `
-Here is a bash script to test:
-\`\`\`bash
-pytest test_solution.py
-\`\`\`
-
-Here is the actual Python implementation:
-\`\`\`python
-def calculate_interest(principal, rate, time):
-    interest = (principal * rate * time) / 100.0
-    return interest
-\`\`\`
-
-And here is an equivalent JavaScript snippet:
-\`\`\`javascript
-const interest = (p * r * t) / 100;
-\`\`\`
-  `.trim();
-
-  const parsed = parseImportedCode(multiResponse, { expectedLanguage: "python" });
-  assert.equal(parsed.ok, true);
-  assert.equal(parsed.multipleBlocks, true);
-  assert.equal(parsed.blockCount, 3);
-  // Auto-selection must select block 2 (Python, score 85)
-  assert.equal(parsed.selectedBlockIndex, 2);
-  assert.ok(parsed.code.includes("def calculate_interest"));
-  const pythonBlock = parsed.blocks.find((b) => b.index === 2);
-  assert.ok(pythonBlock);
-  assert.equal(pythonBlock.isRecommended, true);
-  assert.equal(pythonBlock.language, "python");
-  assert.equal(parsed.requiresMismatchConfirmation, false);
-
-  // analyzeAiResponse line counts and preview
-  const currentCode = "def calculate_interest(p, r, t):\n    pass";
-  const analysis = analyzeAiResponse(parsed, currentCode);
-  assert.equal(analysis.readyToImport, true);
-  assert.equal(analysis.linesAdded >= 2, true);
-  assert.ok(analysis.summary.includes("Ready to import 3 lines"));
-  assert.equal(analysis.requiresMismatchConfirmation, false);
-
-  // Language Mismatch Case: user pastes pure JavaScript into Python assignment
-  const mismatchResponse = `
-\`\`\`javascript
-function solve() {
-  return 42;
-}
-\`\`\`
-  `.trim();
-  const mismatchParsed = parseImportedCode(mismatchResponse, { expectedLanguage: "python" });
-  assert.equal(mismatchParsed.hasLanguageMismatch, true);
-  assert.equal(mismatchParsed.requiresMismatchConfirmation, true);
-  assert.equal(mismatchParsed.blocks[0].isRecommended, false);
-
-  const mismatchAnalysis = analyzeAiResponse(mismatchParsed, currentCode);
-  assert.equal(mismatchAnalysis.hasLanguageMismatch, true);
-  assert.equal(mismatchAnalysis.requiresMismatchConfirmation, true);
-
-  // Structured Solution Case (score 100, isRecommended, no mismatch confirm)
-  const structuredResponse = JSON.stringify({
-    version: "acadrix.programming.solution/v1",
-    language: "python",
-    code: "def solve():\n    return 42\n",
-  });
-  const structuredParsed = parseImportedCode(structuredResponse, { expectedLanguage: "python" });
-  assert.equal(structuredParsed.ok, true);
-  assert.equal(structuredParsed.isStructured, true);
-  assert.equal(structuredParsed.selectedBlockIndex, 1);
-  assert.equal(structuredParsed.requiresMismatchConfirmation, false);
-  assert.equal(structuredParsed.blocks[0].score, 100);
-  assert.equal(structuredParsed.blocks[0].isRecommended, true);
-});
-
-
 // ── Test 21.4: FAB launcher programming mode ──────────────────────────────────
 await check("Test 21.4: FAB launcher programming mode (split button, quick actions, non-blocking toast)", async () => {
   const savedDocument = globalThis.document;
@@ -3101,7 +3001,7 @@ await check("Test 21.5: Reader drawer programming layout (header, badges, and su
     assert.equal(countPill, null, "Header must NOT render .saq-count-pill on programming assignments");
 
     // Editor-first header actions and conditional Apply button.
-    assert.equal(sheet.querySelector("[data-act='import-code']"), null, "Old Import Code action must be absent");
+    assert.ok(sheet.querySelector("[data-act='import-code']"), "Must have Import Code button");
     assert.ok(sheet.querySelector("[data-act='copy-prompt-context']"), "Must have Copy Prompt button");
     assert.ok(sheet.querySelector("[data-act='copy-current-code']"), "Must have Copy Code button");
     assert.ok(sheet.querySelector("[data-act='refresh']"), "Must have Refresh action");

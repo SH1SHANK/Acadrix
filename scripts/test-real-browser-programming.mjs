@@ -119,8 +119,8 @@ function buildProgrammingPageHtml() {
                     <div class="accordion-content" id="public-test-cases-content">
                       <div class="test-case-card">
                         <div class="test-case-slider">
-                          <button class="test-case-pill is-selected" id="tc-pill-1" aria-selected="true">Case 1</button>
-                          <button class="test-case-pill" id="tc-pill-2" aria-selected="false">Case 2</button>
+                          <button class="test-case-pill is-selected is-passed" id="tc-pill-1" aria-selected="true">Case 1</button>
+                          <button class="test-case-pill is-failed" id="tc-pill-2" aria-selected="false">Case 2</button>
                         </div>
                         <div class="test-case-details" id="tc-details-content">
                           <div class="test-case-block">
@@ -130,6 +130,10 @@ function buildProgrammingPageHtml() {
                           <div class="test-case-block">
                             <div class="title">Expected Output</div>
                             <div class="content" id="tc-output">48600\\n204452\\n320</div>
+                          </div>
+                          <div class="test-case-block">
+                            <div class="title">Actual Output</div>
+                            <div class="content" id="tc-actual">48600\\n204452\\n320</div>
                           </div>
                         </div>
                       </div>
@@ -187,18 +191,29 @@ function buildProgrammingPageHtml() {
     const pill2 = document.getElementById("tc-pill-2");
     const tcInput = document.getElementById("tc-input");
     const tcOutput = document.getElementById("tc-output");
+    const tcActual = document.getElementById("tc-actual");
 
     pill1.onclick = () => {
-      pill1.classList.add("is-selected");
-      pill2.classList.remove("is-selected");
-      tcInput.textContent = "20000\\n1\\n2020-12-27\\n2021-08-27";
-      tcOutput.textContent = "48600\\n204452\\n320";
+      pill1.classList.add("is-selected", "is-passed");
+      pill1.classList.remove("is-failed");
+      pill2.classList.remove("is-selected", "is-passed");
+      pill2.classList.add("is-failed");
+      setTimeout(() => {
+        tcInput.textContent = "20000\\n1\\n2020-12-27\\n2021-08-27";
+        tcOutput.textContent = "48600\\n204452\\n320";
+        tcActual.textContent = "48600\\n204452\\n320";
+      }, 75);
     };
     pill2.onclick = () => {
-      pill2.classList.add("is-selected");
-      pill1.classList.remove("is-selected");
-      tcInput.textContent = "50000\\n2\\n2019-01-01\\n2020-01-01";
-      tcOutput.textContent = "100000\\n500000\\n700";
+      pill2.classList.add("is-selected", "is-failed");
+      pill2.classList.remove("is-passed");
+      pill1.classList.remove("is-selected", "is-failed");
+      pill1.classList.add("is-passed");
+      setTimeout(() => {
+        tcInput.textContent = "50000\\n2\\n2019-01-01\\n2020-01-01";
+        tcOutput.textContent = "100000\\n500000\\n700";
+        tcActual.textContent = "100000\\n500000\\n700";
+      }, 75);
     };
 
     // Real Mock Ace Editor
@@ -383,6 +398,51 @@ function buildProgrammingPageHtml() {
           dispatchedExports.join(",") === "pdf,markdown,text"
         );
 
+        let programmingPdfSnapshot = null;
+        const originalAppendChild = Element.prototype.appendChild;
+        Element.prototype.appendChild = function (child) {
+          const result = originalAppendChild.call(this, child);
+          if (child?.tagName === "IFRAME" && child.classList?.contains("saq-pdf-print-frame") && child.contentWindow) {
+            child.contentWindow.print = () => {
+              const printDoc = child.contentDocument;
+              const caseCard = printDoc?.querySelector(".saq-pdf-test-case");
+              const codeBlock = printDoc?.querySelector("pre.saq-pdf-code-block");
+              programmingPdfSnapshot = {
+                printCalled: true,
+                testCaseCount: printDoc?.querySelectorAll(".saq-pdf-test-case").length || 0,
+                actualOutput: caseCard?.querySelector(".saq-pdf-test-case-field:nth-of-type(3) pre")?.textContent || "",
+                status: caseCard?.querySelector(".saq-pdf-test-case-status")?.textContent || "",
+                codeText: codeBlock?.textContent || "",
+                hasPrintStyles: Boolean(printDoc?.querySelector("style")?.textContent.includes("@media print")),
+                hasSyntaxTokens: Boolean(printDoc?.querySelector(".saq-pdf-token-keyword")),
+                hasCompactCodeRule: Boolean(printDoc?.querySelector("pre.saq-pdf-code-block.is-compact")),
+                codeWhitespace: codeBlock ? getComputedStyle(codeBlock).whiteSpace : "",
+                compactCaseBreakMode: caseCard ? getComputedStyle(caseCard).breakInside : "",
+                hasPaginationLineRules: Boolean(printDoc?.querySelector("style")?.textContent.includes("orphans: 2") && printDoc?.querySelector("style")?.textContent.includes("widows: 2")),
+              };
+              setTimeout(() => child.contentWindow?.dispatchEvent(new Event("afterprint")), 0);
+            };
+          }
+          return result;
+        };
+        exportTrigger?.click();
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        exportMenu?.querySelector("[data-act='print']")?.click();
+        for (let attempt = 0; attempt < 100 && !programmingPdfSnapshot; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        Element.prototype.appendChild = originalAppendChild;
+        rep.metrics.programmingPdfSnapshot = programmingPdfSnapshot;
+        rep.steps.step3b_programming_pdf_print_render = Boolean(
+          programmingPdfSnapshot?.printCalled && programmingPdfSnapshot.testCaseCount > 0 &&
+          programmingPdfSnapshot.actualOutput.includes("48600") &&
+          programmingPdfSnapshot.status === "Passed" &&
+          programmingPdfSnapshot.codeText.includes("calculateSimpleInterest") &&
+          programmingPdfSnapshot.hasPrintStyles && programmingPdfSnapshot.hasSyntaxTokens &&
+          programmingPdfSnapshot.hasCompactCodeRule && programmingPdfSnapshot.codeWhitespace === "pre-wrap" &&
+          programmingPdfSnapshot.compactCaseBreakMode === "avoid" && programmingPdfSnapshot.hasPaginationLineRules
+        );
+
         const doc = runtime?.activeDocument;
         rep.steps.step_doc_present = Boolean(doc);
 
@@ -406,6 +466,39 @@ function buildProgrammingPageHtml() {
           pData?.testCases?.[0]?.input?.includes("20000") &&
           pData?.testCases?.[0]?.expectedOutput?.includes("48600")
         );
+        const readerTestCase = shadowRoot?.querySelector(".saq-test-case-card");
+        rep.steps.step7a_reader_actual_output_status = Boolean(
+          pData?.testCases?.[0]?.actualOutputAvailable === true &&
+          pData?.testCases?.[0]?.actualOutput?.includes("204452") &&
+          pData?.testCases?.[0]?.executionStatusAvailable === true &&
+          pData?.testCases?.[0]?.status === "passed" &&
+          readerTestCase?.querySelector(".saq-tc-label")?.textContent === "Input" &&
+          Array.from(readerTestCase?.querySelectorAll(".saq-tc-label") || []).some((label) => label.textContent === "Actual Output") &&
+          Array.from(readerTestCase?.querySelectorAll(".saq-tc-pre") || []).some((pre) => pre.textContent.includes("204452")) &&
+          readerTestCase?.textContent.includes("Passed")
+        );
+        rep.steps.step7b_async_test_case_output = Boolean(
+          pData?.testCases?.[1]?.input?.includes("50000") &&
+          pData?.testCases?.[1]?.expectedOutput?.includes("500000") &&
+          pData?.testCases?.[1]?.actualOutput?.includes("100000\\n500000\\n700") &&
+          pData?.testCases?.[1]?.status === "failed" &&
+          pData?.testCases?.[1]?.executionStatusAvailable === true
+        );
+
+        const editorBeforeReopen = runtime?.reader?.programmingEditor;
+        const portalCodeBeforeReopen = editorBeforeReopen?.getCode?.() || "";
+        const unsavedDraft = portalCodeBeforeReopen + "\\n// Preserve Reader draft across output refresh";
+        editorBeforeReopen?.setCode?.(unsavedDraft);
+        runtime.close();
+        tcActual.textContent = "Latest run output\\nsecond line";
+        await runtime.open();
+        const refreshedCase = runtime?.activeDocument?.questions?.[0]?.programmingData?.testCases?.[0];
+        rep.steps.step7c_reopen_refreshes_portal_output = Boolean(
+          refreshedCase?.actualOutput === "Latest run output\\nsecond line" &&
+          refreshedCase?.actualOutputAvailable === true &&
+          runtime?.reader?.programmingEditor?.getCode?.() === unsavedDraft
+        );
+        runtime?.reader?.programmingEditor?.setCode?.(portalCodeBeforeReopen);
 
         // Step 8: Confirm Reader returns portal to original tab
         const qTabSelected = document.getElementById("tab-question")?.getAttribute("aria-selected") === "true";
@@ -700,6 +793,35 @@ function buildProgrammingPageHtml() {
 
         // Step 36: The local editor never runs or submits assignment code.
         rep.steps.step36_zero_autorun_autosubmit = true;
+
+        // Step 37: Missing portal output/status remain explicitly unavailable in Reader.
+        reader?.build({
+          metadata: { title: "Unavailable Test Case Fixture" },
+          questions: [{
+            number: 1,
+            type: "programming",
+            stem: [{ type: "paragraph", value: "Unavailable execution fixture" }],
+            programmingData: {
+              language: "javascript",
+              testCases: [{
+                index: 1,
+                input: "1",
+                expectedOutput: "2",
+                actualOutput: "",
+                actualOutputAvailable: false,
+                executionStatusAvailable: false,
+                status: null,
+              }],
+            },
+          }],
+        });
+        const unavailableCard = shadowRoot?.querySelector(".saq-test-case-card");
+        rep.steps.step37_explicit_unavailable_execution_data = Boolean(
+          unavailableCard?.textContent.includes("Actual output unavailable") &&
+          unavailableCard?.textContent.includes("Execution status unavailable") &&
+          !unavailableCard?.textContent.includes("Passed") &&
+          !unavailableCard?.textContent.includes("Failed")
+        );
       } catch (err) {
         rep.errors.push(err.stack || err.message || String(err));
       }
@@ -816,6 +938,9 @@ async function runBrowserVerification() {
   }
 
   console.log("Browser Verification Results:");
+  if (report.metrics?.programmingPdfSnapshot) {
+    console.log("Captured Programming Assignment print metrics:", report.metrics.programmingPdfSnapshot);
+  }
   let allOk = true;
   for (const [step, status] of Object.entries(report.steps || {})) {
     if (status) {

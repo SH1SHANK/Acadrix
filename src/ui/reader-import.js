@@ -24,6 +24,7 @@ import {
   computeAnswerState,
   isValidNumerical,
   normalizeSelection,
+  resolveAiOptionSelection,
   isMcqType,
   isMsqType,
   isNumericalType,
@@ -94,6 +95,7 @@ export function createReaderImportFeature(reader) {
   let scrollObserver = null;
   const selectedQuestions = new Set();
   const userSelections = new Map(); // questionNumber -> selection value
+  const userEditedQuestions = new Set();
   const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
   let currentZoomIndex = 2; // 1.0 default
 
@@ -124,6 +126,29 @@ export function createReaderImportFeature(reader) {
 
   const getAiEntriesMap = () => {
     return new Map(importedEntries.map((e) => [e.number, e]));
+  };
+
+  const resolveQuestionSelection = (question, aiEntry = getAiEntriesMap().get(question?.number)) =>
+    resolveAiOptionSelection(
+      question,
+      aiEntry,
+      userSelections.get(question?.number),
+      userEditedQuestions.has(question?.number)
+    );
+
+  const getSelectionsForPortal = () => {
+    const selections = new Map(userSelections);
+    for (const question of reader.documentModel?.questions || []) {
+      const aiEntry = getAiEntriesMap().get(question.number);
+      const isOptionQuestion = isMsqType(question.type) || isMcqType(question.type) ||
+        (Array.isArray(question.options) && question.options.length > 0);
+      if (!isOptionQuestion) continue;
+      const selection = resolveQuestionSelection(question, aiEntry);
+      if (Array.isArray(selection) ? selection.length > 0 : Boolean(selection)) {
+        selections.set(question.number, selection);
+      }
+    }
+    return selections;
   };
 
   const inputSyncDebounceTimers = new Map();
@@ -187,6 +212,7 @@ export function createReaderImportFeature(reader) {
    */
   const initSelectionsFromDocument = (documentModel) => {
     userSelections.clear();
+    userEditedQuestions.clear();
     selectedQuestions.clear();
     for (const [idx, q] of (documentModel?.questions || []).entries()) {
       const qNum = Number(q.number) || (idx + 1);
@@ -394,7 +420,7 @@ export function createReaderImportFeature(reader) {
     const sheet = reader.sheetElement;
     if (!sheet) return;
     const badges = sheet.querySelectorAll("[data-ready-badge]");
-    const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap());
+    const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap(), userEditedQuestions);
 
     badges.forEach((badge) => {
       if (summary.ready > 0) {
@@ -420,6 +446,7 @@ export function createReaderImportFeature(reader) {
     const aiEntriesMap = getAiEntriesMap();
     const aiEntry = aiEntriesMap.get(question.number) || null;
     const userSelection = userSelections.get(question.number);
+    const displaySelection = resolveQuestionSelection(question, aiEntry);
     const qNum = Number(question.number) || (index + 1);
     const isQuestionSelected = selectedQuestions.has(qNum) || selectedQuestions.has(question.number);
     const state = computeAnswerState({ type: question.type, aiEntry, userSelection });
@@ -539,8 +566,8 @@ export function createReaderImportFeature(reader) {
       optsContainer.setAttribute("aria-label", `Question ${question.number} options`);
 
       const currentSelectedLetter =
-        typeof userSelection === "string"
-          ? userSelection.replace(/^[\s(]+|[.\s):]+$/g, "").toUpperCase()
+        typeof displaySelection === "string"
+          ? displaySelection.replace(/^[\s(]+|[.\s):]+$/g, "").toUpperCase()
           : null;
       const aiSuggestedLetter =
         aiEntry &&
@@ -562,7 +589,7 @@ export function createReaderImportFeature(reader) {
           );
           const contentHtml = renderContentNodes(opt.content, { visualMath: true });
           const aiTagHtml = isAiSuggested
-            ? `<span class="saq-opt-ai-tag">AI Suggestion</span>`
+            ? `<span class="saq-opt-ai-tag">AI Suggested</span>`
             : "";
 
           return `
@@ -599,7 +626,7 @@ export function createReaderImportFeature(reader) {
       optsContainer.setAttribute("aria-label", `Question ${question.number} options`);
 
       const currentSelectedSet = new Set(
-        (Array.isArray(userSelection) ? userSelection : [userSelection])
+        (Array.isArray(displaySelection) ? displaySelection : [displaySelection])
           .filter(Boolean)
           .map((s) =>
             String(s).replace(/^[\s(]+|[.\s):]+$/g, "").toUpperCase()
@@ -622,7 +649,7 @@ export function createReaderImportFeature(reader) {
           const isAiSuggested = aiSuggestedSet.has(letter);
           const contentHtml = renderContentNodes(opt.content, { visualMath: true });
           const aiTagHtml = isAiSuggested
-            ? `<span class="saq-opt-ai-tag">AI Suggestion</span>`
+            ? `<span class="saq-opt-ai-tag">AI Suggested</span>`
             : "";
 
           return `
@@ -753,16 +780,30 @@ export function createReaderImportFeature(reader) {
     if (result.fatal) {
       results.textContent = result.fatal;
       results.dataset.tone = "error";
+      results.setAttribute("role", "alert");
+      results.tabIndex = -1;
     } else {
       const answered = result.entries.filter((e) => e.status === "answered").length;
       const missing = result.entries.filter((e) => e.status === "missing").length;
       const invalid = result.entries.filter((e) => e.status === "invalid").length;
-      results.textContent = `✓ ${answered} answered · ${missing} missing · ${invalid} invalid`;
+      results.textContent = `${answered} answered · ${missing} missing · ${invalid} invalid`;
       results.dataset.tone = invalid > 0 ? "warn" : "success";
+      results.setAttribute("role", "status");
+      results.removeAttribute("tabindex");
     }
 
     issues.replaceChildren();
-    for (const item of result.issues || []) {
+    const issueItems = [
+      ...(result.issues || []),
+      ...(result.entries || [])
+        .filter((entry) => entry.status === "invalid")
+        .map((entry) => ({ number: entry.number, reason: entry.reason || "Invalid answer" })),
+    ];
+    const shownIssues = new Set();
+    for (const item of issueItems) {
+      const key = `${item.number}:${item.reason}`;
+      if (shownIssues.has(key)) continue;
+      shownIssues.add(key);
       const row = document.createElement("li");
       row.textContent = `Q${item.number}: ${item.reason}`;
       issues.appendChild(row);
@@ -838,7 +879,7 @@ export function createReaderImportFeature(reader) {
     const dialog = applyDialog();
     if (!dialog || !reader.documentModel) return;
 
-    const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap());
+    const summary = summarizeReviewState(reader.documentModel, userSelections, getAiEntriesMap(), userEditedQuestions);
 
     const readyEl = dialog.querySelector("[data-summary-ready]");
     const matchedEl = dialog.querySelector("[data-summary-matched]");
@@ -904,7 +945,7 @@ export function createReaderImportFeature(reader) {
         portal,
         traverser,
         documentModel: reader.documentModel,
-        selectionsMap: userSelections,
+        selectionsMap: getSelectionsForPortal(),
         aiEntriesMap: getAiEntriesMap(),
       });
 
@@ -955,6 +996,7 @@ export function createReaderImportFeature(reader) {
     }
 
     userSelections.set(question.number, val);
+    userEditedQuestions.add(question.number);
 
     const block = reader.sheetElement?.querySelector(`#saq-q-${index}`);
     if (block) {
@@ -967,7 +1009,7 @@ export function createReaderImportFeature(reader) {
     syncQuestionToPortal(question, val);
   };
 
-  const applyAllAi = () => {
+  const applyAllAi = ({ notify = true } = {}) => {
     let appliedCount = 0;
     for (let index = 0; index < (reader.documentModel?.questions || []).length; index++) {
       const question = reader.documentModel.questions[index];
@@ -977,25 +1019,46 @@ export function createReaderImportFeature(reader) {
         appliedCount++;
       }
     }
-    if (appliedCount > 0) {
+    if (notify && appliedCount > 0) {
       reader.notify?.(`Applied AI suggestions to ${appliedCount} question${appliedCount === 1 ? "" : "s"}.`, "success", 3000);
-    } else {
+    } else if (notify) {
       reader.notify?.("No valid AI suggestions available to apply.", "info", 3000);
     }
   };
 
   const importAnswersFromText = (text) => {
-    const result = parseAnswerKey(text, reader.documentModel, {
-      existing: importedEntries.length ? { fp: currentFingerprint, entries: importedEntries } : null,
-    });
+    let result;
+    try {
+      result = parseAnswerKey(text, reader.documentModel, {
+        existing: importedEntries.length ? { fp: currentFingerprint, entries: importedEntries } : null,
+      });
+    } catch (error) {
+      result = {
+        ok: false,
+        fatal: `Unable to validate answers: ${error?.message || String(error)}`,
+        entries: importedEntries,
+        replaced: [],
+        issues: [],
+      };
+    }
+
     if (result.ok) {
       importedEntries = result.entries;
       lastImportedText = text;
       currentFingerprint = assignmentFingerprint(reader.documentModel);
       enhanceAllQuestionBlocks();
-      reader.notify?.("Imported and validated AI answers.", "success", 3000);
+      // Imported valid answers become portal selections immediately; invalid and missing entries remain untouched.
+      applyAllAi({ notify: false });
+      const invalid = result.entries.filter((entry) => entry.status === "invalid").length;
+      reader.notify?.(
+        invalid ? `Answers reviewed with ${invalid} invalid entr${invalid === 1 ? "y" : "ies"}.` : "Imported and validated AI answers.",
+        invalid ? "warning" : "success",
+        3000
+      );
     }
     renderImportIssues(result);
+    if (result.fatal) importPanel()?.querySelector("[data-import-results]")?.focus?.({ preventScroll: true });
+    return result;
   };
 
   const importAnswers = () => {
@@ -1099,9 +1162,9 @@ export function createReaderImportFeature(reader) {
             <span>Copy Prompt</span>
           </button>
           <div class="saq-split-btn-group" id="saq-export-split">
-            <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">
-              ${ICONS.markdown}
-              <span>Copy</span>
+            <button type="button" class="saq-btn saq-btn-primary saq-split-main" data-act="print" aria-label="Export assignment as PDF" title="Export assignment as PDF">
+              ${ICONS.print}
+              <span>Export PDF</span>
             </button>
             <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">
               ${ICONS.chevronDown}
@@ -1320,6 +1383,7 @@ export function createReaderImportFeature(reader) {
         if (!question) return;
 
         userSelections.set(question.number, input.value);
+        userEditedQuestions.add(question.number);
         const block = sheet.querySelector(`#saq-q-${index}`);
         if (block) {
           const aiEntry = getAiEntriesMap().get(question.number);
@@ -1359,6 +1423,7 @@ export function createReaderImportFeature(reader) {
         const question = reader.documentModel?.questions?.[index];
         if (!question) return;
         userSelections.set(question.number, input.value);
+        userEditedQuestions.add(question.number);
         syncQuestionToPortal(question, input.value, { debounceMs: 0 });
       });
 
@@ -1406,6 +1471,7 @@ export function createReaderImportFeature(reader) {
           }
           if (selectedLetter !== null && selectedLetter !== userSelections.get(question.number)) {
             userSelections.set(question.number, selectedLetter);
+            userEditedQuestions.add(question.number);
             const index = reader.documentModel.questions.indexOf(question);
             const block = sheet.querySelector(`#saq-q-${index}`);
             if (block) updateQuestionBlock(block, question, index);
@@ -1433,9 +1499,10 @@ export function createReaderImportFeature(reader) {
             }
           }
           selectedLetters.sort();
-          const currentLetters = (userSelections.get(question.number) || []).slice().sort();
+          const currentLetters = (resolveQuestionSelection(question, getAiEntriesMap().get(question.number)) || []).slice().sort();
           if (JSON.stringify(selectedLetters) !== JSON.stringify(currentLetters)) {
             userSelections.set(question.number, selectedLetters);
+            userEditedQuestions.add(question.number);
             const index = reader.documentModel.questions.indexOf(question);
             const block = sheet.querySelector(`#saq-q-${index}`);
             if (block) updateQuestionBlock(block, question, index);
@@ -1448,6 +1515,7 @@ export function createReaderImportFeature(reader) {
           );
           if (inputEl && inputEl.value !== undefined && inputEl.value !== userSelections.get(question.number)) {
             userSelections.set(question.number, inputEl.value);
+            userEditedQuestions.add(question.number);
             const index = reader.documentModel.questions.indexOf(question);
             const block = sheet.querySelector(`#saq-q-${index}`);
             if (block) {
@@ -1540,8 +1608,10 @@ export function createReaderImportFeature(reader) {
 
         const isMsq = isMsqType(question.type);
         let newSelection;
+        const displayedSelection = resolveQuestionSelection(question, getAiEntriesMap().get(question.number));
+        userEditedQuestions.add(question.number);
         if (isMsq) {
-          let currentList = userSelections.get(question.number) || [];
+          let currentList = displayedSelection || [];
           if (!Array.isArray(currentList))
             currentList = currentList ? [String(currentList)] : [];
           currentList = currentList
@@ -1893,6 +1963,7 @@ export function createReaderImportFeature(reader) {
         const question = reader.documentModel?.questions?.[index];
         if (question) {
           userSelections.set(question.number, "");
+          userEditedQuestions.add(question.number);
           const block = reader.sheetElement?.querySelector(`#saq-q-${index}`);
           if (block) {
             updateQuestionBlock(block, question, index);
@@ -2032,6 +2103,7 @@ export function createReaderImportFeature(reader) {
       if (!preserveFeatureState) {
         clearAnswers();
         userSelections.clear();
+        userEditedQuestions.clear();
         selectedQuestions.clear();
         currentFingerprint = null;
       }

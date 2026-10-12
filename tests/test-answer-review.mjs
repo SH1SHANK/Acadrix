@@ -7,12 +7,14 @@ import { strict as assert } from "node:assert";
 import { QuestionType, ContentType } from "../src/model/types.js";
 import { AssignmentDocument, QuestionNode, OptionNode, ContentNode } from "../src/model/document.js";
 import { assignmentFingerprint } from "../src/bridge/protocol.js";
+import { parseAnswerKey } from "../src/bridge/parser.js";
 import {
   AnswerState,
   STATUS_CONFIG,
   computeAnswerState,
   isValidNumerical,
   normalizeSelection,
+  resolveAiOptionSelection,
 } from "../src/bridge/answer-state.js";
 import {
   summarizeReviewState,
@@ -134,6 +136,61 @@ test("Answer state classifies UNANSWERED, AI_SUGGESTED, AI_MATCHED, USER_SELECTE
   );
 });
 
+test("Indexed answer review validates question/type and resolves MCQ/MSQ suggestions", () => {
+  const doc = new AssignmentDocument({
+    metadata: { title: "Indexed review fixture" },
+    questions: [
+      new QuestionNode({ number: 1, type: QuestionType.MCQ, options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" })] }),
+      new QuestionNode({ number: 2, type: QuestionType.MSQ, options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" }), new OptionNode({ letter: "C" })] }),
+    ],
+  });
+  const parsed = parseAnswerKey("1: B\n2: A,C", doc);
+  assert.equal(parsed.ok, true);
+  const mcq = parsed.entries.find((entry) => entry.number === 1);
+  const msq = parsed.entries.find((entry) => entry.number === 2);
+  assert.equal(mcq.status, "answered");
+  assert.equal(resolveAiOptionSelection(doc.questions[0], mcq, null), "B");
+  assert.equal(msq.status, "answered");
+  assert.deepEqual(resolveAiOptionSelection(doc.questions[1], msq, null), ["A", "C"]);
+
+  const badOption = parseAnswerKey("1: Z\n2: A", doc);
+  assert.equal(badOption.entries.find((entry) => entry.number === 1).status, "invalid");
+  assert.equal(resolveAiOptionSelection(doc.questions[0], { status: "answered", answer: "Z" }, null), null);
+});
+
+test("Indexed answers reject unsupported question types instead of treating them as text", () => {
+  const doc = new AssignmentDocument({
+    questions: [
+      new QuestionNode({ number: 1, type: QuestionType.DESCRIPTIVE }),
+      new QuestionNode({ number: 2, type: QuestionType.MATCHING }),
+      new QuestionNode({ number: 3, type: QuestionType.PROGRAMMING }),
+      new QuestionNode({ number: 4, type: QuestionType.UNKNOWN }),
+      new QuestionNode({ number: 5, type: QuestionType.TEXT }),
+    ],
+  });
+  const parsed = parseAnswerKey("1: prose\n2: A-1\n3: print(1)\n4: arbitrary\n5: short answer", doc);
+  assert.equal(parsed.ok, true, "per-question protocol issues remain reviewable rather than fatal");
+  for (const number of [1, 2, 3, 4]) {
+    const entry = parsed.entries.find((candidate) => candidate.number === number);
+    assert.equal(entry.status, "invalid", `Q${number} is unsupported by the indexed answer protocol`);
+    assert.match(entry.reason, /not supported/i);
+    assert.ok(parsed.issues.some((issue) => issue.number === number), `Q${number} is reported visibly`);
+  }
+  assert.equal(parsed.entries.find((entry) => entry.number === 5).status, "answered");
+});
+
+test("AI option suggestions never replace existing selections or explicit user overrides", () => {
+  const question = new QuestionNode({
+    number: 1,
+    type: QuestionType.MCQ,
+    options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" })],
+  });
+  const suggestion = { status: "answered", answer: "B" };
+  assert.equal(resolveAiOptionSelection(question, suggestion, "A"), "A");
+  assert.equal(resolveAiOptionSelection(question, suggestion, "A", true), "A");
+  assert.equal(resolveAiOptionSelection(question, suggestion, null, true), null);
+});
+
 // ── 3. Review State Summarizer ──────────────────────────────────────────────
 test("Summarize review state computes correct counts and ready totals", () => {
   const doc = new AssignmentDocument({
@@ -168,6 +225,28 @@ test("Summarize review state computes correct counts and ready totals", () => {
   assert.equal(summary.aiSuggested, 1); // Q3
   assert.equal(summary.unanswered, 0);
   assert.equal(summary.invalid, 0);
+
+  const suggestedDoc = new AssignmentDocument({
+    questions: [
+      new QuestionNode({ number: 1, type: QuestionType.MCQ, options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" })] }),
+      new QuestionNode({ number: 2, type: QuestionType.MSQ, options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" })] }),
+    ],
+  });
+  const suggestions = new Map([
+    [1, { status: "answered", answer: "B" }],
+    [2, { status: "answered", answer: ["A", "B"] }],
+  ]);
+  const suggestedSummary = summarizeReviewState(suggestedDoc, new Map(), suggestions);
+  assert.equal(suggestedSummary.aiSuggested, 2);
+  assert.equal(suggestedSummary.ready, 2, "Validated option suggestions are ready only for explicit portal confirmation");
+
+  const clearedMsqSummary = summarizeReviewState(
+    suggestedDoc,
+    new Map([[2, []]]),
+    suggestions,
+    new Set([2])
+  );
+  assert.equal(clearedMsqSummary.ready, 1, "An explicitly cleared MSQ is not counted as ready from its AI suggestion");
 });
 
 // ── 4. Portal Applicator Execution ──────────────────────────────────────────
@@ -459,6 +538,33 @@ await testAsync("Portal applicator accurately targets real IITM Angular DOM choi
 
   // Assert restored to Q1
   assert.equal(activeLogical, 1);
+});
+
+await testAsync("Portal applicator reports missing question controls instead of claiming success", async () => {
+  const doc = new AssignmentDocument({
+    metadata: { title: "Missing control fixture", totalQuestions: 1 },
+    questions: [new QuestionNode({
+      number: 1,
+      type: QuestionType.MCQ,
+      options: [new OptionNode({ letter: "A" }), new OptionNode({ letter: "B" })],
+    })],
+  });
+  const portal = {
+    detectAssessment: () => true,
+    getActiveLogicalNumber: () => 1,
+    getCurrentQuestionElement: () => ({ querySelectorAll: () => [], querySelector: () => null }),
+  };
+  const traverser = { async restoreLocation() {} };
+  const result = await applyAnswersToPortal({
+    portal,
+    traverser,
+    documentModel: doc,
+    selectionsMap: new Map([[1, "B"]]),
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.appliedCount, 0);
+  assert.deepEqual(result.skippedQuestions, [1]);
+  assert.match(result.error, /Q1/);
 });
 
 // ── 6. Normalization and Edge Case Matching ─────────────────────────────────

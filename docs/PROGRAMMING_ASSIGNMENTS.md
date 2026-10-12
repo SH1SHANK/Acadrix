@@ -37,4 +37,4 @@ Acadrix does not run or submit the programming assignment. The student remains r
 
 ## AI-assisted editing
 
-Acadrix can prepare a prompt from the assignment data. The student may copy it to an external AI tool and paste returned code into the CodeMirror editor. A single matching-language code fence is accepted by the editor's paste handler; there is no current programming "Import Code" dialog or automatic code selection. Prompt sharing is initiated by the student; Acadrix does not call an AI provider.
+Acadrix can prepare a prompt from the assignment data. The student may copy it to an external AI tool and use **Import Code** to insert the returned solution into the editable region. Imports strip optional Markdown fences and preserve the protected prefix and suffix; empty or ambiguous imports are rejected. Prompt sharing is initiated by the student; Acadrix does not call an AI provider.

@@ -80,6 +80,8 @@ export const IITM_SELECTORS = Object.freeze({
     testCaseBlock: ".test-case-block",
     testCaseBlockTitle: ".title, .wrapper .title",
     testCaseBlockContent: ".content",
+    testCaseActualOutput: ".test-case-actual-output, .actual-output-content, .actual-output, .test-actual-output, [data-output='actual']",
+    testCaseStatus: ".test-case-status, .execution-status, [data-execution-status]",
     testCaseItem: ".test-case-details, .test-case-block, .test-case, .test-case-item, .test-case-card, .testcase-item",
     testCaseInput: ".test-case-input, .input-content, .test-input, pre.input, .input",
     testCaseOutput: ".test-case-output, .output-content, .test-output, pre.output, .expected-output, .output",

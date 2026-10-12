@@ -8,8 +8,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <a href="https://github.com/SH1SHANK/unfold-iitm/releases"><img src="https://img.shields.io/badge/version-v0.3.0-informational.svg" alt="Version 0.3.0" /></a>
-  <a href="https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml"><img src="https://github.com/SH1SHANK/unfold-iitm/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+  <a href="https://github.com/SH1SHANK/Acadrix/releases"><img src="https://img.shields.io/badge/version-v0.4.0--rc.1-informational.svg" alt="Version 0.4.0 RC 1" /></a>
+  <a href="https://github.com/SH1SHANK/Acadrix/actions/workflows/ci.yml"><img src="https://github.com/SH1SHANK/Acadrix/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
   <img src="https://img.shields.io/badge/Manifest-V3-brightgreen.svg" alt="Manifest V3" />
 </p>
 
@@ -18,8 +18,8 @@ Acadrix brings an IITM assessment’s questions into one Reader, supports a revi
 ## Features
 
 - **Assessment Reader:** traverses question navigation and presents extracted content together in an extension-owned Shadow DOM surface.
-- **Answer review:** generates prompts for an external AI assistant, parses indexed answer suggestions, lets the student review them, and applies confirmed answers to the portal.
-- **Programming workspace:** extracts programming problem details and test cases. On the actual programming editor page, an embedded CodeMirror editor keeps a local `workingCode` buffer separate from IITM’s Ace editor until the student chooses **Apply Changes**.
+- **Answer review:** parses compact or multiline indexed answer suggestions, validates them against each question type, and automatically applies valid imported answers while preserving explicit user overrides.
+- **Programming workspace:** extracts programming problem details and test cases. On the actual programming editor page, an embedded CodeMirror editor keeps a local `workingCode` buffer separate from IITM’s Ace editor until the student chooses **Apply Changes**; **Import Code** safely replaces only the editable code region.
 - **Export:** creates Markdown, PDF/print output, and portable bundles with assessment-linked resources.
 - **Academic events:** reads the configured public academic-events feed, caches results locally, and schedules browser notifications.
 
@@ -56,8 +56,8 @@ The Reader validates suggestions and requires the student to apply them; it does
 The repository builds a Manifest V3 extension. Node.js 22 is used by CI; install dependencies from the lockfile and build the unpacked extension:
 
 ```bash
-git clone https://github.com/SH1SHANK/unfold-iitm.git
-cd unfold-iitm
+git clone https://github.com/SH1SHANK/Acadrix.git
+cd Acadrix
 npm ci
 node build.mjs
 ```
@@ -83,7 +83,7 @@ See [Development](docs/DEVELOPMENT.md) and [Testing](docs/TESTING.md) for detail
 
 ## Releases
 
-The repository contains versioned release automation. Published versions and their artifacts, when available, are listed on [GitHub Releases](https://github.com/SH1SHANK/unfold-iitm/releases). Release automation does not run as part of the ordinary CI build.
+The repository contains versioned release automation. Published versions and their artifacts, when available, are listed on [GitHub Releases](https://github.com/SH1SHANK/Acadrix/releases). Release automation does not run as part of the ordinary CI build.
 
 ## Documentation
 
@@ -106,7 +106,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution guide and [`.github/
 
 ## Security
 
-Please report vulnerabilities privately using GitHub’s [security reporting](https://github.com/SH1SHANK/unfold-iitm/security/advisories/new). See [SECURITY.md](docs/SECURITY.md) for the implemented security boundaries and network behavior.
+Please report vulnerabilities privately using GitHub’s [security reporting](https://github.com/SH1SHANK/Acadrix/security/advisories/new). See [SECURITY.md](docs/SECURITY.md) for the implemented security boundaries and network behavior.
 
 ## License
 

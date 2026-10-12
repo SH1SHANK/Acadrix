@@ -36,6 +36,12 @@ const payload = (answers = []) => JSON.stringify({ acadrix: 1, fp, answers });
 const parse = (answers, raw = payload(answers), existing = null) => parseAnswerKey(raw, doc, { existing });
 const answer = (number, type, value) => ({ question: number, type, answer: value });
 
+const compactStream = parseAnswerKey("1: B 2: A 3: 42 4: short answer", doc);
+assertAnswered(compactStream, 1, "B");
+assertAnswered(compactStream, 2, ["A"]);
+assertAnswered(compactStream, 3, "42");
+assertAnswered(compactStream, 4, "short answer");
+
 function assertAnswered(result, number, expected) {
   const entry = result.entries.find((item) => item.number === number);
   assert.equal(entry.status, "answered");

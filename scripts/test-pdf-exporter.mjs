@@ -49,6 +49,8 @@ import {
   sanitizeSvg,
   PDF_CSS,
 } from "../src/exporters/pdf.js";
+import { compilePdfDefinition } from "../src/document/compiler.js";
+import { DocRoot, MatchingBlock, QuestionBlock, QuestionKind } from "../src/document/ast.js";
 
 let passed = true;
 
@@ -317,11 +319,61 @@ check("Test 12: Code block preserves exact indentation, whitespace, and tabs", (
   ]);
 
   const html = renderPdfDocument(doc);
-  assert(html.includes('<pre class="saq-pdf-code-block"><code class="language-python">'), "Code block pre/code tags and language class must be present");
-  assert(html.includes(escapeHtml(pythonCode)), "Raw whitespace, indentation, and tabs must be preserved exactly");
+  assert(html.includes('<pre class="saq-pdf-code-block is-compact"><code class="language-python">'), "Small code blocks remain together and retain their language class");
+  const codeStart = html.indexOf('<code class="language-python">') + '<code class="language-python">'.length;
+  const codeEnd = html.indexOf("</code>", codeStart);
+  const renderedCode = html.slice(codeStart, codeEnd).replace(/<[^>]+>/g, "");
+  assert(
+    renderedCode === escapeHtml(pythonCode),
+    "Syntax token wrappers must not change code whitespace, indentation, or tabs"
+  );
 });
 
-// ── Test 13: MathML native rendering ─────────────────────────────────────────
+check("Programming Assignment print layout keeps small sections together but lets long content paginate", () => {
+  const longCode = Array.from({ length: 13 }, (_, index) => `  const value${index} = ${index};`).join("\n");
+  const longOutput = Array.from({ length: 13 }, (_, index) => `output ${index}`).join("\n");
+  const doc = new AssignmentDocument({
+    metadata: { title: "Pagination fixture" },
+    questions: [new QuestionNode({
+      number: 1,
+      type: QuestionType.PROGRAMMING,
+      programmingData: {
+        language: "javascript",
+        currentCode: longCode,
+        testCases: [
+          { index: 1, input: "1", expectedOutput: "2", actualOutput: "2", actualOutputAvailable: true },
+          { index: 2, input: longOutput, expectedOutput: longOutput, actualOutput: longOutput, actualOutputAvailable: true },
+        ],
+      },
+    })],
+  });
+  const html = renderPdfDocument(doc);
+  assert(html.includes('<pre class="saq-pdf-code-block"><code class="language-javascript">'), "long code blocks are allowed to flow across pages");
+  assert(html.includes('class="saq-pdf-test-case is-compact"'), "short test cases remain together");
+  assert(/class="saq-pdf-test-case">\s*<h4/.test(html), "long test cases can paginate rather than create large blank areas");
+  assert(PDF_CSS.includes("orphans: 2") && PDF_CSS.includes("widows: 2"), "code pagination keeps readable line groups");
+  assert(PDF_CSS.includes("white-space: pre-wrap") && PDF_CSS.includes("tab-size: 4"), "print code retains line breaks and indentation");
+});
+
+check("Matching question PDF compilation renders the supplied matching block", () => {
+  const definition = compilePdfDefinition(new DocRoot({
+    blocks: [new QuestionBlock({
+      number: 1,
+      kind: QuestionKind.MATCHING,
+      stem: [new MatchingBlock({
+        leftTitle: "Concepts",
+        rightTitle: "Definitions",
+        pairs: [{ leftMarker: "A", leftText: "Compiler", rightMarker: "I", rightText: "Translates source code" }],
+      })],
+    })],
+  }));
+  const rendered = JSON.stringify(definition.content);
+  assert(/Concepts/.test(rendered), "Matching block must include the left title");
+  assert(/Definitions/.test(rendered), "Matching block must include the right title");
+  assert(/Translates source code/.test(rendered), "Matching block must include the supplied pair");
+});
+
+// ── Test 13: MathML <math> native rendering ───────────────────────────────────
 check("Test 13: MathML <math> is rendered natively without distortion", () => {
   const mathmlSource = '<math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mi>y</mi></math>';
   const doc = createSimpleDoc([
@@ -726,6 +778,12 @@ check("Test 29: buildExportFilename(meta, ext) handles real portal titles, fixtu
       meta: { course: "Sep 2026 - MAD II", title: " Week 1 - Graded Assignment 1 ", timestamp: fixedDate },
       ext: "pdf",
       expected: "MAD II - Week 01 - GA 1.pdf",
+    },
+    {
+      label: "Descriptive assignment title remains readable",
+      meta: { course: "MAD II", title: "JavaScript Graded Assignment - Cafe Management", timestamp: fixedDate },
+      ext: "pdf",
+      expected: "MAD II - JavaScript Graded Assignment - Cafe Management.pdf",
     },
     {
       label: "Real IITM portal DOM (Activity Questions 1.1 with week)",

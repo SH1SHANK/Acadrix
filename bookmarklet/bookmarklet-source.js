@@ -132,7 +132,9 @@
       index = 1,
       input = "",
       expectedOutput = "",
-      actualOutput = "",
+      actualOutput = null,
+      actualOutputAvailable = undefined,
+      executionStatusAvailable = undefined,
       explanation = "",
       raw = "",
       description = "",
@@ -145,12 +147,14 @@
       this.input = typeof input === "string" ? input : (input !== null && input !== undefined ? String(input) : "");
       this.expectedOutput = typeof expectedOutput === "string" ? expectedOutput : (expectedOutput !== null && expectedOutput !== undefined ? String(expectedOutput) : "");
       this.actualOutput = typeof actualOutput === "string" ? actualOutput : (actualOutput !== null && actualOutput !== undefined ? String(actualOutput) : "");
+      this.actualOutputAvailable = Boolean(actualOutputAvailable ?? (actualOutput !== null && actualOutput !== undefined));
+      this.executionStatusAvailable = Boolean(executionStatusAvailable ?? (status === "passed" || status === "failed"));
+      this.status = this.executionStatusAvailable && (status === "passed" || status === "failed") ? status : null;
       this.explanation = explanation || "";
       this.raw = raw || "";
       this.description = description || "";
       this.isSample = Boolean(isSample);
       this.isVisible = Boolean(isVisible);
-      this.status = status || null;
     }
   }
   
@@ -473,6 +477,15 @@
     }
   
     // If no standard kind acronym matched, check if rawTitle contains a specific non-generic title
+    // Keep descriptive assignment names intact; abbreviating them to "GA" loses the identity users need in downloads.
+    if (rawTitle && /\bgraded\s+assignment\b\s*[-:]/i.test(rawTitle)) {
+      const assignmentName = rawTitle
+        .replace(/\bweek[\s\-_:]*\d{1,2}\b/gi, "")
+        .replace(/^[\s\-_:]+|[\s\-_:]+$/g, "")
+        .trim();
+      if (assignmentName) kindPart = sanitizeFilenameSegment(assignmentName);
+    }
+  
     if (!kindPart && rawTitle && typeof rawTitle === "string") {
       const trimmedTitle = rawTitle.trim();
       if (
@@ -824,6 +837,8 @@
       testCaseBlock: ".test-case-block",
       testCaseBlockTitle: ".title, .wrapper .title",
       testCaseBlockContent: ".content",
+      testCaseActualOutput: ".test-case-actual-output, .actual-output-content, .actual-output, .test-actual-output, [data-output='actual']",
+      testCaseStatus: ".test-case-status, .execution-status, [data-execution-status]",
       testCaseItem: ".test-case-details, .test-case-block, .test-case, .test-case-item, .test-case-card, .testcase-item",
       testCaseInput: ".test-case-input, .input-content, .test-input, pre.input, .input",
       testCaseOutput: ".test-case-output, .output-content, .test-output, pre.output, .expected-output, .output",
@@ -3091,6 +3106,52 @@
   /** Shared Reader interaction behavior. */
   
   const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
+  
+  function extractImportedCode(input, prefix = "", suffix = "") {
+    const text = String(input ?? "").replace(/^\uFEFF/, "").trim();
+    if (!text) return "";
+    const blocks = [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)];
+    let code = (blocks.at(-1)?.[1] ?? text).trim();
+    if (prefix && suffix) {
+      const start = code.indexOf(prefix);
+      const end = code.lastIndexOf(suffix);
+      if (start !== -1 && end > start) code = code.slice(start + prefix.length, end);
+    }
+    return code.replace(/^\s*code:\s*/i, "").trim();
+  }
+  
+  function importProgrammingCode(reader) {
+    const editor = reader.programmingEditor;
+    if (!editor) return;
+    const pData = reader.documentModel?.questions?.[0]?.programmingData || {};
+    const prefix = editor.prefixCode ?? pData.prefixCode ?? "";
+    const suffix = editor.suffixCode ?? pData.suffixCode ?? "";
+    const readClipboard = typeof navigator !== "undefined" ? navigator.clipboard?.readText : null;
+    const fallback = () => {
+      const pasted = typeof window !== "undefined" && window.prompt
+        ? window.prompt("Paste the completed editable code:", "")
+        : null;
+      if (pasted !== null) applyImportedCode(pasted);
+    };
+    const applyImportedCode = (input) => {
+      const code = extractImportedCode(input, prefix, suffix);
+      if (!code) {
+        reader.notify?.("No code found to import", "warning", 2500);
+        return;
+      }
+      editor.setCode(code);
+      reader.notify?.("Code imported into the editor", "success", 2500);
+    };
+    if (typeof readClipboard === "function") {
+      Promise.resolve(readClipboard.call(navigator)).then((text) => {
+        if (String(text ?? "").trim()) applyImportedCode(text);
+        else fallback();
+      }).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+  
   function handleReaderKeyDown(e) {
     if (!this.sheetElement || !this.isOpen()) return;
   
@@ -3368,6 +3429,8 @@
       }).catch(() => {
         this.notify?.("Failed to copy current code", "error", 2500);
       });
+    } else if (action === "import-code") {
+      importProgrammingCode(this);
     } else if (action === "copy-prompt-context" || action === "copy-prompt") {
       const text = copyAiContext(this.documentModel);
       const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
@@ -3584,6 +3647,7 @@
             <div class="saq-actions">
               <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-prompt-context" aria-label="Copy Prompt" title="Copy LLM-optimized prompt">${ICONS.copy}<span>Copy Prompt</span></button>
               <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="copy-current-code" aria-label="Copy Code" title="Copy current solution code">${ICONS.code || ICONS.copy}<span>Copy Code</span></button>
+              <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="import-code" aria-label="Import Code" title="Import solution code from clipboard">${ICONS.import || ICONS.copy}<span>Import Code</span></button>
               <div class="saq-dropdown-wrap">
                 <button type="button" class="saq-btn saq-btn-secondary saq-btn-sm" data-act="toggle-export-menu" aria-label="Export problem statement" aria-haspopup="menu" aria-controls="saq-export-menu" aria-expanded="false"><span>Export</span>${ICONS.chevronDown}</button>
                 <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
@@ -3613,7 +3677,7 @@
               <button type="button" class="saq-btn saq-btn-secondary" data-act="import-answers" aria-label="Import AI Response" title="Import structured AI response">${ICONS.bundle || ""}<span>Import</span></button>
               <button type="button" class="saq-btn saq-btn-primary" data-act="copy-questions" aria-label="Copy AI Prompt" title="Copy LLM-optimized prompt with questions">${ICONS.copy}<span>Copy Prompt</span></button>
               <div class="saq-split-btn-group" id="saq-export-split">
-                <button type="button" class="saq-btn saq-btn-secondary saq-split-main" data-act="copy-md-clipboard" aria-label="Copy Markdown" title="Copy assignment as Markdown">${ICONS.markdown}<span>Copy</span></button>
+              <button type="button" class="saq-btn saq-btn-primary saq-split-main" data-act="print" aria-label="Export assignment as PDF" title="Export assignment as PDF">${ICONS.print}<span>Export PDF</span></button>
                 <button type="button" class="saq-btn saq-btn-secondary saq-split-arrow" data-act="toggle-export-menu" aria-label="More download formats" aria-haspopup="menu" aria-expanded="false" title="Download formats (PDF, Markdown, Bundle)">${ICONS.chevronDown}</button>
                 <div class="saq-dropdown-menu" id="saq-export-menu" role="menu" hidden>
                   <button type="button" class="saq-dropdown-item" data-act="print" role="menuitem" title="Download as PDF">${ICONS.print}<span>Download PDF</span></button>
@@ -3852,29 +3916,50 @@
           if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
             const cards = pData.testCases.map((tc) => {
               const label = tc.description ? `Case ${tc.index} (${escapeHtml(tc.description)})` : `Case ${tc.index}`;
+              const statusAvailable = tc.executionStatusAvailable === true && (tc.status === "passed" || tc.status === "failed");
+              const statusHtml = statusAvailable && tc.status === "passed"
+                ? '<span class="acx-badge acx-badge-success">Passed</span>'
+                : statusAvailable && tc.status === "failed"
+                  ? '<span class="acx-badge acx-badge-error">Failed</span>'
+                  : '<span class="acx-badge acx-badge-neutral">Execution status unavailable</span>';
+              const actualAvailable = tc.actualOutputAvailable === true;
+              const actualOutput = actualAvailable
+                ? escapeHtml(tc.actualOutput ?? "") || '<span class="saq-tc-empty">Empty output</span>'
+                : '<span class="saq-tc-unavailable">Actual output unavailable</span>';
               if (tc.raw) {
                 return `
                   <div class="saq-test-case-card">
-                    <div class="saq-test-case-header"><span class="saq-tc-name">${escapeHtml(label)}</span></div>
+                    <div class="saq-test-case-header">
+                      <span class="saq-tc-name">${escapeHtml(label)}</span>
+                      ${statusHtml}
+                    </div>
                     <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.raw)}</pre>
+                    <div class="saq-tc-col saq-tc-actual-raw">
+                      <span class="saq-tc-label">Actual Output</span>
+                      <pre class="saq-tc-pre" tabindex="0">${actualOutput}</pre>
+                    </div>
                   </div>
                 `;
               }
               return `
-                <div class="saq-test-case-card">
+                <div class="saq-test-case-card" data-execution-status="${statusAvailable ? tc.status : "unavailable"}">
                   <div class="saq-test-case-header">
                     <span class="saq-tc-name">${escapeHtml(label)}</span>
                     ${tc.isSample ? '<span class="acx-badge acx-badge-neutral">Sample</span>' : ""}
-                    ${tc.status === "passed" ? '<span class="acx-badge acx-badge-success">Passed</span>' : tc.status === "failed" ? '<span class="acx-badge acx-badge-error">Failed</span>' : ""}
+                    ${statusHtml}
                   </div>
                   <div class="saq-test-case-io">
                     <div class="saq-tc-col">
                       <span class="saq-tc-label">Input</span>
-                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input || "")}</pre>
+                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.input ?? "")}</pre>
                     </div>
                     <div class="saq-tc-col">
                       <span class="saq-tc-label">Expected Output</span>
-                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput || "")}</pre>
+                      <pre class="saq-tc-pre" tabindex="0">${escapeHtml(tc.expectedOutput ?? "")}</pre>
+                    </div>
+                    <div class="saq-tc-col">
+                      <span class="saq-tc-label">Actual Output</span>
+                      <pre class="saq-tc-pre" tabindex="0">${actualOutput}</pre>
                     </div>
                   </div>
                 </div>
@@ -4729,6 +4814,16 @@
       }
   
       if (this.reader.isMounted() && this.activeDocument && !this.reader.isOpen()) {
+        if (this.portal.isProgrammingAssignment?.()) {
+          const editor = this.reader.programmingEditor;
+          const draft = editor?.isModified?.() ? editor.getCode?.() : null;
+          await this.refresh();
+          if (draft !== null && this.reader.programmingEditor) {
+            this.reader.programmingEditor.setCode?.(draft);
+          }
+          return;
+        }
+  
         this.launcher.setExpanded?.(true);
         this.launcher.hide();
         this.reader.show();
