@@ -1,0 +1,24 @@
+sequenceDiagram
+    autonumber
+    actor Student
+    participant Reader as Acadrix Reader
+    participant CM as CodeMirror buffer
+    participant BG as Extension service worker
+    participant Bridge as Main-world bridge
+    participant Ace as IITM Ace editor
+
+    Student->>Reader: Click Apply Changes
+    Reader->>CM: Read workingCode
+    Reader->>BG: Request privileged write
+    BG->>Bridge: Dispatch verified write
+    Bridge->>Ace: Re-read editor and question context
+    alt Context or protected range changed
+        Bridge-->>BG: Reject with diagnostic
+        BG-->>Reader: Show safe failure
+    else Snapshot is still valid
+        Bridge->>Ace: Replace editable range only
+        Bridge->>Ace: Verify protected prefix and suffix
+        Ace-->>Bridge: Updated editor state
+        Bridge-->>BG: Confirm write
+        BG-->>Reader: Show applied state
+    end

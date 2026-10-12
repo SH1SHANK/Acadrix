@@ -2,7 +2,19 @@
 
 Acadrix separates portal observation, semantic extraction, canonical data, and presentation/export. The extension is the full-featured target; `build.mjs` also creates a constrained bookmarklet target.
 
-Interactive diagrams: [system architecture](diagrams/acadrix-architecture.html) and [programming Apply Changes sequence](diagrams/apply-changes-pipeline.html).
+Diagrams: [architecture source](diagrams/architecture.mmd), [interactive architecture view](diagrams/acadrix-architecture.html), [Apply Changes source](diagrams/apply-changes.mmd), and [interactive Apply Changes view](diagrams/apply-changes-pipeline.html).
+
+```mermaid
+flowchart LR
+    portal[IITM portal] --> adapter[Portal adapter]
+    adapter --> traversal[Traversal]
+    traversal --> extraction[Semantic extraction]
+    extraction --> model[AssignmentDocument]
+    model --> reader[Reader]
+    model --> exports[Markdown / PDF / bundle]
+    reader --> programming[Programming workspace]
+    programming -. Apply Changes .-> portal
+```
 
 ## Main data flow
 

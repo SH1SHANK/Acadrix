@@ -1,0 +1,19 @@
+flowchart TD
+    page["Current IITM page"] --> discover{"Assessment page?"}
+    discover -- "No" --> hidden["Do not show navigation"]
+    discover -- "Yes" --> collect["Collect assignment links\nacross all available weeks"]
+    collect --> filter["Keep graded assignments\nexclude solution pages"]
+    filter --> current["Resolve current assignment"]
+    current --> previous["Previous graded assignment"]
+    current --> next["Next graded assignment"]
+    previous --> navigate["Navigate through portal route"]
+    next --> navigate
+    navigate --> refresh["Re-detect page and redraw controls"]
+    refresh --> collect
+
+    classDef decision fill:#172033,stroke:#7dd3fc,color:#f8fafc
+    classDef action fill:#12352b,stroke:#34d399,color:#ecfdf5
+    classDef muted fill:#252a3a,stroke:#94a3b8,color:#e2e8f0
+    class discover decision
+    class collect,filter,current,previous,next,navigate,refresh action
+    class page,hidden muted

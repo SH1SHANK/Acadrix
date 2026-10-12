@@ -99,6 +99,9 @@ The repository contains versioned release automation. Published versions and the
 - [Architecture decisions](docs/decisions/README.md)
 - [Architecture diagram](docs/diagrams/acadrix-architecture.html)
 - [Apply Changes sequence](docs/diagrams/apply-changes-pipeline.html)
+- [Mermaid architecture source](docs/diagrams/architecture.mmd)
+- [Mermaid programming write sequence](docs/diagrams/apply-changes.mmd)
+- [Mermaid graded-assignment navigation](docs/diagrams/graded-navigation.mmd)
 
 ## Contributing
 

@@ -1,0 +1,28 @@
+flowchart LR
+    portal["IITM portal\nAngular page + Ace editor"]
+    adapter["Portal adapter\npage detection + selectors"]
+    traversal["Traversal engine\nquestion navigation + restore"]
+    extraction["Semantic extraction\nHTML → content nodes"]
+    model["Canonical model\nAssignmentDocument"]
+    reader["Reader UI\nShadow DOM"]
+    answers["Answer review\nvalidate + apply"]
+    programming["Programming workspace\nCodeMirror working buffer"]
+    exports["Export orchestration\nMarkdown · PDF · bundle"]
+    events["Academic events\ncache + notifications"]
+
+    portal --> adapter --> traversal --> extraction --> model
+    model --> reader
+    model --> exports
+    reader --> answers
+    reader --> programming
+    programming -. "explicit Apply Changes" .-> portal
+    events -. "schedule data" .-> reader
+
+    classDef source fill:#172033,stroke:#7dd3fc,color:#f8fafc
+    classDef core fill:#102a43,stroke:#60a5fa,color:#eff6ff
+    classDef ui fill:#163b2d,stroke:#34d399,color:#ecfdf5
+    classDef boundary fill:#3a2410,stroke:#f59e0b,color:#fffbeb
+    class portal source
+    class adapter,traversal,extraction,model core
+    class reader,answers,programming,events ui
+    class exports boundary
