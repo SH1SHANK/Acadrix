@@ -464,6 +464,37 @@
                 overflow: hidden;
                 margin-bottom: var(--acx-space-3);
             }
+            .upcoming-hero {
+                display: flex;
+                flex-direction: column;
+                gap: var(--acx-space-1);
+                padding: var(--acx-space-3);
+                border-bottom: var(--acx-border-width) solid var(--acx-border);
+                background: var(--acx-accent-subtle);
+            }
+            .upcoming-hero[hidden] { display: none; }
+            .upcoming-hero-label {
+                font: var(--acx-text-caption);
+                font-weight: 700;
+                color: var(--acx-text-muted);
+                text-transform: uppercase;
+                letter-spacing: .06em;
+            }
+            .upcoming-hero-title {
+                font: var(--acx-text-h3);
+                font-weight: 650;
+                color: var(--acx-text);
+                overflow-wrap: anywhere;
+            }
+            .upcoming-hero-countdown {
+                font-size: 22px;
+                line-height: 1.2;
+                font-weight: 750;
+                font-variant-numeric: tabular-nums;
+                color: var(--acx-accent);
+            }
+            .upcoming-hero-countdown.is-soon { color: var(--acx-warning); }
+            .upcoming-hero-countdown.is-critical { color: var(--acx-error); }
             .upcoming-list {
                 display: flex;
                 flex-direction: column;
@@ -949,6 +980,11 @@
         <!-- ── Upcoming Deadlines ───────────────────────────────────────────────── -->
         <div class="section">Upcoming Deadlines</div>
         <div id="upcomingContainer" class="upcoming-panel">
+            <div id="upcomingHero" class="upcoming-hero" hidden aria-live="polite">
+                <span class="upcoming-hero-label">Next deadline</span>
+                <span id="upcomingHeroTitle" class="upcoming-hero-title"></span>
+                <span id="upcomingHeroCountdown" class="upcoming-hero-countdown"></span>
+            </div>
             <div id="upcomingList" class="upcoming-list"></div>
             <div id="upcomingEmpty" class="upcoming-empty" hidden>
                 No upcoming deadlines. Sync with the portal to refresh

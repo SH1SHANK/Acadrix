@@ -399,10 +399,16 @@ function renderOperationalUI() {
 }
 
 // ── Upcoming Deadlines Component ──────────────────────────────────────────────
+let upcomingCountdownTimer = null;
 function renderUpcomingDeadlines(events = []) {
   const upcomingList = document.getElementById("upcomingList");
   const upcomingEmpty = document.getElementById("upcomingEmpty");
-  if (!upcomingList || !upcomingEmpty) return;
+  const upcomingHero = document.getElementById("upcomingHero");
+  const upcomingHeroTitle = document.getElementById("upcomingHeroTitle");
+  const upcomingHeroCountdown = document.getElementById("upcomingHeroCountdown");
+  if (!upcomingList || !upcomingEmpty || !upcomingHero || !upcomingHeroTitle || !upcomingHeroCountdown) return;
+  if (upcomingCountdownTimer) clearInterval(upcomingCountdownTimer);
+  upcomingCountdownTimer = null;
 
   const assignmentsMap = new Map();
   const now = new Date();
@@ -425,87 +431,27 @@ function renderUpcomingDeadlines(events = []) {
     }
   }
 
-  const getKolkataParts = (d) => {
-    try {
-      const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hourCycle: "h23",
-      });
-      const parts = {};
-      for (const { type, value } of formatter.formatToParts(d)) {
-        if (type !== "literal") parts[type] = parseInt(value, 10);
-      }
-      return parts;
-    } catch {
-      return null;
-    }
-  };
-
-  const nowParts = getKolkataParts(now);
-
-
   const items = Array.from(assignmentsMap.values());
-  if (items.length === 0) {
-    upcomingEmpty.hidden = false;
-    upcomingList.innerHTML = "";
-    return;
-  }
-
-  // Evaluate & prioritize
-  const evaluated = items.map((item) => {
+  // Keep only valid future deadlines so passed work never displaces upcoming work.
+  const evaluated = items.flatMap((item) => {
     const dueTime = new Date(item.dueDate).getTime();
-    const isSubmitted = item.submissionStatus === "SUBMITTED" || item.submissionStatus === "COMPLETED";
+    if (!Number.isFinite(dueTime) || dueTime <= nowMs) return [];
     const diffMs = dueTime - nowMs;
-    const isOverdue = diffMs < 0;
-
-    let dayDiff = null;
-    const dueParts = getKolkataParts(new Date(item.dueDate));
-    if (nowParts && dueParts) {
-      const d1 = Date.UTC(nowParts.year, nowParts.month - 1, nowParts.day);
-      const d2 = Date.UTC(dueParts.year, dueParts.month - 1, dueParts.day);
-      dayDiff = Math.round((d2 - d1) / 86400000);
-    }
-
-    let tier = 4;
     let badgeText = "";
     let badgeClass = "acx-badge-neutral";
 
-    if (isSubmitted) {
-      tier = 5;
-      badgeText = "Submitted";
-      badgeClass = "acx-badge-success";
-    } else if (isOverdue) {
-      tier = 1;
-      badgeText = "Overdue";
-      badgeClass = "acx-badge-error";
-    } else if (dayDiff === 0) {
-      tier = 2;
-      badgeText = "Due Today";
+    if (diffMs <= 24 * 3600 * 1000) {
+      badgeText = "Due Soon";
       badgeClass = "acx-badge-warning";
-    } else if (dayDiff === 1 || diffMs <= 24 * 3600 * 1000) {
-      tier = 3;
-      badgeText = "Due Tomorrow";
-      badgeClass = "acx-badge-accent";
     } else {
-      tier = 4;
-      badgeClass = "acx-badge-neutral";
-      if (diffMs <= 72 * 3600 * 1000) {
-        badgeText = "Due Soon";
-      } else {
-        try {
-          badgeText = new Intl.DateTimeFormat("en-US", {
-            timeZone: "Asia/Kolkata",
-            month: "short",
-            day: "numeric",
-          }).format(new Date(item.dueDate));
-        } catch {
-          badgeText = "Upcoming";
-        }
+      try {
+        badgeText = new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Kolkata",
+          month: "short",
+          day: "numeric",
+        }).format(new Date(item.dueDate));
+      } catch {
+        badgeText = "Upcoming";
       }
     }
 
@@ -517,31 +463,48 @@ function renderUpcomingDeadlines(events = []) {
     const sourceLabel = item.deadlineSource === "SUPABASE" ? " · synced" : "";
     const metaDisplay = `${freshnessText}${sourceLabel}`;
 
-    return {
+    return [{
       ...item,
       dueTime,
-      tier,
       badgeText,
       badgeClass,
       freshnessText,
       metaDisplay,
-    };
+    }];
   });
-  // Sort deterministically:
-  // 1. Tier ascending (1 to 5)
-  // 2. dueTime ascending
-  // 3. title alphabetically
   evaluated.sort((a, b) => {
-    if (a.tier !== b.tier) return a.tier - b.tier;
     if (a.dueTime !== b.dueTime) return a.dueTime - b.dueTime;
     return a.title.localeCompare(b.title);
   });
 
-  const displayItems = evaluated.slice(0, 4);
-  upcomingEmpty.hidden = true;
+  const [nextDeadline, ...remainingDeadlines] = evaluated;
+  upcomingEmpty.hidden = evaluated.length > 0;
+  upcomingHero.hidden = !nextDeadline;
   upcomingList.innerHTML = "";
+  if (!nextDeadline) return;
 
-  for (const it of displayItems) {
+  const updateCountdown = () => {
+    const minutesRemaining = Math.max(1, Math.ceil((nextDeadline.dueTime - Date.now()) / 60000));
+    const days = Math.floor(minutesRemaining / 1440);
+    const hours = Math.floor((minutesRemaining % 1440) / 60);
+    const minutes = minutesRemaining % 60;
+    const units = (count, label) => `${count} ${label}${count === 1 ? "" : "s"}`;
+    const countdown = days
+      ? `In ${units(days, "Day")}${hours ? ` ${units(hours, "Hour")}` : ""}`
+      : hours
+        ? `In ${units(hours, "Hour")}${minutes ? ` ${units(minutes, "Minute")}` : ""}`
+        : `In ${units(minutes, "Minute")}`;
+    upcomingHeroTitle.textContent = nextDeadline.courseCode
+      ? `${nextDeadline.courseCode} · ${nextDeadline.title}`
+      : nextDeadline.title;
+    upcomingHeroCountdown.textContent = countdown;
+    upcomingHeroCountdown.classList.toggle("is-critical", minutesRemaining <= 60);
+    upcomingHeroCountdown.classList.toggle("is-soon", minutesRemaining > 60 && minutesRemaining <= 72 * 60);
+  };
+  updateCountdown();
+  upcomingCountdownTimer = setInterval(() => renderUpcomingDeadlines(events), 30_000);
+
+  for (const it of remainingDeadlines.slice(0, 3)) {
     const itemEl = document.createElement("div");
     itemEl.className = "upcoming-item";
 
