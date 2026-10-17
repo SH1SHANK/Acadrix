@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <a href="https://github.com/SH1SHANK/Acadrix/releases"><img src="https://img.shields.io/badge/version-v0.4.0--rc.1-informational.svg" alt="Version 0.4.0 RC 1" /></a>
+  <a href="https://github.com/SH1SHANK/Acadrix/releases"><img src="https://img.shields.io/badge/version-v0.5.0--rc--1-informational.svg" alt="Version 0.5.0 RC 1" /></a>
   <a href="https://github.com/SH1SHANK/Acadrix/actions/workflows/ci.yml"><img src="https://github.com/SH1SHANK/Acadrix/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
   <img src="https://img.shields.io/badge/Manifest-V3-brightgreen.svg" alt="Manifest V3" />
 </p>
@@ -18,8 +18,10 @@ Acadrix brings an IITM assessment’s questions into one Reader, supports a revi
 ## Features
 
 - **Assessment Reader:** traverses question navigation and presents extracted content together in an extension-owned Shadow DOM surface.
-- **Answer review:** parses compact or multiline indexed answer suggestions, validates them against each question type, and automatically applies valid imported answers while preserving explicit user overrides.
+- **Answer review:** parses compact or multiline indexed answer suggestions, validates them against each question type, and keeps suggested selections in the Reader until the student explicitly applies them to the portal.
 - **Programming workspace:** extracts programming problem details and test cases. On the actual programming editor page, an embedded CodeMirror editor keeps a local `workingCode` buffer separate from IITM’s Ace editor until the student chooses **Apply Changes**; **Import Code** safely replaces only the editable code region.
+- **Course grade calculator:** calculates weighted course marks from verified course policies, shows component contributions and pass requirements, searches policies across courses, and can use scores scraped from the Grades page. Student scores remain in local extension storage.
+- **Course page helpers:** highlights the next upcoming deadline, restyles oversized lecture-slide links, and adds a transcript action that copies a timestamped AI study prompt with the lecture video link when available.
 - **Export:** creates Markdown, PDF/print output, and portable bundles with assessment-linked resources.
 - **Academic events:** reads the configured public academic-events feed, caches results locally, and schedules browser notifications.
 
@@ -36,6 +38,8 @@ Acadrix distinguishes the programming assignment information page from the activ
 When the student applies code, Acadrix uses the privileged extension write path, verifies the editor/question context, replaces only the editable range, and checks that protected scaffold content remains intact. Acadrix does not run or submit the assignment for the student.
 
 See [Programming assignments](docs/PROGRAMMING_ASSIGNMENTS.md) for the data flow and safeguards.
+
+See [Features](docs/FEATURES.md) for the grade calculator, deadline display, lecture slides, and transcript prompt behavior.
 
 ## Normal assignment answer format
 

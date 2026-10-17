@@ -13,3 +13,4 @@ scratch/
 
 # Local agent/MCP configuration
 .omp/
+/supabase/.temp/

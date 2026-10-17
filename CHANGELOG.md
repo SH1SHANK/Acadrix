@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.5.0-rc-1](https://github.com/SH1SHANK/Acadrix/compare/v0.4.0-rc.1...v0.5.0-rc-1) (2026-10-17)
+
+### Highlights
+
+- Added a course grade calculator with searchable verified policies, manual score entry, locally captured Grades-page scores, weighted-score visuals, and required-marks calculations.
+- Added a **Summarise** action beside video transcripts. It copies a timestamped lecture-summary prompt and the YouTube video link when available.
+- Replaced oversized lecture-slide image buttons with compact accessible download links and emphasized the nearest upcoming deadline with a live countdown.
+- Improved programming imports to merge matching complete function or method definitions, preserve unrelated code, and reject unsafe partial or ambiguous matches.
+- Improved programming prompt context, editor import feedback, clipboard fallback guidance, protected-scaffold verification, and non-blocking dialog behavior.
+- Corrected course-code normalization for IITM degree-prefixed course IDs and added the Sep 2026 grading-policy migration.
+
+### Verification
+
+- `npm run build` and `npm run check` passed.
+- `npm test` passed all deterministic suites.
+- Real IITM session behavior and Supabase migration application are not covered by the local suite.
+
+### Release packages
+
+- `acadrix-v0.5.0-rc-1-chrome-extension.zip` — unpacked Manifest V3 extension for manual installation.
+- `acadrix-v0.5.0-rc-1-bookmarklet.zip` — bookmarklet source, install page, stylesheet, and drag-to-install package.
+
+### Install the extension manually
+
+1. Download and extract `acadrix-v0.5.0-rc-1-chrome-extension.zip`.
+2. Open `chrome://extensions` in Chrome or another Chromium browser.
+3. Turn on **Developer mode**.
+4. Select **Load unpacked** and choose the extracted folder.
+5. Refresh the IITM page.
+
+### Install the bookmarklet
+
+Download and extract `acadrix-v0.5.0-rc-1-bookmarklet.zip`, then follow the included install page to add the bookmarklet.
+
+This is a prerelease candidate. Review course calculations against the published policy before relying on them for academic planning.
+
 ## [0.4.0-rc.1](https://github.com/SH1SHANK/Acadrix/compare/v0.3.0...v0.4.0-rc.1) (2026-10-12)
 
 ### Highlights

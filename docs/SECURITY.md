@@ -14,6 +14,8 @@ Acadrix runs as a browser extension alongside an IITM portal page. It separates 
 
 Acadrix is not network-silent. The extension makes a GET request to its configured Supabase `public.academic_events` endpoint to retrieve public academic event data; returned records can be cached in `chrome.storage.local`. The browser extension includes the Supabase public/anonymous API key required for this public endpoint. It must not be treated as a secret or replaced with a service-role key.
 
+The grade calculator also reads public course policy records from `public.course_grading_policies`. Grades-page scores and manually entered calculator values are stored locally in `chrome.storage.local`; the extension does not send those student scores to Supabase.
+
 When a student exports a bundle, the resource pipeline may fetch image or other resource URLs referenced by the assessment. PDF generation and document formatting use the extension's bundled code. Acadrix does not send assessment answers or programming code to an AI service. Preparing a prompt does not submit it; the student chooses whether and where to share copied prompt text.
 
 ## Extension permissions

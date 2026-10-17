@@ -15,6 +15,8 @@ node build.mjs
 
 `build.mjs` builds the extension into the ignored `build/` directory and regenerates the committed bookmarklet outputs. Edit modular source under `src/` for bundled functionality; edit extension static assets under `extension/`. Do not hand-edit generated `build/` output or generated bookmarklet files.
 
+Course grading-policy schema and seed records are versioned in `supabase/migrations/`. Apply migrations to the intended Supabase project before expecting its course policies to be available to the extension. Keep Supabase CLI state under `supabase/.temp/` local; never commit credentials or service-role keys.
+
 ## Validation
 
 ```bash

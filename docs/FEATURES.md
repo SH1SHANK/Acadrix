@@ -22,6 +22,7 @@ This page summarizes behavior present in the current extension. The [architectur
 - Embeds CodeMirror in the Reader as a local editable working buffer. IITM’s existing Ace editor remains authoritative.
 - Supports the languages listed in `src/bridge/languages.js` and includes highlighting, completion, indentation, clipboard editing, and undo/redo.
 - Applies changes through the privileged write path, restricted to the editable region and checked against the captured editor/question context and scaffold.
+- Imports plain code or multiple fenced blocks through a shared parser, merges uniquely matched function or method definitions, and leaves the buffer unchanged when a partial or ambiguous merge cannot be done safely.
 
 ## Export
 
@@ -34,6 +35,20 @@ This page summarizes behavior present in the current extension. The [architectur
 - Retrieves only course-independent weekly assignment deadlines (`course_code IS NULL`) from the configured Supabase `public.academic_events` endpoint.
 - Caches those weekly deadlines in extension storage and schedules deadline-related browser notifications.
 - Does not infer submission status from IITM page content.
+
+## Course grades and grading policies
+
+- Shows a floating grade-calculator button on course and Grades pages; it does not open a dialog automatically.
+- Looks up the course policy by term and course code from `public.course_grading_policies`. Students can search for another course from inside the calculator.
+- Calculates the weighted score, each assessment's contribution, and remaining marks needed to reach the policy pass mark. The calculator requires an explicit **Calculate** action.
+- Reads graded assignment results from the Grades page and stores those student scores locally. Scores are not uploaded to Supabase; other assessment marks can be entered manually.
+- Policy-table setup and the grading-policy JSON format are maintained in `supabase/migrations/` and `src/portal-decor/grade-calculator.js`.
+
+## Course page helpers
+
+- Filters expired items from the popup's upcoming-deadline list and emphasizes the nearest future deadline with a live countdown.
+- Replaces IITM's image-only lecture-slide button with a compact, keyboard-accessible download link while keeping its original destination.
+- Adds **Summarise** next to the video transcript. It copies a prompt containing every visible timestamped transcript cue and the active YouTube URL when the player exposes one; the prompt is sent to no AI service by Acadrix.
 
 ## Course outline navigation
 

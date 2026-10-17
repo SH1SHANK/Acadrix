@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Acadrix",
-  "version": "0.4.0",
-  "version_name": "0.4.0 RC 1",
+  "version": "0.5.0",
+  "version_name": "0.5.0 RC 1",
   "description": "Read all questions in one view and export IITM Online Degree assessments to Markdown, PDF, or portable bundles.",
   "homepage_url": "https://github.com/SH1SHANK/Acadrix",
   "permissions": [
