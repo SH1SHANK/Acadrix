@@ -97,6 +97,7 @@ export function serializeProgrammingPrompt(programmingDoc, options = {}) {
     includePrefixCode = true,
     includeSuffixCode = true,
     includeCurrentCode = false,
+    editableCode = null,
     includeReturnInstructions = true,
   } = options;
 
@@ -201,9 +202,12 @@ export function serializeProgrammingPrompt(programmingDoc, options = {}) {
   }
 
   // 9. Starter Code
-  const codeToInclude = starterCode || (!includeCurrentCode ? currentCode : "");
+  const codeToInclude = typeof editableCode === "string" ? editableCode : (starterCode || (!includeCurrentCode ? currentCode : ""));
+  if (includeStarterCode && typeof editableCode === "string" && starterCode?.trim()) {
+    parts.push(`## Starter Code\n\`\`\`${lang}\n${starterCode.trim()}\n\`\`\``);
+  }
   if (includeStarterCode && codeToInclude && codeToInclude.trim().length > 0) {
-    const heading = starterCode ? "Starter Code" : "Starter / Current Code";
+    const heading = typeof editableCode === "string" ? "Current Editor Code" : (starterCode ? "Starter Code" : "Starter / Current Code");
     parts.push(`## ${heading}\n\`\`\`${lang}\n${codeToInclude.trim()}\n\`\`\``);
   }
 
@@ -223,8 +227,7 @@ export function serializeProgrammingPrompt(programmingDoc, options = {}) {
 
   // 12. Return Instructions
   if (includeReturnInstructions) {
-    const returnInst = pData.returnInstructions ||
-      `Return only the completed, working ${lang} code for direct pasting into the editor.`;
+    const returnInst = [pData.returnInstructions, `Return code for direct pasting into the editor. Keep function and method names and signatures from the provided code exactly. Return complete definitions for changed functions or methods, or a complete editable solution when no named definition applies. Plain code or one or more ${lang}-labeled code fences are accepted. Do not include explanatory text.`].filter(Boolean).join("\n");
     parts.push(`## Return Instructions\n${returnInst.trim()}`);
   }
 
@@ -235,7 +238,7 @@ export function serializeProgrammingPrompt(programmingDoc, options = {}) {
 
   // 14. Task
   parts.push(
-    `## Task\n### Task\nSolve the programming assignment and return only the editable solution code for direct pasting into Acadrix's code editor. Do not wrap the solution in an Acadrix JSON or HTML format, and do not include explanatory text.\nThe editable solution must replace only the editable/main code region.\nDo not modify protected prefix or suffix code.`
+    `## Task\n### Task\nSolve the programming assignment and return code for direct pasting into Acadrix's code editor. Keep exact function or method names and signatures from the provided code. Return complete definitions for changed functions or methods, using plain code or one or more ${lang}-labeled code fences; return a complete editable solution when no named definition applies. Do not wrap the solution in an Acadrix JSON or HTML format, and do not include explanatory text.\nDo not modify protected prefix or suffix code.`
   );
 
 

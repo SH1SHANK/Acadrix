@@ -1458,7 +1458,7 @@ button.saq-option.is-ai-suggested:not(.is-selected):not(.selected) {
   position: absolute;
   inset: 0;
   background: var(--acx-overlay-scrim);
-  animation: acx-fade-enter var(--acx-duration-fast) var(--acx-ease-standard) both;
+  animation: acx-fade-enter var(--acx-duration-base) var(--acx-ease-standard) both;
 }
 .saq-dialog-content {
   position: relative;
@@ -1470,7 +1470,7 @@ button.saq-option.is-ai-suggested:not(.is-selected):not(.selected) {
   border-radius: var(--acx-radius-lg);
   box-shadow: var(--acx-shadow-3);
   overflow: hidden;
-  animation: acx-dialog-enter var(--acx-duration-fast) var(--acx-ease-standard) both;
+  animation: acx-dialog-enter var(--acx-duration-base) var(--acx-ease-standard) both;
 }
 .saq-dialog-head {
   display: flex;
@@ -1484,6 +1484,7 @@ button.saq-option.is-ai-suggested:not(.is-selected):not(.selected) {
   font: var(--acx-text-ui);
   font-weight: 600;
   color: var(--acx-text);
+  margin: 0;
 }
 .saq-dialog-body {
   padding: var(--acx-space-4);
@@ -2590,6 +2591,10 @@ math {
 @keyframes acx-spin {
   to { transform: rotate(360deg); }
 }
+@keyframes acx-fade-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 @keyframes acx-dialog-enter {
   from {
     opacity: 0;
@@ -3590,6 +3595,10 @@ math {
   background: var(--acx-surface-sunken);
   color: var(--acx-text);
 }
+.saq-code-editor-root:focus-within {
+  border-color: var(--acx-focus-ring);
+  box-shadow: inset 0 0 0 var(--acx-border-width-strong) var(--acx-focus-ring);
+}
 .saq-code-editor-header,
 .saq-code-editor-footer {
   display: flex;
@@ -3655,6 +3664,28 @@ math {
   white-space: nowrap !important;
 }
 .saq-programming-header .saq-actions .saq-btn { white-space: nowrap; flex-shrink: 0; }
+
+@media (max-width: 600px) {
+  .saq-programming-header {
+    height: auto !important;
+    min-height: var(--acx-header-h) !important;
+    padding: var(--acx-space-2) var(--acx-space-3) !important;
+    flex-wrap: wrap !important;
+    row-gap: var(--acx-space-2) !important;
+  }
+  .saq-header-left { flex: 1 1 100%; }
+  .saq-programming-header .saq-actions {
+    flex: 1 1 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    margin-left: 0 !important;
+  }
+  .saq-programming-header .saq-actions .saq-btn { min-height: var(--acx-target-min); }
+  .saq-code-editor-header,
+  .saq-code-editor-footer { flex-wrap: wrap; }
+  .saq-editor-footer-actions { flex-wrap: wrap; }
+  .saq-editor-footer-status { flex: 1 1 100%; }
+}
 /* @extension-only-end */
 
 /* ── Embedded KaTeX Layout Rules ───────────────────────────────────────────── */

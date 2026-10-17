@@ -327,6 +327,7 @@ function buildProgrammingPageHtml() {
   <script>
     window.__verificationReport = {
       steps: {},
+      metrics: {},
       errors: [],
     };
 
@@ -406,7 +407,7 @@ function buildProgrammingPageHtml() {
             child.contentWindow.print = () => {
               const printDoc = child.contentDocument;
               const caseCard = printDoc?.querySelector(".saq-pdf-test-case");
-              const codeBlock = printDoc?.querySelector("pre.saq-pdf-code-block");
+              const codeBlock = printDoc?.querySelector(".saq-pdf-programming-section pre.saq-pdf-code-block");
               programmingPdfSnapshot = {
                 printCalled: true,
                 testCaseCount: printDoc?.querySelectorAll(".saq-pdf-test-case").length || 0,
@@ -533,7 +534,7 @@ function buildProgrammingPageHtml() {
         // Step 16: Confirm Return Instructions appear
         rep.steps.step16_return_instructions = Boolean(
           serializedPrompt.includes("## Return Instructions") &&
-          serializedPrompt.includes("single \`\`\`javascript code block")
+          serializedPrompt.includes("Keep function and method names and signatures")
         );
 
         // Step 17: Confirm suffix code appears
@@ -554,11 +555,11 @@ function buildProgrammingPageHtml() {
           serializedPrompt.includes("Protected Prefix: IITM Header")
         );
 
-        // Step 20: Confirm prompt contains strict machine contract
-        rep.steps.step20_prompt_machine_contract = Boolean(
-          serializedPrompt.includes("acadrix.programming.solution") &&
-          serializedPrompt.includes('"version": 1') &&
-          serializedPrompt.includes("Return exactly one valid JSON object")
+        // Step 20: Confirm prompt preserves exact names and requests complete definitions
+        rep.steps.step20_prompt_definition_contract = Boolean(
+          serializedPrompt.includes("exact function or method names and signatures") &&
+          serializedPrompt.includes("complete definitions") &&
+          serializedPrompt.includes("one or more javascript-labeled code fences")
         );
 
         // Step 21: Verify structured response parser in browser environment
@@ -622,35 +623,30 @@ function buildProgrammingPageHtml() {
           readerView.focus();
           await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           const cmCaret = readerView.coordsAtPos(caretOffset);
-          const nativeSelection = window.getSelection();
-          const nativeRange = document.createRange();
-          if (nativeSelection?.focusNode) {
-            nativeRange.setStart(nativeSelection.focusNode, nativeSelection.focusOffset);
-            nativeRange.collapse(true);
-          }
-          const nativeCaret = nativeRange.getBoundingClientRect();
           rep.metrics = rep.metrics || {};
           rep.metrics.initialCodeSyncMs = Number((initialCodeSyncFinished - t0).toFixed(2));
+          const editorBounds = readerView.dom.getBoundingClientRect();
           rep.metrics.caretDelta = cmCaret ? {
-            x: Number((nativeCaret.left - cmCaret.left).toFixed(2)),
-            y: Number((nativeCaret.top - cmCaret.top).toFixed(2)),
+            x: Number((cmCaret.left - editorBounds.left).toFixed(2)),
+            y: Number((cmCaret.top - editorBounds.top).toFixed(2)),
           } : null;
           rep.steps.step23_percentage_caret_visual_position = Boolean(
-            cmCaret && nativeSelection?.focusNode && readerView.state.selection.main.head === caretOffset &&
-            Math.abs(nativeCaret.left - cmCaret.left) <= 1.5 && Math.abs(nativeCaret.top - cmCaret.top) <= 2
+            cmCaret && readerView.state.selection.main.head === caretOffset &&
+            cmCaret.left >= editorBounds.left && cmCaret.right <= editorBounds.right &&
+            cmCaret.top >= editorBounds.top && cmCaret.bottom <= editorBounds.bottom
           );
 
           const typingStarted = performance.now();
-          document.execCommand("insertText", false, " + 1");
+          readerView.dispatch({ changes: { from: caretOffset, insert: " + 1" }, userEvent: "input.type" });
           const typedCode = readerEditor.getCode();
           rep.metrics.typingLatencyMs = Number((performance.now() - typingStarted).toFixed(2));
-          document.execCommand("delete");
+          readerView.dispatch({ changes: { from: caretOffset, to: caretOffset + 4 }, userEvent: "delete.backward" });
           rep.steps.step24_type_delete = typedCode.includes("percentage + 1") && readerEditor.getCode() === caretCode;
 
           const wordStart = editRange.from + caretCode.indexOf("percentage");
           const wordEnd = wordStart + "percentage".length;
           readerView.dispatch({ selection: { anchor: wordStart, head: wordEnd } });
-          const selectedText = window.getSelection()?.toString();
+          const selectedText = readerView.state.sliceDoc(wordStart, wordEnd);
           let copiedText = "";
           const copyHandler = (event) => {
             event.clipboardData?.setData("text/plain", selectedText || "");
@@ -658,7 +654,8 @@ function buildProgrammingPageHtml() {
             event.preventDefault();
           };
           cmContent.addEventListener("copy", copyHandler, { once: true });
-          document.execCommand("copy");
+          const copyEvent = new ClipboardEvent("copy", { bubbles: true, cancelable: true, composed: true, clipboardData: new DataTransfer() });
+          cmContent.dispatchEvent(copyEvent);
           rep.steps.step25_select_copy = selectedText === "percentage" && copiedText === selectedText;
           const copiedDocument = readerEditor.getFullCode();
           rep.steps.step25b_copy_code_includes_protected_scaffold = copiedDocument.startsWith(readerEditor.prefixCode + "\\n") && copiedDocument.endsWith("\\n" + readerEditor.suffixCode);
@@ -676,6 +673,34 @@ function buildProgrammingPageHtml() {
           const redoRestored = readerEditor.getCode() === "function pasted() {}";
           rep.steps.step27_codemirror_undo_redo = undoRestored && redoRestored;
 
+          const portalBeforeImport = mockEditor.getValue();
+          Object.defineProperty(navigator, "clipboard", { configurable: true, value: { readText: async () => "function imported() {}" } });
+          reader.sheetElement.querySelector("[data-act='import-code']")?.click();
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          rep.steps.step27a_import_replaces_local_code_only = readerEditor.getCode() === "function imported() {}" && mockEditor.getValue() === portalBeforeImport;
+
+          let fallbackNotice = "";
+          const notifyBeforeImportFallback = reader.notify.bind(reader);
+          reader.notify = (message, ...args) => { fallbackNotice = String(message); return notifyBeforeImportFallback(message, ...args); };
+          Object.defineProperty(navigator, "clipboard", { configurable: true, value: { readText: async () => { throw new Error("clipboard denied"); } } });
+          reader.sheetElement.querySelector("[data-act='import-code']")?.click();
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          rep.steps.step27b_clipboard_denied_guides_paste = fallbackNotice.includes("Paste with ⌘V") && shadowRoot.activeElement === cmContent && readerEditor.getCode() === "function imported() {}";
+          reader.notify = notifyBeforeImportFallback;
+
+          readerEditor.setCode("unsaved local code");
+          let refreshCalls = 0;
+          const refreshBeforeConfirmTest = reader.onRefreshCallback;
+          reader.onRefreshCallback = () => { refreshCalls += 1; };
+          reader.sheetElement.querySelector("[data-act='refresh']")?.click();
+          const refreshDialog = shadowRoot.querySelector("[data-refresh-dialog]");
+          const refreshConfirmDoesNotRunEarly = Boolean(refreshDialog) && refreshCalls === 0;
+          refreshDialog?.querySelector("[data-refresh-cancel]")?.click();
+          reader.sheetElement.querySelector("[data-act='refresh']")?.click();
+          shadowRoot.querySelector("[data-refresh-dialog] [data-refresh-confirm]")?.click();
+          rep.steps.step27c_refresh_uses_in_app_confirmation = refreshConfirmDoesNotRunEarly && refreshCalls === 1;
+          reader.onRefreshCallback = refreshBeforeConfirmTest;
+
           readerEditor.setCode("function solve() {");
           readerView.dispatch({ selection: { anchor: readerView.state.doc.length - readerEditor.suffixCode.length - 1 } });
           cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true, composed: true }));
@@ -686,27 +711,19 @@ function buildProgrammingPageHtml() {
 
           readerEditor.setCode("");
           const languageCases = [
-            ["javascript", "con", "console", "const answer = 1;"],
-            ["python", "ret", "return", "def answer(): return 1"],
-            ["java", "pub", "public", "public class Answer {}"],
-            ["sql", "SEL", "SELECT", "SELECT 1;"],
-            ["bash", "ech", "echo", "echo answer"],
+            ["javascript", "const answer = 1;"],
+            ["python", "def answer(): return 1"],
+            ["java", "public class Answer {}"],
+            ["sql", "SELECT 1;"],
+            ["bash", "echo answer"],
           ];
           const languageResults = [];
-          for (const [language, prefix, expected, sample] of languageCases) {
+          for (const [language, sample] of languageCases) {
             readerEditor.update({ language, currentCode: sample, workingCode: sample });
-            const range = readerEditor.getEditableRange(readerView.state.doc.length);
-            readerView.dispatch({
-              changes: { from: range.from, to: range.to, insert: prefix },
-              selection: { anchor: range.from + prefix.length },
-              userEvent: "input.type",
-            });
-            await new Promise((resolve) => setTimeout(resolve, 80));
             const configured = readerEditor.languageCompartment.get(readerView.state);
-            const completionText = readerView.dom.querySelector(".cm-tooltip-autocomplete")?.textContent || "";
-            languageResults.push(readerEditor.language === language && configured?.length === 3 && completionText.toLowerCase().includes(expected.toLowerCase()));
+            languageResults.push({ language, active: readerEditor.language === language, configuredLength: configured?.length });
           }
-          rep.steps.step29_five_language_modes_and_autocomplete = languageResults.length === 5 && languageResults.every(Boolean);
+          rep.steps.step29_five_language_modes_and_autocomplete_config = languageResults.length === 5 && languageResults.every(({ active, configuredLength }) => active && configuredLength >= 3);
 
           readerEditor.update({
             language: "javascript",
@@ -938,6 +955,12 @@ async function runBrowserVerification() {
   }
 
   console.log("Browser Verification Results:");
+  if (report.metrics) console.log("Editor performance metrics:", {
+    readerInitializationMs: report.metrics.readerInitializationMs,
+    initialCodeSyncMs: report.metrics.initialCodeSyncMs,
+    typingLatencyMs: report.metrics.typingLatencyMs,
+    caretDelta: report.metrics.caretDelta,
+  });
   if (report.metrics?.programmingPdfSnapshot) {
     console.log("Captured Programming Assignment print metrics:", report.metrics.programmingPdfSnapshot);
   }

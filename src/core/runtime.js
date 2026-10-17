@@ -283,7 +283,7 @@ export class AcadrixRuntime {
     }
 
     if (!this.portal.detectAssessment()) {
-      alert("Open an IITM quiz, assessment, or programming assignment first.");
+      this.launcher?.showToast?.("Open an IITM quiz, assessment, or programming assignment first.", "warn");
       return;
     }
 
@@ -499,7 +499,6 @@ export class AcadrixRuntime {
       } else {
         const msg = "Markdown and Bundle export are available in the Acadrix Chrome Extension. Plain-text export is available there too.";
         this.reader.notify?.(msg, "warn", 4200);
-        alert(msg);
       }
       return;
     }
@@ -588,7 +587,6 @@ export class AcadrixRuntime {
         console.error("[Acadrix Runtime] Export failed:", err);
         const errMsg = this.formatExportErrorMessage(err);
         this.reader.notify?.(errMsg, "error", 5200);
-        alert(errMsg);
       }
     } finally {
       if (!this.isDestroyed && this.lifecycle.state !== LifecycleState.DESTROYED) {

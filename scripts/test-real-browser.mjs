@@ -322,7 +322,7 @@ function buildFixtureHtml() {
         child.contentWindow.print = () => {
           const iframeDoc = child.contentDocument;
           const imgEl = iframeDoc ? iframeDoc.querySelector(".saq-pdf-image") : null;
-          const svgEl = iframeDoc ? iframeDoc.querySelector(".saq-pdf-svg-wrap svg") : null;
+          const svgEl = iframeDoc ? iframeDoc.querySelector(".saq-pdf-svg-wrap svg, .saq-pdf-svg-wrap img") : null;
           telemetry.printCalls.push({
             iframeInBody: document.body.contains(child),
             hasAriaHidden: child.getAttribute("aria-hidden") === "true",
@@ -599,7 +599,7 @@ function buildFixtureHtml() {
         copyQBtnInImport.click();
         await sleep(20);
         const importPrompt = t.clipboardWrites[t.clipboardWrites.length - 1] || "";
-        const importFp = (importPrompt.match(/\"fp\":\"([0-9a-f]{8})\"/) || [])[1];
+        const indexedPromptCaptured = importPrompt.includes("Output ONLY the answers, one per line") && importPrompt.includes("Q1 [MCQ]");
 
         importButton.click();
         await sleep(10);
@@ -613,14 +613,15 @@ function buildFixtureHtml() {
         const initialQ1 = importSheet.querySelector("#saq-q-0");
         const initialQ2 = importSheet.querySelector("#saq-q-1");
         const initialSuggestionsSelected = Boolean(
-          initialQ1?.querySelector(".saq-option[data-letter='B']")?.classList.contains("is-selected") &&
+          initialQ1?.querySelector(".saq-option[data-letter='A']")?.classList.contains("is-selected") &&
+          !initialQ1?.querySelector(".saq-option[data-letter='B']")?.classList.contains("is-selected") &&
           initialQ2?.querySelector(".saq-option[data-letter='A']")?.classList.contains("is-selected") &&
           initialQ2?.querySelector(".saq-option[data-letter='C']")?.classList.contains("is-selected")
         );
         const initialSuggestionsLabeled = Boolean(
           initialQ1?.querySelector(".saq-option[data-letter='B'] .saq-opt-ai-tag")?.textContent === "AI Suggested" &&
           initialQ2?.querySelector(".saq-option[data-letter='A'] .saq-opt-ai-tag")?.textContent === "AI Suggested" &&
-          initialQ1?.querySelector(".saq-status-badge")?.textContent === "AI Suggested" &&
+          initialQ1?.querySelector(".saq-status-badge")?.textContent === "Overridden" &&
           initialQ2?.querySelector(".saq-status-badge")?.textContent === "AI Suggested"
         );
         const validProtocolVisible = testImportPanel.querySelector("[data-import-results]")?.textContent.includes("4 answered");
@@ -633,7 +634,7 @@ function buildFixtureHtml() {
         t.steps.step5c = {
           hasImportButton: Boolean(importButton),
           hasDialogAndName: testImportPanel.getAttribute("role") === "dialog" && testImportPanel.getAttribute("aria-labelledby") === "saq-import-title",
-          fingerprintCaptured: Boolean(importFp),
+          indexedPromptCaptured,
           badgeCount: importBadges.length,
           badges: importBadges.map((badge) => badge.textContent),
           hostileTextInert: Boolean(hostileBadge && !hostileBadge.querySelector("img") && hostileBadge.textContent.includes("<img onerror=alert(1)>")),
@@ -643,6 +644,12 @@ function buildFixtureHtml() {
             Array.from(testImportPanel.querySelectorAll("[data-import-issues] li")).some((item) => item.textContent.includes("Q5") && item.textContent.includes("not supported"))
           ),
           initialSuggestionsSelected,
+          initialOptionState: {
+            q1: initialQ1?.querySelectorAll(".saq-option").length ? Array.from(initialQ1.querySelectorAll(".saq-option")).map((option) => option.dataset.letter + ":" + option.className) : [],
+            q2: initialQ2?.querySelectorAll(".saq-option").length ? Array.from(initialQ2.querySelectorAll(".saq-option")).map((option) => option.dataset.letter + ":" + option.className) : [],
+            q1Status: initialQ1?.querySelector(".saq-status-badge")?.textContent,
+            q2Status: initialQ2?.querySelector(".saq-status-badge")?.textContent,
+          },
           initialSuggestionsLabeled,
           readyOptionSuggestionCount,
           portalSelectionUnchanged,
@@ -1037,7 +1044,7 @@ async function runRealBrowserTests() {
     assert(s4.printDetails.iframeInBody === true, "Print iframe must be mounted in document.body during print()");
     assert(s4.printDetails.hasAriaHidden === true, "Print iframe must have aria-hidden='true'");
     assert(s4.printDetails.questionCount === 3, `Expected 3 rendered questions in print document, got ${s4.printDetails.questionCount}`);
-    assert(s4.printDetails.hasImageAndSvg === true, "Print document must render both .saq-pdf-image and .saq-pdf-svg-wrap svg");
+    assert(s4.printDetails.hasImageAndSvg === true, "Print document must render an image and an SVG as inline vector or extracted image asset");
     assert(s4.printDetails.imageComplete === true, "Image in print iframe must finish loading before print() is invoked");
     assert(s4.printDetails.documentTitleDuringPrint === "Week 04 - GA", `Expected document.title 'Week 04 - GA' during print(), got '${s4.printDetails.documentTitleDuringPrint}'`);
     assert(s4.documentTitleAfterPrint === s4.originalDocTitle, `Expected document.title restored to '${s4.originalDocTitle}' after afterprint, got '${s4.documentTitleAfterPrint}'`);
@@ -1110,11 +1117,11 @@ async function runRealBrowserTests() {
     assert(s5b.readerStillOpenAfterFirstEsc === true, "First Escape must NOT close Reader drawer");
   });
 
-  await check("Real-Browser Check 6c: Indexed AI answers validate, render selected AI Suggested options, and remain Reader-only", () => {
+  await check("Real-Browser Check 6c: Indexed AI answers validate, preserve portal choices, and remain Reader-only until applied", () => {
     const s5c = report.steps.step5c;
     assert(s5c && s5c.hasImportButton === true, "Import AI button must be present in Reader header");
     assert(s5c.hasDialogAndName === true, "Import panel must expose role=dialog and an accessible name");
-    assert(s5c.fingerprintCaptured === true, "Import test must obtain the prompt fingerprint");
+    assert(s5c.indexedPromptCaptured === true, "Import test must obtain the canonical indexed-answer prompt");
     assert(s5c.badgeCount === 5, `Expected five imported answer badges, got ${s5c.badgeCount}`);
     assert(s5c.badges.some((b) => b.includes("AI: B")), "MCQ badge must render its answer");
     assert(s5c.badges.some((b) => b.includes("AI: A, C")), "MSQ badge must render sorted answers");
@@ -1122,8 +1129,8 @@ async function runRealBrowserTests() {
     assert(s5c.hostileTextInert === true, "Hostile TEXT answer must remain inert visible text");
     assert(s5c.indexedProtocolValidated === true, "Indexed answers must validate against question types and option letters");
     assert(s5c.unsupportedTypeErrorVisible === true, "Unsupported indexed question types must be visibly reported");
-    assert(s5c.initialSuggestionsSelected === true, "Valid MCQ/MSQ suggestions must be selected immediately in Reader");
-    assert(s5c.initialSuggestionsLabeled === true, "Suggested options and question state must be labeled AI Suggested");
+    assert(s5c.initialSuggestionsSelected === true, `Preserve the existing Q1 choice while selecting only untouched Q2 suggestions: ${JSON.stringify(s5c.initialOptionState)}`);
+    assert(s5c.initialSuggestionsLabeled === true, "Existing portal choice and untouched AI suggestions must have distinct labels");
     assert(s5c.readyOptionSuggestionCount === "2", "Validated MCQ/MSQ suggestions must be counted ready for explicit application");
     assert(s5c.portalSelectionUnchanged === true, "Validation and review must not mutate IITM form controls");
     assert(s5c.focusInImportPanel === true, "Opening import must move focus into the dialog");

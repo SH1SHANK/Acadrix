@@ -835,6 +835,12 @@ await check("Test 14: Granular copy helpers — copyQuestion, copyStarterCode, c
   assert.ok(ai.includes("## Test Cases"), "copyAiContext: test cases included");
   assert.ok(ai.includes("## Return Instructions"), "copyAiContext: return instructions");
   assert.ok(!ai.includes("## Current Student Code"), "copyAiContext: current code excluded by default");
+  const aiWithEditor = copyAiContext(doc, { editableCode: "def fib(n):\n    return 42" });
+  assert.ok(aiWithEditor.includes("## Starter Code") && aiWithEditor.includes("pass"), "copyAiContext: starter names remain available for reference");
+  assert.ok(aiWithEditor.includes("## Current Editor Code"), "copyAiContext: live editor code is identified");
+  assert.ok(aiWithEditor.includes("return 42"), "copyAiContext: live editor code is included for definition matching");
+  assert.ok(aiWithEditor.includes("exact function or method names and signatures"), "copyAiContext: requests exact existing names");
+  assert.ok(aiWithEditor.includes("one or more python-labeled code fences"), "copyAiContext: accepts multiple language fences");
 
   const full = copyFullAssignment(doc);
   assert.ok(full.length > 0, "copyFullAssignment: not empty");

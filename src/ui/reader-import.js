@@ -1047,8 +1047,6 @@ export function createReaderImportFeature(reader) {
       lastImportedText = text;
       currentFingerprint = assignmentFingerprint(reader.documentModel);
       enhanceAllQuestionBlocks();
-      // Imported valid answers become portal selections immediately; invalid and missing entries remain untouched.
-      applyAllAi({ notify: false });
       const invalid = result.entries.filter((entry) => entry.status === "invalid").length;
       reader.notify?.(
         invalid ? `Answers reviewed with ${invalid} invalid entr${invalid === 1 ? "y" : "ies"}.` : "Imported and validated AI answers.",
@@ -1261,7 +1259,7 @@ export function createReaderImportFeature(reader) {
         const totalQCount = (documentModel?.questions || []).length;
         const container = document.createElement("div");
         container.innerHTML = `
-          <aside id="saq-import-panel" class="saq-dialog-modal saq-import-dialog" role="dialog" aria-modal="true" aria-labelledby="saq-import-title" hidden>
+          <aside id="saq-import-panel" class="saq-dialog-modal saq-import-dialog" role="dialog" aria-modal="true" aria-labelledby="saq-import-title" aria-describedby="saq-import-help" hidden>
             <div class="saq-dialog-backdrop" data-act="import-close"></div>
             <div class="saq-dialog-content">
               <header class="saq-dialog-head">
@@ -1327,7 +1325,7 @@ export function createReaderImportFeature(reader) {
       if (!dialogEl) {
         const container = document.createElement("div");
         container.innerHTML = `
-          <aside id="saq-apply-dialog" class="saq-dialog-modal" role="dialog" aria-modal="true" aria-labelledby="saq-apply-title" hidden>
+          <aside id="saq-apply-dialog" class="saq-dialog-modal" role="dialog" aria-modal="true" aria-labelledby="saq-apply-title" aria-describedby="saq-apply-description" hidden>
             <div class="saq-dialog-backdrop" data-act="apply-cancel"></div>
             <div class="saq-dialog-content">
               <header class="saq-dialog-head">
@@ -1359,7 +1357,7 @@ export function createReaderImportFeature(reader) {
                 <div class="saq-apply-issues-warn" data-summary-issues hidden>
                   ${ICONS.warn}<span data-summary-issues-text></span>
                 </div>
-                <p class="saq-apply-notice">
+                <p id="saq-apply-description" class="saq-apply-notice">
                   ${ICONS.info}
                   <span>Applies selected answers directly to the active IITM portal form controls without submitting the assessment.</span>
                 </p>

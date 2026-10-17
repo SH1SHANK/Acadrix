@@ -544,6 +544,8 @@ export class ReaderDrawer {
       const editorSlot = b.querySelector("[data-programming-editor-slot]");
       if (editorSlot) {
         const pData = q.programmingData || {};
+        let programStatus = null;
+        let applyButton = null;
         const editor = new ProgrammingCodeEditor({
           language: pData.language || "javascript",
           prefixCode: pData.prefixCode,
@@ -560,9 +562,9 @@ export class ReaderDrawer {
           },
           onStatus: (message, tone) => this.notify(message, tone),
           onStateChange: ({ status, modified, applying }) => {
-            const statusEl = this.sheetElement?.querySelector("#saq-program-sync-status");
-            if (statusEl) statusEl.textContent = status;
-            const applyButton = this.sheetElement?.querySelector("#saq-apply-programming-code");
+            programStatus ||= this.sheetElement?.querySelector("#saq-program-sync-status");
+            applyButton ||= this.sheetElement?.querySelector("#saq-apply-programming-code");
+            if (programStatus) programStatus.textContent = status;
             if (applyButton) {
               applyButton.hidden = !modified;
               applyButton.disabled = !modified || applying;

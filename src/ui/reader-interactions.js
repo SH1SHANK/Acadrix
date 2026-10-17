@@ -12,49 +12,84 @@ import {
 
 const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
 
-export function extractImportedCode(input, prefix = "", suffix = "") {
-  const text = String(input ?? "").replace(/^\uFEFF/, "").trim();
-  if (!text) return "";
-  const blocks = [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)];
-  let code = (blocks.at(-1)?.[1] ?? text).trim();
-  if (prefix && suffix) {
-    const start = code.indexOf(prefix);
-    const end = code.lastIndexOf(suffix);
-    if (start !== -1 && end > start) code = code.slice(start + prefix.length, end);
-  }
-  return code.replace(/^\s*code:\s*/i, "").trim();
-}
-
 function importProgrammingCode(reader) {
   const editor = reader.programmingEditor;
   if (!editor) return;
-  const pData = reader.documentModel?.questions?.[0]?.programmingData || {};
-  const prefix = editor.prefixCode ?? pData.prefixCode ?? "";
-  const suffix = editor.suffixCode ?? pData.suffixCode ?? "";
   const readClipboard = typeof navigator !== "undefined" ? navigator.clipboard?.readText : null;
-  const fallback = () => {
-    const pasted = typeof window !== "undefined" && window.prompt
-      ? window.prompt("Paste the completed editable code:", "")
-      : null;
-    if (pasted !== null) applyImportedCode(pasted);
-  };
-  const applyImportedCode = (input) => {
-    const code = extractImportedCode(input, prefix, suffix);
-    if (!code) {
-      reader.notify?.("No code found to import", "warning", 2500);
-      return;
-    }
-    editor.setCode(code);
-    reader.notify?.("Code imported into the editor", "success", 2500);
+  const pasteFromEditor = () => {
+    editor.editorView?.focus();
+    reader.notify?.("Clipboard access is unavailable. Paste with ⌘V in the code editor.", "info", 4000);
   };
   if (typeof readClipboard === "function") {
-    Promise.resolve(readClipboard.call(navigator)).then((text) => {
-      if (String(text ?? "").trim()) applyImportedCode(text);
-      else fallback();
-    }).catch(fallback);
-  } else {
-    fallback();
+    Promise.resolve().then(() => readClipboard.call(navigator)).then((text) => {
+      if (!String(text ?? "").trim()) {
+        editor.importCode(String(text ?? ""));
+        editor.editorView?.focus();
+        return;
+      }
+      const result = editor.importCode(String(text));
+      if (result.ok) reader.notify?.(result.mode === "merge" ? `Updated ${result.count} function(s) in the editor` : "Code imported into the editor", "success", 2500);
+    }).catch(pasteFromEditor);
+  } else pasteFromEditor();
+}
+
+function confirmRefresh(reader) {
+  const root = reader.shadowHost?.root;
+  if (!root) return;
+  const returnFocus = root.activeElement;
+  root.querySelector("[data-refresh-dialog]")?.remove();
+  const dialog = document.createElement("div");
+  dialog.className = "saq-dialog-modal";
+  dialog.dataset.refreshDialog = "";
+  dialog.setAttribute("role", "alertdialog");
+  dialog.setAttribute("aria-modal", "true");
+  dialog.setAttribute("aria-labelledby", "saq-refresh-title");
+  dialog.innerHTML = `<div class="saq-dialog-backdrop"></div><div class="saq-dialog-content"><div class="saq-dialog-head"><h2 class="saq-dialog-title" id="saq-refresh-title">Discard editor changes?</h2></div><div class="saq-dialog-body"><p id="saq-refresh-description">Your unsaved code will be discarded when the assignment reloads.</p></div><div class="saq-dialog-footer"><button type="button" class="saq-btn saq-btn-secondary" data-refresh-cancel>Cancel</button><button type="button" class="saq-btn saq-btn-primary" data-refresh-confirm>Refresh</button></div></div></div>`;
+  dialog.setAttribute("aria-describedby", "saq-refresh-description");
+  const close = () => {
+    dialog.remove();
+    returnFocus?.focus?.();
+  };
+  dialog.querySelector("[data-refresh-cancel]").addEventListener("click", close);
+  dialog.querySelector(".saq-dialog-backdrop").addEventListener("click", close);
+  dialog.querySelector("[data-refresh-confirm]").addEventListener("click", () => {
+    close();
+    refreshReader(reader);
+  });
+  dialog.addEventListener("keydown", (event) => {
+    const actions = [...dialog.querySelectorAll("button:not(:disabled)")];
+    const active = root.activeElement;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      dialog.querySelector("[data-refresh-cancel]")?.click();
+    } else if (event.key === "Tab" && actions.length) {
+      if (!dialog.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? actions.at(-1) : actions[0]).focus();
+      } else if (event.shiftKey && active === actions[0]) {
+        event.preventDefault();
+        actions.at(-1).focus();
+      } else if (!event.shiftKey && active === actions.at(-1)) {
+        event.preventDefault();
+        actions[0].focus();
+      }
+    }
+  });
+  root.appendChild(dialog);
+  dialog.querySelector("[data-refresh-cancel]").focus();
+}
+
+function refreshReader(reader) {
+  const exportMenu = reader.sheetElement?.querySelector("#saq-export-menu");
+  const splitArrow = reader.sheetElement?.querySelector("[data-act='toggle-export-menu']");
+  if (exportMenu) {
+    exportMenu.hidden = true;
+    exportMenu.setAttribute("hidden", "");
+    splitArrow?.setAttribute("aria-expanded", "false");
   }
+  reader.closeAiPopover?.({ restoreFocus: false });
+  reader.onRefreshCallback?.();
 }
 
 export function handleReaderKeyDown(e) {
@@ -63,6 +98,14 @@ export function handleReaderKeyDown(e) {
   if (this.runReaderFeatureHook("handleKeydown", e)) return;
 
   if (e.key === "Escape") {
+
+    const refreshDialog = this.shadowHost?.root?.querySelector("[data-refresh-dialog]");
+    if (refreshDialog) {
+      e.preventDefault();
+      e.stopPropagation();
+      refreshDialog.querySelector("[data-refresh-cancel]")?.click();
+      return;
+    }
 
     if (this.isLightboxOpen?.()) {
       e.preventDefault();
@@ -110,15 +153,15 @@ export function handleReaderKeyDown(e) {
 
   if (e.defaultPrevented || e.key !== "Tab") return;
 
-  const activeDialog = this.sheetElement.querySelector(".saq-dialog-modal:not([hidden])");
+  const activeDialog = this.shadowHost?.root?.querySelector(".saq-dialog-modal:not([hidden])");
   const focusScope = activeDialog || this.sheetElement;
   const focusables = Array.from(
     focusScope.querySelectorAll(
-      "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
+      "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])"
     )
   ).filter((el) => {
-    if (el.hasAttribute("disabled")) return false;
-    if (el.closest?.("[hidden]")) return false;
+    if (el.closest?.("[hidden], [inert], [aria-hidden='true']")) return false;
+    if (el.getClientRects && el.getClientRects().length === 0) return false;
     return true;
   });
 
@@ -252,18 +295,10 @@ export function handleReaderActionClick(e) {
     this.programmingEditor?.applyChanges?.();
   } else if (action === "refresh") {
     if (this.programmingEditor?.isModified()) {
-      const keepChanges = typeof window !== "undefined" && window.confirm
-        ? !window.confirm("You have unsaved Reader changes. Refresh from the assignment and discard them?")
-        : true;
-      if (keepChanges) return;
+      confirmRefresh(this);
+    } else {
+      refreshReader(this);
     }
-    if (exportMenu) {
-      exportMenu.hidden = true;
-      exportMenu.setAttribute("hidden", "");
-      if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
-    }
-    this.closeAiPopover?.({ restoreFocus: false });
-    if (this.onRefreshCallback) this.onRefreshCallback();
   } else if (action === "export-md" || action === "export-txt") {
     if (exportMenu) {
       exportMenu.hidden = true;
@@ -337,7 +372,7 @@ export function handleReaderActionClick(e) {
   } else if (action === "import-code") {
     importProgrammingCode(this);
   } else if (action === "copy-prompt-context" || action === "copy-prompt") {
-    const text = copyAiContext(this.documentModel);
+    const text = copyAiContext(this.documentModel, { editableCode: this.programmingEditor?.getCode?.() });
     const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
     Promise.resolve(write).then(() => {
       this.notify?.("AI context prompt copied", "success", 2500);

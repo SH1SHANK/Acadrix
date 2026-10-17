@@ -9,7 +9,7 @@ import { java } from "@codemirror/lang-java";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { sql } from "@codemirror/lang-sql";
-import { HighlightStyle, StreamLanguage, bracketMatching, indentOnInput, indentService, indentUnit, syntaxHighlighting } from "@codemirror/language";
+import { HighlightStyle, StreamLanguage, bracketMatching, ensureSyntaxTree, indentOnInput, indentService, indentUnit, syntaxHighlighting, syntaxTree } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import { shell } from "@codemirror/legacy-modes/mode/shell";
 import { Compartment, EditorSelection, EditorState, Transaction } from "@codemirror/state";
@@ -141,11 +141,167 @@ function composeDocument(prefixCode, workingCode, suffixCode) {
   return parts.join("\n");
 }
 
-function matchingFencedCode(text, language) {
-  const source = String(text ?? "").replace(/\r\n?/g, "\n");
-  const match = source.match(/^\s*(`{3,}|~{3,})\s*([^\s`~]+)[^\n]*\n([\s\S]*?)\n\s*\1\s*$/);
-  if (!match || /^[ \t]*(`{3,}|~{3,})/m.test(match[3]) || normalizeProgrammingLanguage(match[2]) !== language) return null;
-  return match[3];
+function extractImportedSource(text, language) {
+  const source = String(text ?? "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").trim();
+  if (!source) return { code: "", fenced: false, error: "No code found to import." };
+  const blocks = [];
+  const fence = /(?:^|\n)[ \t]*(`{3,}|~{3,})[ \t]*([^\s`~]*)[^\n]*\n([\s\S]*?)\n[ \t]*\1[ \t]*(?=\n|$)/g;
+  for (const match of source.matchAll(fence)) blocks.push({ label: match[2].toLowerCase(), code: match[3] });
+  if (!blocks.length) return { code: source, fenced: false, error: null };
+
+  const matching = blocks.filter(({ label }) => normalizeProgrammingLanguage(label) === language);
+  const unlabeled = blocks.filter(({ label }) => !label);
+  if (matching.length || (blocks.length === 1 && unlabeled.length === 1)) {
+    return { code: (matching.length ? matching : unlabeled).map(({ code }) => code.trim()).join("\n\n"), fenced: true, error: null };
+  }
+  return { code: "", fenced: true, error: `No ${LANGUAGE_REGISTRY[language]?.canonicalName || language} code block found.` };
+}
+
+function firstDescendant(node, names) {
+  if (!node) return null;
+  if (names.has(node.name)) return node;
+  for (let child = node.firstChild; child; child = child.nextSibling) {
+    const match = firstDescendant(child, names);
+    if (match) return match;
+  }
+  return null;
+}
+
+function directChild(node, name) {
+  for (let child = node?.firstChild; child; child = child.nextSibling) {
+    if (child.name === name) return child;
+  }
+  return null;
+}
+
+function parseTreeFor(language, code) {
+  const state = EditorState.create({ doc: code, extensions: [getCodeMirrorLanguageSupport(language)] });
+  return ensureSyntaxTree(state, code.length, 1000) || syntaxTree(state);
+}
+
+function findDefinitions(language, source) {
+  if (language === "bash") return findBashDefinitions(source);
+  if (language === "sql") return findSqlDefinitions(source);
+
+  let code = source;
+  let offset = 0;
+  let tree = parseTreeFor(language, code);
+  let definitions = collectSyntaxDefinitions(language, code, tree);
+  if (!definitions.length && (language === "javascript" || language === "java")) {
+    const wrapper = "class __AcadrixImport__ {\n";
+    offset = wrapper.length;
+    code = wrapper + source + "\n}";
+    tree = parseTreeFor(language, code);
+    definitions = collectSyntaxDefinitions(language, code, tree, "__AcadrixImport__");
+  }
+  return definitions.map((definition) => ({ ...definition, from: definition.from - offset, to: definition.to - offset }));
+}
+
+function hasIncompleteDefinition(language, source) {
+  if (language === "bash") {
+    const starts = [...source.matchAll(/^[ \t]*(?:function[ \t]+)?[A-Za-z_][A-Za-z0-9_]*[ \t]*\([ \t]*\)[ \t]*\{/gm)];
+    return starts.length > findBashDefinitions(source).length;
+  }
+  const declaration = language === "python" ? /^\s*def\s+\w+\s*\(/m
+    : language === "sql" ? /\bCREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE)\b/i
+    : language === "javascript" ? /\bfunction\s+[$\w]+\s*\(|^\s*class\s+[$\w]+|^\s*[$\w]+\s*\(/m
+    : /^\s*(?:(?:public|private|protected|static|final|abstract|synchronized)\s+)*[\w<>\[\]]+\s+\w+\s*\(/m;
+  if (!declaration.test(source)) return false;
+  const hasError = (code) => {
+    const tree = parseTreeFor(language, code);
+    let found = false;
+    tree.iterate({ enter(cursor) { if (cursor.type.isError) found = true; } });
+    return found;
+  };
+  if (!hasError(source)) return false;
+  if (language === "javascript" || language === "java") {
+    const wrapped = `class __AcadrixImport__ {\n${source}\n}`;
+    return hasError(wrapped);
+  }
+  return true;
+}
+
+function collectSyntaxDefinitions(language, code, tree, syntheticClass = null) {
+  const definitions = [];
+  const scope = [];
+  const classTypes = new Set(["ClassDeclaration", "ClassDefinition"]);
+  const definitionTypes = language === "python"
+    ? new Set(["FunctionDefinition"])
+    : language === "java"
+    ? new Set(["MethodDeclaration"])
+    : new Set(["MethodDeclaration", "FunctionDeclaration"]);
+  tree.iterate({
+    enter(cursor) {
+      if (classTypes.has(cursor.name)) {
+        const nameNode = firstDescendant(cursor.node.firstChild?.nextSibling, new Set(["VariableDefinition", "Definition", "VariableName"]));
+        scope.push(nameNode ? code.slice(nameNode.from, nameNode.to) : "");
+      }
+      if (!definitionTypes.has(cursor.name)) return;
+      const nameNode = language === "python"
+        ? firstDescendant(cursor.node, new Set(["VariableName"]))
+        : language === "java"
+        ? directChild(cursor.node, "Definition")
+        : cursor.name === "MethodDeclaration"
+        ? directChild(cursor.node, "PropertyDefinition")
+        : directChild(cursor.node, "VariableDefinition");
+      if (!nameNode) return;
+      const name = code.slice(nameNode.from, nameNode.to).trim();
+      if (!/^[\p{L}_$][\p{L}\p{N}_$]*$/u.test(name)) return;
+      const owners = scope.filter(Boolean).filter((name) => name !== syntheticClass);
+      definitions.push({ name, owners, from: cursor.from, to: cursor.to });
+    },
+    leave(cursor) {
+      if (classTypes.has(cursor.name)) scope.pop();
+    },
+  });
+  return definitions;
+}
+
+function findSqlDefinitions(code) {
+  const tree = parseTreeFor("sql", code);
+  const definitions = [];
+  tree.iterate({
+    enter(cursor) {
+      if (cursor.name !== "Statement") return;
+      const statement = code.slice(cursor.from, cursor.to);
+      const match = /^\s*CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE)\s+(?:[\w"]+\.)?"?([\w$]+)"?/i.exec(statement);
+      if (match) definitions.push({ name: match[1], owners: [], from: cursor.from, to: cursor.to });
+    },
+  });
+  return definitions;
+}
+
+function findBashDefinitions(code) {
+  const definitions = [];
+  const signature = /^[ \t]*(?:function[ \t]+)?([A-Za-z_][A-Za-z0-9_]*)[ \t]*\([ \t]*\)[ \t]*\{/gm;
+  for (const match of code.matchAll(signature)) {
+    const open = match.index + match[0].lastIndexOf("{");
+    const close = findShellBlockEnd(code, open);
+    if (close < 0) continue;
+    definitions.push({ name: match[1], owners: [], from: match.index, to: close + 1 });
+  }
+  return definitions;
+}
+
+function findShellBlockEnd(code, open) {
+  let depth = 0;
+  let quote = "";
+  for (let i = open; i < code.length; i++) {
+    const char = code[i];
+    if (quote) {
+      if (char === "\\") { i++; continue; }
+      if (char === quote) quote = "";
+      continue;
+    }
+    if (char === "'" || char === '"' || char === "`") { quote = char; continue; }
+    if (char === "#") {
+      while (i < code.length && code[i] !== "\n") i++;
+      continue;
+    }
+    if (char === "{") depth++;
+    else if (char === "}" && --depth === 0) return i;
+  }
+  return -1;
 }
 
 export class ProgrammingCodeEditor {
@@ -168,11 +324,14 @@ export class ProgrammingCodeEditor {
     this.element = null;
     this.editorHost = null;
     this.editorView = null;
+    this.badgeElements = null;
+    this.badgeState = null;
     this.languageCompartment = new Compartment();
   }
 
   render() {
     const container = document.createElement("section");
+    this.badgeState = null;
     container.className = "saq-code-editor-root";
     const languageName = LANGUAGE_REGISTRY[this.language]?.canonicalName || this.language;
     container.innerHTML = `
@@ -198,6 +357,12 @@ export class ProgrammingCodeEditor {
       </footer>`;
     this.element = container;
     this.editorHost = container.querySelector(".saq-cm-host");
+    this.badgeElements = {
+      discard: container.querySelector("[data-editor-act='discard']"),
+      status: container.querySelector("[data-editor-status]"),
+      undo: container.querySelector("[data-editor-act='undo']"),
+      redo: container.querySelector("[data-editor-act='redo']"),
+    };
     container.addEventListener("click", (event) => {
       const button = event.target.closest?.("[data-editor-act]");
       if (!button || button.disabled || this.isApplying) return;
@@ -368,6 +533,113 @@ export class ProgrammingCodeEditor {
     });
   }
 
+  importCode(input) {
+    const extracted = extractImportedSource(input, this.language);
+    if (extracted.error) {
+      this.notifyStatus(extracted.error, "warning");
+      return { ok: false, error: extracted.error };
+    }
+
+    let code = extracted.code;
+    if (this.prefixCode && this.suffixCode) {
+      const prefixAt = code.indexOf(this.prefixCode);
+      const suffixAt = code.lastIndexOf(this.suffixCode);
+      if (prefixAt >= 0 && suffixAt > prefixAt) code = code.slice(prefixAt + this.prefixCode.length, suffixAt).trim();
+    }
+    if (!code.trim()) {
+      const error = "No editable code found to import.";
+      this.notifyStatus(error, "warning");
+      return { ok: false, error };
+    }
+
+    if (hasIncompleteDefinition(this.language, code)) {
+      const error = "An imported function or method is incomplete; no code was changed.";
+      this.notifyStatus(error, "warning");
+      return { ok: false, error };
+    }
+
+    const imported = findDefinitions(this.language, code);
+    if (imported.length) {
+      const current = findDefinitions(this.language, this.getCode());
+      const changes = [];
+      let unmatched = false;
+      const seen = new Set();
+      for (const definition of imported) {
+        const key = `${definition.owners.join(".")}::${definition.name}`;
+        if (seen.has(key)) {
+          const error = `The import contains more than one definition named ${definition.name}.`;
+          this.notifyStatus(error, "warning");
+          return { ok: false, error };
+        }
+        seen.add(key);
+        let candidates = current.filter((candidate) => candidate.name === definition.name);
+        if (definition.owners.length) {
+          candidates = candidates.filter((candidate) => candidate.owners.join(".") === definition.owners.join("."));
+        }
+        if (candidates.length > 1) {
+          const error = `More than one existing definition is named ${definition.name}; the import was not applied.`;
+          this.notifyStatus(error, "warning");
+          return { ok: false, error };
+        }
+        if (!candidates.length) {
+          unmatched = true;
+          continue;
+        }
+        const target = candidates[0];
+        const targetLineStart = this.getCode().lastIndexOf("\n", target.from - 1) + 1;
+        const inputLineStart = code.lastIndexOf("\n", definition.from - 1) + 1;
+        const targetIndent = this.getCode().slice(targetLineStart, target.from);
+        const inputIndent = code.slice(inputLineStart, definition.from);
+        const indent = (value) => /^\s*$/.test(value) ? value : "";
+        const baseIndent = indent(targetIndent);
+        const snippetIndent = indent(inputIndent);
+        let replacement = code.slice(definition.from, definition.to).split("\n").map((line, index) => {
+          if (index === 0) return line;
+          const relative = snippetIndent && line.startsWith(snippetIndent) ? line.slice(snippetIndent.length) : line;
+          return baseIndent + relative;
+        }).join("\n");
+        if (this.getCode().slice(target.from, target.to).endsWith("\n") && !replacement.endsWith("\n")) replacement += "\n";
+        changes.push({ from: target.from, to: target.to, insert: replacement });
+      }
+
+      if (changes.length && unmatched) {
+        const error = "Some imported functions do not match existing definitions; no code was changed.";
+        this.notifyStatus(error, "warning");
+        return { ok: false, error };
+      }
+      if (changes.length) {
+        this.applyImportedChanges(changes);
+        return { ok: true, mode: "merge", count: changes.length };
+      }
+    }
+
+    this.applyImportedChanges([{ from: 0, to: this.getCode().length, insert: code }]);
+    return { ok: true, mode: "replace" };
+  }
+
+  applyImportedChanges(changes) {
+    if (!this.editorView) {
+      let code = this.getCode();
+      for (const change of [...changes].sort((a, b) => b.from - a.from)) {
+        code = code.slice(0, change.from) + change.insert + code.slice(change.to);
+      }
+      this.workingCode = code;
+      this.applyState = "idle";
+      this.updateStateBadges();
+      return;
+    }
+    const range = this.getEditableRange();
+    const ordered = [...changes].sort((a, b) => a.from - b.from);
+    const last = ordered.at(-1);
+    this.editorView.dispatch({
+      changes: ordered.map(({ from, to, insert }) => ({ from: range.from + from, to: range.from + to, insert })),
+      selection: EditorSelection.cursor(range.from + last.from + last.insert.length),
+      userEvent: "input.paste",
+      annotations: isolateHistory.of("full"),
+    });
+    this.editorView.focus();
+  }
+
   undo() {
     if (this.editorView) undo(this.editorView);
   }
@@ -378,38 +650,43 @@ export class ProgrammingCodeEditor {
 
   handlePaste(event, view) {
     const clipboardText = event.clipboardData?.getData("text/plain");
-    const fencedCode = matchingFencedCode(clipboardText, this.language);
-    if (fencedCode === null) return false;
+    if (!clipboardText) return false;
+    const result = this.importCode(clipboardText);
+    if (!result.ok) {
+      event.preventDefault();
+      return true;
+    }
     event.preventDefault();
-    const { from, to } = this.getEditableRange(view.state.doc.length);
-    const selection = view.state.selection.main;
-    const changeFrom = selection.empty ? from : selection.from;
-    const changeTo = selection.empty ? to : selection.to;
-    view.dispatch({
-      changes: { from: changeFrom, to: changeTo, insert: fencedCode },
-      selection: EditorSelection.cursor(changeFrom + fencedCode.length),
-      userEvent: "input.paste",
-      annotations: isolateHistory.of("full"),
-    });
     return true;
   }
 
   updateStateBadges() {
     if (!this.element) return;
-    const modified = this.isModified();
-    const discard = this.element.querySelector("[data-editor-act='discard']");
-    const status = this.element.querySelector("[data-editor-status]");
+    const modified = this.workingCode !== this.currentCode;
     const label = this.applyState === "applying" ? "Updating…"
       : this.applyState === "error" ? "Update failed"
       : this.applyState === "updated" ? "Updated"
       : modified ? "Modified" : "In Sync";
-    if (discard) discard.disabled = !modified || this.isApplying;
-    if (status) status.textContent = label;
-    const undoButton = this.element.querySelector("[data-editor-act='undo']");
-    const redoButton = this.element.querySelector("[data-editor-act='redo']");
-    if (undoButton) undoButton.disabled = !this.editorView || undoDepth(this.editorView.state) === 0 || this.isApplying;
-    if (redoButton) redoButton.disabled = !this.editorView || redoDepth(this.editorView.state) === 0 || this.isApplying;
-    this.onStateChange?.({ status: label, modified, applying: this.isApplying, failed: this.applyState === "error" });
+    const undoDisabled = !this.editorView || undoDepth(this.editorView.state) === 0 || this.isApplying;
+    const redoDisabled = !this.editorView || redoDepth(this.editorView.state) === 0 || this.isApplying;
+    const state = { status: label, modified, applying: this.isApplying, failed: this.applyState === "error", undoDisabled, redoDisabled };
+    const previous = this.badgeState;
+    this.badgeState = state;
+    if (!previous || previous.modified !== modified || previous.applying !== state.applying) {
+      if (this.badgeElements?.discard) this.badgeElements.discard.disabled = !modified || this.isApplying;
+    }
+    if (!previous || previous.status !== label) {
+      if (this.badgeElements?.status) this.badgeElements.status.textContent = label;
+    }
+    if (!previous || previous.undoDisabled !== undoDisabled) {
+      if (this.badgeElements?.undo) this.badgeElements.undo.disabled = undoDisabled;
+    }
+    if (!previous || previous.redoDisabled !== redoDisabled) {
+      if (this.badgeElements?.redo) this.badgeElements.redo.disabled = redoDisabled;
+    }
+    if (!previous || previous.status !== label || previous.modified !== modified || previous.applying !== state.applying || previous.failed !== state.failed) {
+      this.onStateChange?.({ status: label, modified, applying: state.applying, failed: state.failed });
+    }
   }
 
   discardChanges() {
@@ -449,11 +726,11 @@ export class ProgrammingCodeEditor {
         this.onApply?.(this.workingCode);
       } else {
         this.applyState = "error";
-        this.notifyStatus("Unable to update assignment. Refresh the portal page and try again.", "error");
+        this.notifyStatus(res?.error || "The portal editor did not confirm the code update. Refresh and try again.", "error");
       }
-    } catch {
+    } catch (error) {
       this.applyState = "error";
-      this.notifyStatus("Unable to update assignment. Refresh the portal page and try again.", "error");
+      this.notifyStatus(error?.message || "Unable to update assignment. Refresh the portal page and try again.", "error");
     } finally {
       this.isApplying = false;
       this.updateStateBadges();

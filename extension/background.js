@@ -359,7 +359,8 @@
               const totalRows = session.getLength();
               const frontMarkers = (typeof session.getMarkers === "function" ? session.getMarkers(true) : null) || {};
               const defaultMarkers = (typeof session.getMarkers === "function" ? session.getMarkers() : null) || {};
-              const allMarkers = { ...defaultMarkers, ...frontMarkers, ...(session.$frontMarkers || {}) };
+              const backMarkers = (typeof session.getMarkers === "function" ? session.getMarkers(false) : null) || {};
+              const allMarkers = { ...defaultMarkers, ...frontMarkers, ...backMarkers, ...(session.$frontMarkers || {}), ...(session.$backMarkers || {}) };
               const readonlyMarkers = Object.values(allMarkers).filter((m) => {
                 if (!m) return false;
                 const c = typeof m.clazz === "string" ? m.clazz : "";
@@ -418,6 +419,17 @@
               if (originalSuffix !== null && postSuffix !== originalSuffix) {
                 return { ok: false, error: "Protected suffix was altered.", errorCode: "CODE_WRITE_VERIFICATION_FAILED" };
               }
+              const expectedFullCode = [originalPrefix, payload.code, originalSuffix]
+                .filter((part) => part !== null)
+                .join("\n");
+              if (session.getValue() !== expectedFullCode) {
+                return { ok: false, error: "The portal editor did not retain the imported code.", errorCode: "CODE_WRITE_VERIFICATION_FAILED" };
+              }
+
+              try {
+                editor.focus?.();
+                editor.resize?.(true);
+              } catch {}
 
               return {
                 ok: true,
