@@ -220,6 +220,7 @@ await check("Edge Case 8: Code spanning pages with preserved indentation", async
   assert(tokens.length >= 65, "All lines tokenized");
   assert(tokens[0][0].text === "def", "First token is def keyword");
   assert(tokens[1][0].text === "    ", "Preserved 4-space indentation");
+  assert(tokenizeCode("function calculate() {}", "javascript")[0][0].color === "#2F4BDB", "JavaScript function keyword is highlighted as JavaScript, not Java");
 
   const doc = new AssignmentDocument({
     metadata: { title: "Code Spanning Pages", totalQuestions: 1 },

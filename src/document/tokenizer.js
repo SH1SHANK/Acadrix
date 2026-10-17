@@ -85,6 +85,16 @@ export function tokenizeCode(rawCode, language = "text") {
     keywordSet = PYTHON_KEYWORDS;
     lineCommentChar = "#";
   } else if (
+    normalizedLang === "js" ||
+    normalizedLang === "javascript" ||
+    normalizedLang === "ts" ||
+    normalizedLang === "typescript"
+  ) {
+    keywordSet = JS_KEYWORDS;
+    lineCommentChar = "//";
+    blockCommentStart = "/*";
+    blockCommentEnd = "*/";
+  } else if (
     normalizedLang.includes("java") ||
     normalizedLang.includes("c++") ||
     normalizedLang.includes("cpp") ||
@@ -99,16 +109,6 @@ export function tokenizeCode(rawCode, language = "text") {
     keywordSet = SQL_KEYWORDS;
     isCaseInsensitiveKeywords = true;
     lineCommentChar = "--";
-    blockCommentStart = "/*";
-    blockCommentEnd = "*/";
-  } else if (
-    normalizedLang.includes("js") ||
-    normalizedLang.includes("ts") ||
-    normalizedLang.includes("javascript") ||
-    normalizedLang.includes("typescript")
-  ) {
-    keywordSet = JS_KEYWORDS;
-    lineCommentChar = "//";
     blockCommentStart = "/*";
     blockCommentEnd = "*/";
   }
