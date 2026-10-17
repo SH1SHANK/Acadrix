@@ -16,8 +16,8 @@
  * 12. Stale cache works when Supabase is unavailable
  * 13. No cache + unavailable Supabase = UNAVAILABLE
  * 14. Portal deadline text is completely ignored
- * 15. Portal grade data is completely ignored
- * 16. No grade scraper runs (captureGrades is deprecated no-op)
+ * 15. Portal grade data is kept in local storage only
+ * 16. Grade capture runs only on the Grades page and never syncs scores
  * 17. No deadline scraper runs (captureStartPage is deprecated no-op)
  * 18. No submission status is falsely inferred (submissionStatus is UNKNOWN)
  * 19. Popup uses academic_events-derived data
@@ -372,7 +372,7 @@ await check("Req 13: No cache + unavailable Supabase = UNAVAILABLE state", async
 });
 
 // ── Test 14 & 15: Portal text and grades completely ignored ──────────────────
-await check("Req 14 & 15: Portal deadline text and grade scores are completely ignored", async () => {
+await check("Req 14 & 15: portal deadline text and grade scores cannot define event deadlines", async () => {
   const portalAssessment = {
     title: "Assignment 1",
     dueDateText: "Due Oct 11, 11:59 PM (portal scrape)",
@@ -387,8 +387,8 @@ await check("Req 14 & 15: Portal deadline text and grade scores are completely i
   assert.notEqual(resolved.source, "PORTAL", "Source must never be PORTAL");
 });
 
-// ── Test 16 & 17: Scraper functions are deprecated no-ops ────────────────────
-await check("Req 16 & 17: captureGrades and captureStartPage are strictly non-scraping no-ops", async () => {
+// ── Test 16 & 17: Grade capture is local; deadline capture remains disabled ─
+await check("Req 16 & 17: grades require a local store; deadline scraper stays disabled", async () => {
   const dummyDoc = {
     querySelector: () => {
       throw new Error("DOM querySelector MUST NOT be called by scrapers!");
@@ -401,9 +401,9 @@ await check("Req 16 & 17: captureGrades and captureStartPage are strictly non-sc
   const startRes = await captureStartPage(dummyDoc, {});
   assert.equal(startRes, null, "captureStartPage must be no-op returning null");
 
-  const gradeRes = await captureGrades(dummyDoc, {});
-  assert.equal(gradeRes.ok, false, "captureGrades must be no-op returning ok: false");
-  assert.equal(gradeRes.records.length, 0, "captureGrades must return 0 records");
+  const gradeRes = await captureGrades(dummyDoc, null);
+  assert.equal(gradeRes.ok, false, "captureGrades must fail closed without local storage");
+  assert.equal(gradeRes.records.length, 0, "No scores are captured without a local store");
 });
 
 // ── Test 18: Submission status is strictly UNKNOWN ───────────────────────────
@@ -444,6 +444,9 @@ await check("Req 20 & 21: Architectural Negative Tests (Zero DOM in repo, zero s
   assert(!eventsContent.includes("document."), "events.js must never access document");
   assert(!eventsContent.includes("grade_records"), "events.js must not reference grade_records table");
   assert(!eventsContent.includes("academic_weeks"), "events.js must not reference academic_weeks table");
+
+  const captureContent = readFileSync("src/portal-decor/capture.js", "utf8");
+  assert(!captureContent.includes("fetch("), "Grades must never be sent over the network");
 
   const schedulerContent = readFileSync("src/notifications/scheduler.js", "utf8");
   assert(!schedulerContent.includes("captureGrades"), "scheduler.js must not import or call captureGrades");

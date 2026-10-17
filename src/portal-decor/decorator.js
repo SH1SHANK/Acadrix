@@ -30,6 +30,65 @@ const ERROR_ICON_SVG = `<svg viewBox="0 0 14 14" width="12" height="12" aria-hid
 export const HOST_DECOR_STYLE_ID = "acx-portal-decor-host-styles";
 
 export const HOST_DECOR_STYLES = `
+/* Replace IITM's oversized image-only slides link with a compact, usable action. */
+.objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"]) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 44px !important;
+  padding: 0 16px !important;
+  border: 1px solid #454B5B !important;
+  border-radius: 8px !important;
+  background: #252936 !important;
+  color: #F1F3F9 !important;
+  font: 500 14px/20px system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  text-decoration: none !important;
+  vertical-align: middle !important;
+  transition: background-color 120ms ease, border-color 120ms ease !important;
+}
+
+.objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"]) > img {
+  display: none !important;
+}
+
+.objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"])::before {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  background: currentColor;
+  content: "";
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3v12m0 0 5-5m-5 5-5-5M5 17v3h14v-3' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3v12m0 0 5-5m-5 5-5-5M5 17v3h14v-3' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"])::after {
+  content: "Download lecture slides";
+}
+
+.objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"]):hover {
+  border-color: #8EA2FF !important;
+  background: #303746 !important;
+}
+
+.objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"]):focus-visible {
+  outline: 2px solid #8EA2FF !important;
+  outline-offset: 2px !important;
+}
+
+@media (forced-colors: active) {
+  .objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"]) {
+    border-color: ButtonText !important;
+    color: LinkText !important;
+  }
+  .objectives-full.backend-html a[href*="drive.google.com/drive/folders/"]:has(> img[src*="Download1.png"]):focus-visible {
+    outline-color: Highlight !important;
+  }
+}
+
+.objectives-full.backend-html:has(a[href*="drive.google.com/drive/folders/"] > img[src*="Download1.png"]) > br {
+  display: none !important;
+}
+
 /* Acadrix Portal Decor: Coordinated Graded Visual Emphasis */
 button.child-row[data-acx-graded="true"],
 .child-row[data-acx-graded="true"] {

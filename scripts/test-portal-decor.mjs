@@ -22,6 +22,11 @@ import {
   isPortalDecorStale,
 } from "../src/portal-decor/storage.js";
 import { captureGrades, captureStartPage } from "../src/portal-decor/capture.js";
+import { HOST_DECOR_STYLES } from "../src/portal-decor/decorator.js";
+
+assert.match(HOST_DECOR_STYLES, /\.objectives-full\.backend-html a\[href\*="drive\.google\.com\/drive\/folders\/"\]:has\(> img\[src\*="Download1\.png"\]\)::after/);
+assert.match(HOST_DECOR_STYLES, /content: "Download lecture slides"/);
+assert.match(HOST_DECOR_STYLES, /:focus-visible/);
 
 const fixture = fs.readFileSync("fixtures/portal-decor/grades-week1.html", "utf8");
 const sidebarFixture = fs.readFileSync("fixtures/portal-decor/sidebar-week1.html", "utf8");
@@ -375,6 +380,7 @@ function parseGradesFixtureToMockDoc(html, courseTitle = "Sep 2026 - MAD II") {
       return null;
     },
     querySelectorAll: (sel) => {
+      if (sel.includes(".desktop-container .item")) return desktopItems;
       if (sel.includes("module-container")) return [moduleContainer];
       return [];
     },
@@ -382,9 +388,20 @@ function parseGradesFixtureToMockDoc(html, courseTitle = "Sep 2026 - MAD II") {
 }
 
 const mockDoc = parseGradesFixtureToMockDoc(fixture, "Sep 2026 - MAD II");
-const extractedResult = await captureGrades(mockDoc, gradesStore, pendingQueue, store, () => tick);
-assert.equal(extractedResult.ok, false, "captureGrades must be deprecated no-op (§12)");
-assert.equal(extractedResult.records.length, 0, "No records scraped from grades page");
+const capturedGradesStore = createPortalGradesStore(() => tick);
+const extractedResult = await captureGrades(mockDoc, capturedGradesStore, () => tick);
+assert.equal(extractedResult.ok, true, "Grades page scores should be captured locally");
+assert.equal(extractedResult.records.length, 0, "Pending scores must not be captured as zero");
+const gradedRow = {
+  querySelector: (selector) => selector.includes("item-title") ? { textContent: "Week 1 - Graded Assignment 1", getAttribute: () => "assignment-1" } : null,
+  querySelectorAll: (selector) => selector.includes("item-value") ? [{ textContent: "68%" }] : [],
+  closest: () => ({ querySelector: () => ({ textContent: "Week 1" }) }),
+};
+mockDoc.querySelectorAll = (selector) => selector.includes(".desktop-container .item") ? [gradedRow] : [];
+const captured = await captureGrades(mockDoc, capturedGradesStore, () => tick);
+assert.equal(captured.records[0].yourScore, 68, "Capture only the student's score into local storage");
+assert.equal(captured.records[0].courseCode, "CS2006");
+await capturedGradesStore.clear();
 
 // Populate sample decor for store isolation and pruning verification
 const jsDecorKey = assignmentKey("Sep 2026 - MAD II", "Week 1", "JavaScript Graded Assignment - Simple and Compound Interest");
@@ -663,6 +680,7 @@ const mockFetchSupabaseDeadlines = async (url) => {
   };
 };
 
+const storedGradesBeforeDeadlineFetch = await testGradesUntouchedStore.getCourseGrades("2026-09", "CS2006");
 const fetchRes = await fetchDeadlinesFromSupabase({
   termId: "2026-09",
   courseCode: "CS2006",
@@ -675,9 +693,9 @@ assert.equal(fetchRes.ok, true);
 assert.equal(fetchRes.deadlines.length, 1);
 assert.equal(fetchRes.deadlines[0].dueDate, "2026-10-11T18:29:00.000Z");
 
-// Verify that gradesStore was completely untouched (authoritative grades are strictly from portal)
+// Deadline sync must not change the locally captured grades.
 const storedGradesEmpty = await testGradesUntouchedStore.getCourseGrades("2026-09", "CS2006");
-assert.equal(storedGradesEmpty.length, 0, "Grades store must remain empty when fetching deadlines from Supabase");
+assert.equal(storedGradesEmpty.length, storedGradesBeforeDeadlineFetch.length, "Deadline sync must leave local grades unchanged");
 
 // Verify that decorStore received the deadline
 const fetchedDecor = await testFetchDecorStore.get(

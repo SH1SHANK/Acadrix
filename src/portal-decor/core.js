@@ -71,7 +71,7 @@ export function parseCourseCode(courseKeyText, titleText = "") {
   if (/\bCS2005\b/.test(raw) || /\bJAVA\b/.test(raw) || /\bPROGRAMMING CONCEPTS USING JAVA\b/.test(raw)) {
     return "CS2005";
   }
-  if (/\bSE2001\b/.test(raw) || /\bSYSTEM COMMANDS\b/.test(raw)) {
+  if (/\bSE2001C\b/.test(raw) || /\bSE2001\b/.test(raw) || /\bSYSTEM COMMANDS\b/.test(raw)) {
     return "SE2001";
   }
   if (/\bMS2001\b/.test(raw) || /\bBDM\b/.test(raw) || /\bBUSINESS DATA MANAGEMENT\b/.test(raw)) {
@@ -79,6 +79,10 @@ export function parseCourseCode(courseKeyText, titleText = "") {
   }
 
   // 2. Generic code extractor pattern e.g. "CS1001", "MA2001"
+  // IITM pages often expose BSCS2006-style IDs while policy data uses CS2006.
+  const degreeCode = raw.match(/\bBS(CS|MA|HS|MS|SE|DA|EE|BT)(\d{4}[A-Z]?)\b/);
+  if (degreeCode) return `${degreeCode[1]}${degreeCode[2]}`;
+
   const genericMatch = raw.match(/\b([A-Z]{2}\d{4}[A-Z]?)\b/);
   if (genericMatch) {
     return genericMatch[1];

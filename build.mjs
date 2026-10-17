@@ -99,6 +99,8 @@ export const EXTENSION_MODULES = [
   "src/portal-decor/core.js",
   "src/portal-decor/storage.js",
   "src/portal-decor/capture.js",
+  "src/portal-decor/grade-calculator.js",
+  "src/portal-decor/transcript-summary.js",
   "src/portal-decor/sync.js",
   "src/portal-decor/decorator.js",
   "src/portal-decor/index.js",
@@ -190,6 +192,7 @@ function cleanBookmarkletCode(code) {
 
 function bundleTarget(targetConfig, isBookmarklet = false) {
   const parts = [];
+  const indent = (code) => code.split("\n").map((line) => line.trim() ? `  ${line}` : "").join("\n");
 
   for (const modPath of targetConfig.modules) {
     if (!isBookmarklet && modPath === "src/ui/code-editor.js") {
@@ -203,18 +206,18 @@ function bundleTarget(targetConfig, isBookmarklet = false) {
         legalComments: "none",
         write: false,
       }).outputFiles[0].text;
-      parts.push(`  // ── [Bundled module: ${modPath}] ──\n  ${bundledEditor.replace(/\n/g, "\n  ")}\n  const { ProgrammingCodeEditor } = AcadrixCodeEditorBundle;`);
+      parts.push(`  // ── [Bundled module: ${modPath}] ──\n${indent(bundledEditor)}\n  const { ProgrammingCodeEditor } = AcadrixCodeEditorBundle;`);
       continue;
     }
     const raw = readFileSync(modPath, "utf8");
     const transformed = transformModule(raw, isBookmarklet);
-    parts.push(`  // ── [Module: ${modPath}] ──\n  ${transformed.replace(/\n/g, "\n  ")}`);
+    parts.push(`  // ── [Module: ${modPath}] ──\n${indent(transformed)}`);
   }
 
   // Add entry point code
   const indexRaw = readFileSync(targetConfig.entry, "utf8");
   const indexTransformed = transformModule(indexRaw, isBookmarklet);
-  parts.push(`  // ── [Entry: ${targetConfig.entry}] ──\n  ${indexTransformed.replace(/\n/g, "\n  ")}`);
+  parts.push(`  // ── [Entry: ${targetConfig.entry}] ──\n${indent(indexTransformed)}`);
 
   return `/**
  * Acadrix — ${targetConfig.name}.

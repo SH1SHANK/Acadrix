@@ -206,29 +206,33 @@ export function createPortalGradesStore(now = () => Date.now()) {
       await write(data);
       return Object.values(data[termId][courseCode]);
     },
-    async captureRecord(record) {
-      if (!record?.termId || !record?.courseCode || !record?.externalAssignmentId) {
-        return null;
-      }
+    async captureRecords(records = []) {
+      const validRecords = records.filter((record) => record?.termId && record?.courseCode && record?.externalAssignmentId);
+      if (!validRecords.length) return [];
       const data = await this.getAll();
-      data[record.termId] ||= {};
-      data[record.termId][record.courseCode] ||= {};
-      const prev = data[record.termId]?.[record.courseCode]?.[record.externalAssignmentId];
-      const cloned = structuredClone(record);
-      if (prev?.submissionStatus === "SUBMITTED" && cloned.submissionStatus !== "SUBMITTED") {
-        cloned.submissionStatus = "SUBMITTED";
-        cloned.submissionStatusSource = prev.submissionStatusSource;
-        cloned.submissionCheckedAt = prev.submissionCheckedAt;
+      for (const record of validRecords) {
+        data[record.termId] ||= {};
+        data[record.termId][record.courseCode] ||= {};
+        const prev = data[record.termId]?.[record.courseCode]?.[record.externalAssignmentId];
+        const cloned = structuredClone(record);
+        if (prev?.submissionStatus === "SUBMITTED" && cloned.submissionStatus !== "SUBMITTED") {
+          cloned.submissionStatus = "SUBMITTED";
+          cloned.submissionStatusSource = prev.submissionStatusSource;
+          cloned.submissionCheckedAt = prev.submissionCheckedAt;
+        }
+        if ((!cloned.dueDate || cloned.dueDate === "") && prev?.dueDate) {
+          cloned.dueDate = prev.dueDate;
+          cloned.dueDateText = prev.dueDateText;
+          cloned.deadlineSource = prev.deadlineSource || "LOCAL";
+          cloned.deadlineVerifiedAt = prev.deadlineVerifiedAt || prev.capturedAt;
+        }
+        data[record.termId][record.courseCode][record.externalAssignmentId] = cloned;
       }
-      if ((!cloned.dueDate || cloned.dueDate === "") && prev?.dueDate) {
-        cloned.dueDate = prev.dueDate;
-        cloned.dueDateText = prev.dueDateText;
-        cloned.deadlineSource = prev.deadlineSource || "LOCAL";
-        cloned.deadlineVerifiedAt = prev.deadlineVerifiedAt || prev.capturedAt;
-      }
-      data[record.termId][record.courseCode][record.externalAssignmentId] = cloned;
       await write(data);
-      return record;
+      return validRecords;
+    },
+    async captureRecord(record) {
+      return (await this.captureRecords([record]))[0] || null;
     },
     async clear() {
       memoryStores[PORTAL_GRADES_STORAGE_KEY] = {};

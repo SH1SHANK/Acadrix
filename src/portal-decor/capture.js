@@ -1,13 +1,13 @@
 /**
  * Portal Decor: Course Detection & Visibility Helpers.
  * 
- * Grade scraping and start-page deadline scraping have been completely removed.
- * Authoritative academic dates and deadlines come exclusively from
- * Supabase public.academic_events via AcademicEventRepository (§11, §12).
+ * Grade scores are stored locally for the grade calculator; deadline scraping
+ * remains disabled and authoritative dates come from academic_events.
  */
 
-import { IITM_SELECTORS } from "../portal/selectors.js";
 import { portalDecorNormalizeText } from "./core.js";
+import { IITM_SELECTORS } from "../portal/selectors.js";
+import { parseCourseCode, parseTermId, createExternalAssignmentId, parseScore } from "./core.js";
 
 /**
  * Extracts the active course key from top bar or side navigation.
@@ -56,8 +56,42 @@ export async function captureStartPage() {
 }
 
 /**
- * @deprecated Scraping removed (§12). Grades are out of scope for Acadrix.
+ * Captures graded assignment scores from the active Grades page into local storage.
+ * Never sends student scores to Supabase.
  */
-export async function captureGrades() {
-  return { ok: false, reason: "GRADE_SCRAPING_REMOVED", records: [] };
+export async function captureGrades(root = document, gradesStore, now = () => Date.now()) {
+  if (!root?.querySelector || (!gradesStore?.captureRecord && !gradesStore?.captureRecords)) return { ok: false, reason: "MISSING_STORE", records: [] };
+  const courseKey = getCourseKey(root);
+  const termId = parseTermId(courseKey);
+  const courseCode = parseCourseCode(courseKey, root.querySelector(IITM_SELECTORS.metadata.courseTitle)?.textContent || "");
+  if (!courseKey || courseCode === "UNKNOWN_COURSE") return { ok: false, reason: "UNKNOWN_COURSE", records: [] };
+
+  const rows = [...(root.querySelectorAll(IITM_SELECTORS.decor.gradeRows) || [])];
+  const records = [];
+  for (const row of rows) {
+    const titleLink = row.querySelector(IITM_SELECTORS.decor.gradeTitle);
+    const title = portalDecorNormalizeText(titleLink?.textContent || "");
+    if (!title || /activity questions|not graded/i.test(title)) continue;
+    const values = [...(row.querySelectorAll(IITM_SELECTORS.decor.gradeValues) || [])];
+    const scoreRaw = portalDecorNormalizeText(values[0]?.textContent || "");
+    const { score } = parseScore(scoreRaw);
+    if (score === null) continue;
+    const module = portalDecorNormalizeText(row.closest?.(".module-container")?.querySelector?.(IITM_SELECTORS.decor.gradeModule)?.textContent || "");
+    const record = {
+      termId,
+      courseCode,
+      externalAssignmentId: createExternalAssignmentId(termId, courseCode, module, title, titleLink),
+      title,
+      module,
+      yourScore: score,
+      yourScoreRaw: scoreRaw,
+      scoreStatus: "GRADED",
+      source: "grades-page-local",
+      capturedAt: now(),
+    };
+    records.push(record);
+  }
+  if (gradesStore.captureRecords) await gradesStore.captureRecords(records);
+  else for (const record of records) await gradesStore.captureRecord(record);
+  return { ok: true, records };
 }

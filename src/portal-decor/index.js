@@ -11,6 +11,8 @@ import {
   PORTAL_GRADES_STORAGE_KEY,
 } from "./storage.js";
 import { getCourseKey } from "./capture.js";
+import { initGradeCalculator } from "./grade-calculator.js";
+import { initTranscriptSummary } from "./transcript-summary.js";
 import { fetchDeadlinesFromSupabase } from "./sync.js";
 import { decorateSidebar, createSidebarObserver, removeHostStyles } from "./decorator.js";
 import { IITM_SELECTORS } from "../portal/selectors.js";
@@ -42,10 +44,13 @@ export function initPortalDecor({
   const decorStore = store || createPortalDecorStore(now);
   const portalGradesStore = gradesStore || createPortalGradesStore(now);
   const portalPendingQueue = pendingQueue || createPendingSyncQueue();
+  const gradeCalculator = initGradeCalculator({ doc, gradesStore: portalGradesStore });
+  const transcriptSummary = initTranscriptSummary({ doc });
   let isDestroyed = false;
   let observer = null;
   let storageListener = null;
   let highlightDeadlinesEnabled = true;
+  let rerunRequested = false;
 
   function removeAllDecorations() {
     try {
@@ -65,9 +70,9 @@ export function initPortalDecor({
   }
 
   function startObserver() {
-    if (!observer && highlightDeadlinesEnabled && !isDestroyed) {
+    if (!observer && !isDestroyed) {
       observer = createSidebarObserver(doc, () => {
-        if (highlightDeadlinesEnabled) runCycle();
+        runCycle();
       });
     }
   }
@@ -82,9 +87,16 @@ export function initPortalDecor({
   let isRunning = false;
 
   async function runCycle() {
-    if (isDestroyed || !highlightDeadlinesEnabled || isRunning) return;
+    if (isDestroyed) return;
+    if (isRunning) {
+      rerunRequested = true;
+      return;
+    }
     isRunning = true;
     try {
+      transcriptSummary.run();
+      gradeCalculator.run().catch((err) => console.warn("[Acadrix] grade calculator error:", err));
+      if (!highlightDeadlinesEnabled) return;
       const courseKey = getCourseKey(doc);
       if (courseKey) {
         const termId = parseTermId(courseKey);
@@ -114,6 +126,10 @@ export function initPortalDecor({
       console.warn("[Acadrix] portal-decor cycle error:", err);
     } finally {
       isRunning = false;
+      if (rerunRequested && !isDestroyed) {
+        rerunRequested = false;
+        setTimeout(runCycle, 0);
+      }
     }
   }
 
@@ -123,13 +139,9 @@ export function initPortalDecor({
       chrome.storage.local.get({ highlightDeadlines: true }, (items) => {
         if (isDestroyed) return;
         highlightDeadlinesEnabled = items.highlightDeadlines ?? true;
-        if (highlightDeadlinesEnabled) {
-          runCycle();
-          startObserver();
-        } else {
-          removeAllDecorations();
-          stopObserver();
-        }
+        if (!highlightDeadlinesEnabled) removeAllDecorations();
+        runCycle();
+        startObserver();
       });
     } else {
       runCycle();
@@ -152,8 +164,8 @@ export function initPortalDecor({
               startObserver();
               runCycle();
             } else {
-              stopObserver();
               removeAllDecorations();
+              runCycle();
             }
           } else if (PORTAL_DECOR_STORAGE_KEY in changes || PORTAL_GRADES_STORAGE_KEY in changes) {
             if (highlightDeadlinesEnabled) {
@@ -168,7 +180,7 @@ export function initPortalDecor({
 
   const onPageHide = () => destroy();
   const onNavChange = () => {
-    if (highlightDeadlinesEnabled && !isDestroyed) {
+    if (!isDestroyed) {
       runCycle();
     }
   };
@@ -192,6 +204,8 @@ export function initPortalDecor({
     isDestroyed = true;
 
     stopObserver();
+    gradeCalculator.destroy();
+    transcriptSummary.destroy();
 
     if (storageListener && typeof chrome !== "undefined" && chrome?.storage?.onChanged) {
       try {
