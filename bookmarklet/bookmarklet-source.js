@@ -13,12 +13,12 @@
    * Types and Enums for the Canonical Assignment Document Model.
    * Establishes the contract for all extraction and export layers.
    */
-  
+
   const AssessmentFamily = Object.freeze({
     STANDARD: "standard",
     PROGRAMMING: "programming",
   });
-  
+
   const QuestionType = Object.freeze({
     MCQ: "single_choice",
     MSQ: "multiple_choice",
@@ -29,7 +29,7 @@
     PROGRAMMING: "programming",
     UNKNOWN: "unknown",
   });
-  
+
   const ContentType = Object.freeze({
     PARAGRAPH: "paragraph",
     HEADING: "heading",
@@ -60,7 +60,7 @@
     INLINE: "inline",
     DISPLAY: "display",
   });
-  
+
   const MathFormat = Object.freeze({
     TEX: "tex",
     MATHML: "mathml",
@@ -74,8 +74,8 @@
    * Defines the structured, minimal schema representing an IITM assessment independently
    * of input HTML representations or output formats (Markdown, PDF, Reader UI).
    */
-  
-  
+
+
   /**
    * Atomic or composite content node (e.g. text paragraph, LaTeX formula, code block, image, table).
    */
@@ -92,7 +92,7 @@
       this.attributes = attributes || {};
     }
   }
-  
+
   /**
    * Option item for choice-based questions (MCQ / MSQ).
    */
@@ -157,7 +157,7 @@
       this.isVisible = Boolean(isVisible);
     }
   }
-  
+
   /**
    * Programming Assignment specific data payload.
    */
@@ -226,7 +226,7 @@
         raw: "",
       };
     }
-  
+
     get editor() {
       return {
         language: this.language,
@@ -236,7 +236,7 @@
         suffixCode: this.suffixCode,
       };
     }
-  
+
     get isGuarded() {
       return Boolean(
         this.hasPrefixCode ||
@@ -246,7 +246,7 @@
       );
     }
   }
-  
+
   /**
    * Normalized Question Node.
    */
@@ -282,7 +282,7 @@
         : (programmingData ? new ProgrammingAssignmentData(programmingData) : null);
       this.status = status;
       this.review = review;
-  
+
       /**
        * LEGACY MIGRATION DATA ONLY.
        * NOT PART OF THE CANONICAL SEMANTIC MODEL.
@@ -297,14 +297,14 @@
     get rawHtml() {
       return this.legacyMigrationData;
     }
-  
+
     /**
      * Transitional helper for the temporary reader drawer.
      */
     getLegacyOptionsMarkup() {
       return this.legacyMigrationData?.optsHtml || "";
     }
-  
+
     /**
      * Transitional adapter method: constructs a valid QuestionNode from legacy raw HTML snapshots.
      * Isolates legacy HTML scraping behind the Canonical Document Model contract.
@@ -330,7 +330,7 @@
       });
     }
   }
-  
+
   /**
    * Top-level Normalized Assignment Document.
    */
@@ -353,7 +353,7 @@
       this.questions = Array.isArray(questions) ? questions : [];
       this.resources = resources instanceof Map ? resources : new Map(Object.entries(resources));
     }
-  
+
     addQuestion(question) {
       if (question instanceof QuestionNode) {
         this.questions.push(question);
@@ -361,21 +361,21 @@
         this.questions.push(new QuestionNode(question));
       }
     }
-  
+
     getQuestion(index) {
       return this.questions[index] || null;
     }
-  
+
     get length() {
       return this.questions.length;
     }
   }
-  
+
   const TERM_PREFIX_REGEX =
     /^\s*(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{4}\s*[-–—:]\s*/i;
-  
+
   const WEEK_EXTRACT_REGEX = /\bweek[\s\-_:]*(\d{1,2})\b/i;
-  
+
   const KIND_EXTRACT_PATTERNS = [
     { label: "GrPA", regex: /\b(?:grpa|graded\s+programming(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
     { label: "PPA", regex: /\b(?:ppa|practice\s+programming(?:\s+assignment)?)(?:[\s\-_#:]*(\d+))?\b/i },
@@ -385,7 +385,7 @@
     { label: "OPPE", regex: /\b(?:oppe)(?:[\s\-_#:]*(\d+))?\b/i },
     { label: "Quiz", regex: /\b(?:quiz)(?:[\s\-_#:]*(\d+))?\b/i },
   ];
-  
+
   function sanitizeFilenameSegment(raw) {
     if (typeof raw !== "string") return "";
     return raw
@@ -394,9 +394,9 @@
       .trim()
       .replace(/^[. ]+|[. ]+$/g, "");
   }
-  
+
   const TRAILING_CONNECTOR_REGEX = /\s+\b(?:and|of|for|to|in|the)$/i;
-  
+
   function truncateCourseOnWordBoundary(course, maxLen = 60) {
     if (course.length <= maxLen) return course;
     const sliced = course.slice(0, maxLen);
@@ -413,7 +413,7 @@
     }
     return truncated;
   }
-  
+
   function parseWeekCandidate(candidate, allowDirectNumber = false) {
     if (typeof candidate === "number" && candidate >= 0 && candidate <= 99) {
       return `Week ${String(Math.floor(candidate)).padStart(2, "0")}`;
@@ -428,7 +428,7 @@
     }
     return "";
   }
-  
+
   /**
    * Pure, core, bookmarklet-safe filename builder for exported artifacts.
    * Format: "{Course} - Week {NN} - {Kind}.{ext}"
@@ -443,13 +443,13 @@
     const safeMeta = meta && typeof meta === "object" ? meta : {};
     const rawCourse = typeof safeMeta.course === "string" ? safeMeta.course.replace(TERM_PREFIX_REGEX, "") : "";
     const rawTitle = typeof safeMeta.title === "string" ? safeMeta.title : "";
-  
+
     // 1. Course (sanitized, truncated at 60 chars on a word boundary, trailing connector words dropped)
     let coursePart = sanitizeFilenameSegment(rawCourse);
     if (coursePart) {
       coursePart = truncateCourseOnWordBoundary(coursePart, 60);
     }
-  
+
     // 2. Week (/\bweek[\s\-_:]*(\d{1,2})\b/i, zero-padded to 2 digits)
     // Fallback order: header subtitle / explicit week -> title -> sidebar active .unit-header
     const weekPart =
@@ -457,14 +457,14 @@
       parseWeekCandidate(safeMeta.subtitle, false) ||
       parseWeekCandidate(rawTitle, false) ||
       parseWeekCandidate(safeMeta.activeUnitHeader || safeMeta.unitHeader, false);
-  
+
     // 3. Kind (GrPA, PPA, AQ, GA, PA, OPPE, Quiz; first match wins, optional number suffix kept)
     let kindPart = "";
     const kindSource =
       typeof safeMeta.kind === "string" && safeMeta.kind.trim()
         ? `${safeMeta.kind} ${rawTitle}`
         : rawTitle;
-  
+
     if (kindSource) {
       for (const { label, regex } of KIND_EXTRACT_PATTERNS) {
         const m = kindSource.match(regex);
@@ -475,7 +475,7 @@
         }
       }
     }
-  
+
     // If no standard kind acronym matched, check if rawTitle contains a specific non-generic title
     // Keep descriptive assignment names intact; abbreviating them to "GA" loses the identity users need in downloads.
     if (rawTitle && /\bgraded\s+assignment\b\s*[-:]/i.test(rawTitle)) {
@@ -485,7 +485,7 @@
         .trim();
       if (assignmentName) kindPart = sanitizeFilenameSegment(assignmentName);
     }
-  
+
     if (!kindPart && rawTitle && typeof rawTitle === "string") {
       const trimmedTitle = rawTitle.trim();
       if (
@@ -501,7 +501,7 @@
         }
       }
     }
-  
+
     // 4. Assemble present parts or fallback to "Acadrix Assignment - YYYY-MM-DD"
     const parts = [coursePart, weekPart, kindPart].filter(Boolean);
     let baseName = "";
@@ -513,9 +513,9 @@
       const dateStr = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 10);
       baseName = `Acadrix Assignment - ${dateStr}`;
     }
-  
+
     baseName = sanitizeFilenameSegment(baseName) || "Acadrix Assignment";
-  
+
     // 5. Clean extension and enforce 120-char total cap
     const cleanExt = sanitizeFilenameSegment(String(ext || "pdf").replace(/^\.+/, "")) || "pdf";
     const extSuffix = `.${cleanExt}`;
@@ -523,7 +523,7 @@
     if (baseName.length > maxBaseLen) {
       baseName = baseName.slice(0, maxBaseLen).replace(/[. \-]+$/g, "").replace(/^[. ]+|[. ]+$/g, "");
     }
-  
+
     return `${baseName}${extSuffix}`;
   }
 
@@ -535,14 +535,14 @@
    * a canonical AssignmentDocument.
    * Decouples question traversal and extraction from document construction.
    */
-  
-  
+
+
   class AssignmentAssembler {
     constructor(metadata = {}) {
       this.metadata = metadata;
       this.questions = [];
     }
-  
+
     /**
      * Adds an extracted QuestionNode to the assembly pipeline.
      * @param {QuestionNode} questionNode
@@ -551,7 +551,7 @@
       if (!questionNode) return;
       this.questions.push(questionNode);
     }
-  
+
     /**
      * Finalizes and builds the immutable AssignmentDocument instance.
      * @returns {AssignmentDocument}
@@ -571,16 +571,16 @@
   /**
    * DOM utility helpers.
    */
-  
+
   const $ = (selector, root = document) =>
     root && typeof root.querySelector === "function" ? root.querySelector(selector) : null;
-  
+
   const $$ = (selector, root = document) => {
     if (!root || typeof root.querySelectorAll !== "function") return [];
     const res = root.querySelectorAll(selector);
     return res && typeof res[Symbol.iterator] === "function" ? [...res] : (Array.isArray(res) ? res : []);
   };
-  
+
   const escapeHtml = (str = "") =>
     str
       .replace(/&/g, "&amp;")
@@ -588,10 +588,10 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
-  
+
   const isEscapedHtml = (el) =>
     el && el.children.length === 0 && /<[a-z!/][^>]*>/i.test(el.textContent);
-  
+
   const lowestCommonAncestor = (a, b) => {
     if (!a || !b) return null;
     const ancestors = new Set();
@@ -599,7 +599,7 @@
     for (let n = b; n; n = n.parentElement) if (ancestors.has(n)) return n;
     return null;
   };
-  
+
   /**
    * Sanitizes SVG source markup according to strict vector safety policy.
    * Strips executable tags (<script>, <foreignObject>), on* event attributes,
@@ -614,7 +614,7 @@
       .replace(/(?:href|xlink:href)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href="#"')
       .replace(/(?:href|xlink:href)\s*=\s*(?:"data:text\/html[^"]*"|'data:text\/html[^']*')/gi, 'href="#"');
   };
-  
+
   /**
    * Sanitizes MathML markup by stripping scripts and event handlers.
    */
@@ -636,9 +636,9 @@
    * 2. MathML fallback (sanitized native MathML Core)
    * 3. Plain text fallback (clean italic/serif representation)
    */
-  
-  
-  
+
+
+
   /**
    * Renders mathematical expressions visually using KaTeX with MathML fallback.
    * 
@@ -651,7 +651,7 @@
    */
   function renderVisualMath(tex, { isDisplay = false, mathml = "", fallbackText = "" } = {}) {
     const cleanTex = (tex || "").trim();
-  
+
     // Priority 1: Original TeX via KaTeX
     if (cleanTex) {
       const k = typeof katex !== "undefined" && katex?.renderToString
@@ -659,7 +659,7 @@
         : (typeof globalThis !== "undefined" && globalThis.katex?.renderToString
             ? globalThis.katex
             : (typeof window !== "undefined" && (window.katex || window.parent?.katex)));
-  
+
       if (k && typeof k.renderToString === "function") {
         try {
           return k.renderToString(cleanTex, {
@@ -672,7 +672,7 @@
         }
       }
     }
-  
+
     // Priority 2: MathML fallback
     if (mathml && typeof mathml === "string" && mathml.trim()) {
       const sanitized = sanitizeMathML(mathml.trim());
@@ -682,7 +682,7 @@
         return `<${wrapTag} class="${wrapCls}">${sanitized}</${wrapTag}>`;
       }
     }
-  
+
     // Priority 3: Plain text fallback
     const rawText = fallbackText || cleanTex || "";
     return `<span class="math-plain">${escapeHtml(rawText)}</span>`;
@@ -692,9 +692,9 @@
   /**
    * Timing and async utilities.
    */
-  
+
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  
+
   const debounce = (fn, delayMs = 250) => {
     let timer = null;
     return (...args) => {
@@ -702,7 +702,7 @@
       timer = setTimeout(() => fn(...args), delayMs);
     };
   };
-  
+
   const waitForCondition = async (predicate, { timeoutMs = 3000, intervalMs = 50 } = {}) => {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
@@ -718,7 +718,7 @@
    * Keyboard Shortcut Resolution Utilities.
    * Maps physical keys (e.code) to consistent modifier strings across platforms.
    */
-  
+
   const keyName = (e) => {
     const c = e.code || "";
     if (/^Key[A-Z]$/.test(c)) return c.slice(3);
@@ -737,7 +737,7 @@
     const k = e.key || "";
     return k.length === 1 ? k.toUpperCase() : k;
   };
-  
+
   const shortcutFromEvent = (e) => {
     if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return "";
     const key = keyName(e);
@@ -750,7 +750,7 @@
     parts.push(key);
     return parts.join("+");
   };
-  
+
   const isTypingTarget = (el) =>
     Boolean(el?.closest?.("input, textarea, select, [contenteditable=true], [contenteditable='']"));
 
@@ -760,7 +760,7 @@
    * Categorized strictly by architectural domain.
    * Derived from observed IITM portal DOM structures.
    */
-  
+
   const IITM_SELECTORS = Object.freeze({
     // Assessment boundaries & root containers
     assessment: {
@@ -769,7 +769,7 @@
       evaluatedAnswer: ".evaluated-answer",
       evaluatedRightPanel: ".evaluated-answer, .panel.right-panel, .cell",
     },
-  
+
     // Paginator & navigation controls
     navigation: {
       paginator: "div.chips, .app-assessment-paginator, .assessment-paginator",
@@ -778,7 +778,7 @@
       nextWindow: "button.paginator-next, button.next-page, button[aria-label*='Next' i], button[aria-label*='next' i], .chips-nav-next, .paginator-next, button.next",
       prevWindow: "button.paginator-prev, button.prev-page, button[aria-label*='Prev' i], button[aria-label*='prev' i], .chips-nav-prev, .paginator-prev, button.prev",
     },
-  
+
     // Question metadata & timers
     metadata: {
       timer: "app-submission-timer",
@@ -796,7 +796,7 @@
       currentNumberRegex: /Question\s+(\d+)/i,
       reviewDetectRegex: /Answer is (Correct|Incorrect)|Score\s*:\s*\d/,
     },
-  
+
     // Question content & prompt areas
     content: {
       backendHtml: ".backend-html",
@@ -804,13 +804,13 @@
       feedback: ".feedback",
       feedbackTitle: ".title",
     },
-  
+
     // Answer controls (for read-only inspection)
     controls: {
       optionRole: "[role=radio], [role=checkbox]",
       textInput: "textarea, input[type=text], input[type=number]",
     },
-  
+
     // Choice & Option controls (real observed IITM structures)
     choices: {
       container: ".choices, [role=radiogroup]",
@@ -856,7 +856,7 @@
       breadcrumb: "nav.breadcrumb .breadcrumb-item.current, .mobile-header .parent-title, nav.breadcrumb .breadcrumb-item, .breadcrumb span",
       timer: "app-submission-timer .due-label, app-submission-timer, .submission-timer",
     },
-  
+
     // Declutter layout elements
     declutter: {
       breadcrumb: ".breadcrumb",
@@ -872,9 +872,9 @@
    * Encapsulates all direct DOM inspection and queries on IITM assessment pages.
    * No UI or traversal logic should query IITM selectors directly.
    */
-  
-  
-  
+
+
+
   /**
    * Normalized Portal Page Types.
    */
@@ -886,7 +886,7 @@
     GRADES: "GRADES",
     UNKNOWN: "UNKNOWN",
   });
-  
+
   /**
    * Determines whether the FAB (and shortcut) should be enabled for a given page type.
    * @param {string} pageType
@@ -898,12 +898,12 @@
       pageType === PortalPageType.PROGRAMMING_ASSIGNMENT
     );
   }
-  
+
   class IitmPortalAdapter {
     constructor(doc = typeof document !== "undefined" ? document : null) {
       this.doc = doc;
     }
-  
+
     /**
      * Identifies the current portal page type from the DOM.
      * First-class support for Standard Assessments and Programming Assignments.
@@ -912,7 +912,7 @@
      */
     detectPageType(root = this.doc) {
       if (!root || typeof root.querySelector !== "function") return PortalPageType.UNKNOWN;
-  
+
       // The assignment overview and the active coding route can share metadata and
       // sometimes the outer PA wrapper. Require a coding surface inside that wrapper;
       // a title, deadline, resume CTA, or wrapper alone is not editor evidence.
@@ -945,55 +945,55 @@
         const label = el.getAttribute?.("aria-label") || "";
         return /^resume assignment$/i.test((el.textContent || label).trim());
       });
-  
+
       if ((hasPaOverview || hasResumeAction) && !hasCodingSurface) {
         return PortalPageType.PROGRAMMING_ASSIGNMENT_INFO;
       }
       if (hasPaView && hasCodingSurface) {
         return PortalPageType.PROGRAMMING_ASSIGNMENT;
       }
-  
+
       // 2. Standard Assessment check
       const hasAssessmentView = Boolean($(IITM_SELECTORS.assessment.view, root));
       const hasAssessmentRoot = Boolean($(IITM_SELECTORS.assessment.root, root));
       const hasPaginator = Boolean($(IITM_SELECTORS.navigation.paginator, root));
-  
+
       if (hasAssessmentView || (hasPaginator && hasAssessmentRoot) || hasAssessmentRoot) {
         return PortalPageType.ASSESSMENT;
       }
-  
+
       // 3. Grades / Scores view
       if ($("app-grades, .grades-view, app-score-card, .score-card-container", root)) {
         return PortalPageType.GRADES;
       }
-  
+
       // 4. Course Content / Videos / Syllabus
       if ($("app-course-content, .course-content, app-unit-view, .unit-content, app-video-player", root)) {
         return PortalPageType.COURSE_CONTENT;
       }
-  
+
       return PortalPageType.UNKNOWN;
     }
-  
+
     /**
      * Returns true if an IITM assessment view (Standard or Programming) is currently active in the DOM.
      */
     detectAssessment() {
       return isFabEligible(this.detectPageType());
     }
-  
+
     isProgrammingAssignment() {
       return this.detectPageType() === PortalPageType.PROGRAMMING_ASSIGNMENT;
     }
-  
+
     isStandardAssessment() {
       return this.detectPageType() === PortalPageType.ASSESSMENT;
     }
-  
+
     getProgrammingView() {
       return $(IITM_SELECTORS.programming?.view || "app-programming-assignment-view, .programming-assignment-view", this.doc);
     }
-  
+
     /**
      * Resolves canonical capabilities supported on the current page.
      * @returns {object}
@@ -1035,21 +1035,21 @@
         canApplyAnswers: false,
       };
     }
-  
+
     getPaginator() {
       return $(IITM_SELECTORS.navigation.paginator, this.doc);
     }
-  
+
     getAssessmentView() {
       return $(IITM_SELECTORS.assessment.view, this.doc);
     }
-  
-  
-  
+
+
+
     getCurrentQuestionElement() {
       return $(IITM_SELECTORS.assessment.root, this.doc);
     }
-  
+
     /**
      * Queries fresh question chips from the currently active paginator in the DOM.
      * Never caches references across navigation.
@@ -1058,7 +1058,7 @@
     getQuestionChips() {
       return $$(IITM_SELECTORS.navigation.chip, this.doc);
     }
-  
+
     /**
      * Extracts the 1-based logical question number from a chip button.
      * Checks explicit text content first, aria-label second, and data attributes third.
@@ -1071,11 +1071,11 @@
       const txt = (chip.textContent || "").trim();
       const num = parseInt(txt, 10);
       if (!isNaN(num) && num > 0) return num;
-  
+
       const aria = chip.getAttribute("aria-label") || "";
       const m = aria.match(/\b(\d+)\b/);
       if (m) return parseInt(m[1], 10);
-  
+
       const dataNum = chip.getAttribute("data-question-number") || chip.getAttribute("data-index");
       if (dataNum) {
         const parsed = parseInt(dataNum, 10);
@@ -1083,10 +1083,10 @@
           return chip.hasAttribute("data-index") ? parsed + 1 : parsed;
         }
       }
-  
+
       return null;
     }
-  
+
     /**
      * Returns the currently active chip element in the DOM.
      * @returns {HTMLButtonElement|null}
@@ -1094,7 +1094,7 @@
     getActiveChip() {
       return $(IITM_SELECTORS.navigation.activeChip, this.doc);
     }
-  
+
     /**
      * Returns the zero-based index of the active chip in the currently visible window.
      * @returns {number}
@@ -1109,7 +1109,7 @@
           c.getAttribute("aria-selected") === "true"
       );
     }
-  
+
     /**
      * Returns the 1-based logical question number of the currently active question.
      * Uses active chip text, falling back to assessment header text.
@@ -1121,7 +1121,7 @@
         const chipNum = this.getChipLogicalNumber(activeChip);
         if (chipNum !== null) return chipNum;
       }
-  
+
       // Fallback: header text (e.g. "Question 3 / 10")
       const view = this.getAssessmentView();
       if (view) {
@@ -1130,10 +1130,10 @@
         const match = textToMatch.match(IITM_SELECTORS.metadata.currentNumberRegex);
         if (match) return parseInt(match[1], 10);
       }
-  
+
       return null;
     }
-  
+
     /**
      * Returns the zero-based global question index.
      * @returns {number|null}
@@ -1142,7 +1142,7 @@
       const logical = this.getActiveLogicalNumber();
       return logical !== null ? logical - 1 : null;
     }
-  
+
     /**
      * Returns total question count reported by the assessment view.
      * @returns {number|null}
@@ -1158,7 +1158,7 @@
       if (this.isProgrammingAssignment()) return 1;
       return null;
     }
-  
+
     /**
      * Returns a unique identity string for the current visible paginator window.
      * E.g. "1-5" or comma-separated numbers of currently visible chips.
@@ -1171,7 +1171,7 @@
       if (!numbers.length) return `count-${chips.length}`;
       return `${numbers[0]}..${numbers[numbers.length - 1]}`;
     }
-  
+
     /**
      * Returns the smallest stable ancestor element that survives question container replacement.
      * Typically the parent element of <app-assessment-question-view> or the assessment main element.
@@ -1190,7 +1190,7 @@
       if (main) return main;
       return view || this.doc.body;
     }
-  
+
     /**
      * Helper to check if a navigation button is interactive and not disabled.
      * @param {Element|null} btn
@@ -1208,7 +1208,7 @@
       }
       return true;
     }
-  
+
     /**
      * Discovers the "Next Page / Window" button in the assessment paginator.
      * Uses standard CSS selectors, descendant icon/text inspection, and DOM positioning.
@@ -1217,21 +1217,21 @@
      */
     getNextWindowButton() {
       const paginator = this.getPaginator();
-  
+
       // 1. Direct standard class/attribute match inside paginator or document
       const root = paginator || this.doc;
       const directMatch = $(IITM_SELECTORS.navigation.nextWindow, root);
       if (directMatch) return directMatch;
-  
+
       if (!paginator) return null;
-  
+
       // 2. Query non-chip buttons in the paginator and inspect attributes/descendants in JavaScript
       const candidateButtons = Array.from(paginator.querySelectorAll("button:not(.chip)"));
       for (const btn of candidateButtons) {
         const aria = (btn.getAttribute("aria-label") || "").toLowerCase();
         const title = (btn.getAttribute("title") || "").toLowerCase();
         const text = (btn.textContent || "").trim().toLowerCase();
-  
+
         if (
           aria.includes("next") ||
           title.includes("next") ||
@@ -1242,7 +1242,7 @@
         ) {
           return btn;
         }
-  
+
         // Check descendant icons (Angular Material <mat-icon>, FontAwesome <i>, etc.)
         const icon = btn.querySelector("mat-icon, i, span, svg");
         if (icon) {
@@ -1260,7 +1260,7 @@
           }
         }
       }
-  
+
       // 3. Positional fallback: last .arrow-btn in paginator
       const arrowButtons = Array.from(paginator.querySelectorAll("button.arrow-btn"));
       if (arrowButtons.length >= 2) {
@@ -1279,10 +1279,10 @@
           }
         }
       }
-  
+
       return null;
     }
-  
+
     /**
      * Discovers the "Previous Page / Window" button in the assessment paginator.
      * Uses standard CSS selectors, descendant icon/text inspection, and DOM positioning.
@@ -1291,21 +1291,21 @@
      */
     getPrevWindowButton() {
       const paginator = this.getPaginator();
-  
+
       // 1. Direct standard class/attribute match inside paginator or document
       const root = paginator || this.doc;
       const directMatch = $(IITM_SELECTORS.navigation.prevWindow, root);
       if (directMatch) return directMatch;
-  
+
       if (!paginator) return null;
-  
+
       // 2. Query non-chip buttons in the paginator and inspect attributes/descendants in JavaScript
       const candidateButtons = Array.from(paginator.querySelectorAll("button:not(.chip)"));
       for (const btn of candidateButtons) {
         const aria = (btn.getAttribute("aria-label") || "").toLowerCase();
         const title = (btn.getAttribute("title") || "").toLowerCase();
         const text = (btn.textContent || "").trim().toLowerCase();
-  
+
         if (
           aria.includes("prev") ||
           title.includes("prev") ||
@@ -1316,7 +1316,7 @@
         ) {
           return btn;
         }
-  
+
         // Check descendant icons
         const icon = btn.querySelector("mat-icon, i, span, svg");
         if (icon) {
@@ -1334,7 +1334,7 @@
           }
         }
       }
-  
+
       // 3. Positional fallback: first .arrow-btn in paginator
       const arrowButtons = Array.from(paginator.querySelectorAll("button.arrow-btn"));
       if (arrowButtons.length >= 2) {
@@ -1353,10 +1353,10 @@
           }
         }
       }
-  
+
       return null;
     }
-  
+
     /**
      * Checks whether the paginator has an active next-window control.
      * @returns {boolean}
@@ -1365,7 +1365,7 @@
       const btn = this.getNextWindowButton();
       return this.isButtonEnabled(btn);
     }
-  
+
     /**
      * Triggers click on the next-window button.
      * @returns {boolean} True if click was dispatched
@@ -1376,7 +1376,7 @@
       btn?.click();
       return true;
     }
-  
+
     /**
      * Checks whether the paginator has an active previous-window control.
      * @returns {boolean}
@@ -1385,7 +1385,7 @@
       const btn = this.getPrevWindowButton();
       return this.isButtonEnabled(btn);
     }
-  
+
     /**
      * Triggers click on the previous-window button.
      * @returns {boolean} True if click was dispatched
@@ -1396,7 +1396,7 @@
       btn?.click();
       return true;
     }
-  
+
     isReviewMode() {
       const hasEvaluated = Boolean($(IITM_SELECTORS.assessment.evaluatedAnswer, this.doc));
       const view = this.getAssessmentView();
@@ -1405,17 +1405,17 @@
       );
       return hasEvaluated || hasReviewText;
     }
-  
+
     getSubmissionTimerText() {
       const timerEl = $(IITM_SELECTORS.metadata.timer, this.doc);
       return (timerEl?.textContent || "").replace(/\s+/g, " ").trim();
     }
-  
+
     getReviewPanel() {
       const q = this.getCurrentQuestionElement();
       return q?.closest(IITM_SELECTORS.assessment.evaluatedRightPanel) || null;
     }
-  
+
     /**
      * Verifies that the current question container is structurally present and populated.
      * @returns {boolean}
@@ -1426,7 +1426,7 @@
       // Check that question element is in DOM and has children or meaningful content
       return q.children.length > 0 || (q.textContent || "").trim().length > 0;
     }
-  
+
     /**
      * Generates a fast text signature of the current question for settling/readiness.
      */
@@ -1434,7 +1434,7 @@
       const q = this.getCurrentQuestionElement();
       return (q?.textContent || "").replace(/\s+/g, " ").trim().slice(0, 120);
     }
-  
+
     /**
      * Discovers the assessment title from active side-nav items, page headers, or breadcrumbs,
      * excluding question stem headings and choices.
@@ -1450,7 +1450,7 @@
       if (selectedText && !/^(assignment|assessment|quiz)$/i.test(selectedText)) {
         return selectedText;
       }
-  
+
       // 2. Unit view / start page title bar or mobile header
       const titleBarEl = $(
         "app-title-bar h1.title, app-title-bar .title, .title-bar-container .title, .mobile-header .title-group .title, .mobile-header .title, app-pa-start-page h1, app-programming-assignment-view h1, .assignment-title, .assessment-title",
@@ -1460,7 +1460,7 @@
       if (titleBarText && !/^(assignment|assessment|quiz)$/i.test(titleBarText)) {
         return titleBarText;
       }
-  
+
       // 3. General candidates, excluding question body, choices, backend HTML
       const candidates = $$(
         IITM_SELECTORS.metadata.assessmentTitle || ".assignment-title, .assessment-title, h1.title, .breadcrumb, h1, h2",
@@ -1475,10 +1475,10 @@
           return txt;
         }
       }
-  
+
       return selectedText || titleBarText || "Assignment";
     }
-  
+
     /**
      * Discovers the course name from the portal sidebar or course header (e.g. ".side-nav-title"),
      * stripping any leading term prefix like "Sep 2026 - ".
@@ -1495,47 +1495,47 @@
         )
         .trim();
     }
-  
+
     /** Discovers the assessment unit/week from the real portal's sidebar, breadcrumb, or title. */
     getAssessmentWeek() {
       const weekRe = /\bweek[\s\-_:]*(\d{1,2})\b/i;
-  
+
       // 1. Unit container of the active/selected child row
       const selected = $(IITM_SELECTORS.metadata.selectedChildRow || "button.child-row.selected, .child-row.selected, .child-row.active", this.doc);
       const unit = selected?.closest?.(IITM_SELECTORS.metadata.unitContainer || ".unit-container");
       const unitText = unit ? ($(IITM_SELECTORS.metadata.unitTitle || ".unit-title", unit)?.textContent || "") : "";
       const unitMatch = unitText.replace(/\s+/g, " ").trim().match(weekRe);
       if (unitMatch) return `Week ${unitMatch[1]}`;
-  
+
       // 2. Mobile header parent title
       const parentTitle = $(".mobile-header .parent-title, .parent-title", this.doc);
       const parentMatch = (parentTitle?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
       if (parentMatch) return `Week ${parentMatch[1]}`;
-  
+
       // 3. Breadcrumbs
       const breadcrumb = $(IITM_SELECTORS.metadata.breadcrumbCurrent || "nav.breadcrumb .breadcrumb-item.current", this.doc);
       const breadcrumbMatch = (breadcrumb?.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
       if (breadcrumbMatch) return `Week ${breadcrumbMatch[1]}`;
-  
+
       const breadcrumbs = $$("nav.breadcrumb .breadcrumb-item, .breadcrumb span", this.doc);
       for (const b of breadcrumbs) {
         const bMatch = (b.textContent || "").replace(/\s+/g, " ").trim().match(weekRe);
         if (bMatch) return `Week ${bMatch[1]}`;
       }
-  
+
       // 4. Active unit header
       const activeHeader = $(IITM_SELECTORS.metadata.activeUnitHeader, this.doc);
       const activeText = (activeHeader?.textContent || "").replace(/\s+/g, " ").trim();
       const activeMatch = activeText.match(weekRe);
       if (activeMatch) return `Week ${activeMatch[1]}`;
-  
+
       // 5. Title match
       const titleMatch = this.getAssessmentTitle().match(weekRe);
       if (titleMatch) return `Week ${titleMatch[1]}`;
       return "";
     }
   }
-  
+
   const portalAdapter = new IitmPortalAdapter();
 
   // ── [Module: src/extraction/extractor.js] ──
@@ -1547,15 +1547,15 @@
    * In Phase 3, this will be replaced with a true semantic AST extractor (TreeWalker,
    * LaTeX recovery, code blocks, tables, and asset bundling).
    */
-  
-  
-  
-  
+
+
+
+
   class AssessmentExtractor {
     constructor(portal) {
       this.portal = portal;
     }
-  
+
     /**
      * Captures the question stem from the active assessment view.
      */
@@ -1563,26 +1563,26 @@
       const view = this.portal.getAssessmentView();
       const q = this.portal.getCurrentQuestionElement();
       if (!view || !q) return "";
-  
+
       const rp = reviewMode ? this.portal.getReviewPanel() : null;
       const seen = new Set();
-  
+
       const stems = $$(IITM_SELECTORS.content.backendHtml, view)
         .filter((el) => !q.contains(el) && !(rp && rp.contains(el)))
         .map((el) => el.outerHTML)
         .filter((html) => !seen.has(html) && seen.add(html)); // Deduplicate responsive variants
-  
+
       if (stems.length) return stems.join("");
-  
+
       const leg = q.querySelector(IITM_SELECTORS.content.legend);
       if (leg) {
         const content = isEscapedHtml(leg) ? leg.textContent : leg.innerHTML;
         return `<div>${content}</div>`;
       }
-  
+
       return "";
     }
-  
+
     /**
      * Captures the options/answer controls HTML from the active assessment view.
      * Strips any interactive bindings so it acts purely as a read-only snapshot.
@@ -1590,7 +1590,7 @@
     grabOptions(reviewMode = false) {
       const q = this.portal.getCurrentQuestionElement();
       if (!q) return "";
-  
+
       if (!reviewMode) {
         // Clone element to prevent any mutations on live form
         const clone = q.cloneNode(true);
@@ -1601,10 +1601,10 @@
         });
         return clone.innerHTML;
       }
-  
+
       const rp = this.portal.getReviewPanel();
       if (rp) return rp.outerHTML;
-  
+
       // Fallback: lowest common ancestor of review banner and question
       const view = this.portal.getAssessmentView();
       const banner = $$("*", view)
@@ -1613,18 +1613,18 @@
             IITM_SELECTORS.metadata.reviewDetectRegex.test(e.textContent || "") && !e.contains(q)
         )
         .sort((a, b) => a.querySelectorAll("*").length - b.querySelectorAll("*").length)[0];
-  
+
       const target = banner ? lowestCommonAncestor(banner, q) : q;
       return target ? target.outerHTML : q.outerHTML;
     }
-  
+
     /**
      * Captures the active question into a Canonical QuestionNode.
      */
     captureCurrentQuestion(index = 0, reviewMode = false) {
       const stemHtml = this.grabStem(reviewMode);
       const optsHtml = this.grabOptions(reviewMode);
-  
+
       return QuestionNode.fromLegacySnapshot({
         stemHtml,
         optsHtml,
@@ -1639,7 +1639,7 @@
    * Traversal Error Hierarchy.
    * Provides structured diagnostic information for navigation, pagination, and readiness failures.
    */
-  
+
   class TraversalError extends Error {
     constructor(message, details = {}) {
       super(message);
@@ -1647,7 +1647,7 @@
       this.details = details;
     }
   }
-  
+
   class NavigationTimeoutError extends TraversalError {
     constructor({ targetNumber, targetIndex, currentNumber, timeoutMs }) {
       const msg = `Question ${targetNumber} failed to become ready within ${timeoutMs}ms (expected index: ${targetIndex}, current active number: ${currentNumber ?? "unknown"}).`;
@@ -1655,7 +1655,7 @@
       this.name = "NavigationTimeoutError";
     }
   }
-  
+
   class NavigationMismatchError extends TraversalError {
     constructor({ expected, actual }) {
       const msg = `Navigation mismatch: expected active question ${expected}, but portal resolved to ${actual}.`;
@@ -1663,7 +1663,7 @@
       this.name = "NavigationMismatchError";
     }
   }
-  
+
   class PaginatorAdvanceTimeoutError extends TraversalError {
     constructor({ previousWindowId, currentWindow, newWindow, freshWindow, reason, timeoutMs }) {
       const fromWin = previousWindowId ?? currentWindow ?? "unknown";
@@ -1679,7 +1679,7 @@
       this.name = "PaginatorAdvanceTimeoutError";
     }
   }
-  
+
   class RestorationError extends TraversalError {
     constructor({ targetNumber, actualNumber, reason }) {
       const msg = `Failed to restore original question location (${targetNumber}). Currently at ${actualNumber ?? "unknown"}: ${reason}`;
@@ -1687,7 +1687,7 @@
       this.name = "RestorationError";
     }
   }
-  
+
   class TraversalCancellationError extends TraversalError {
     constructor(message = "Traversal cancelled by user") {
       super(message);
@@ -1711,12 +1711,12 @@
    * - Traverser does NOT depend on AssessmentExtractor.
    * - Traverser exposes question contexts via onQuestion callback.
    */
-  
-  
-  
+
+
+
   const DEFAULT_TIMEOUT_MS = 3500;
   const FALLBACK_POLL_INTERVAL_MS = 80;
-  
+
   class QuestionTraverser {
     /**
      * @param {import("../portal/adapter.js").IitmPortalAdapter} portal
@@ -1728,7 +1728,7 @@
       this.defaultTimeoutMs = timeoutMs;
       this.lastRestorationError = null;
     }
-  
+
     /**
      * Mutation-aware readiness detection.
      * Observes the stable assessment ancestor until the target question becomes active
@@ -1744,31 +1744,31 @@
       if (signal?.aborted) {
         throw new TraversalCancellationError("Traversal cancelled by user");
       }
-  
+
       const isReadyNow = () =>
         this.portal.getActiveLogicalNumber() === targetNumber &&
         this.portal.isQuestionStructurallyReady();
-  
+
       // Fast path: already active and populated
       if (isReadyNow()) {
         return;
       }
-  
+
       return new Promise((resolve, reject) => {
         let timeoutId = null;
         let observer = null;
         let pollIntervalId = null;
         let isCleanedUp = false;
-  
+
         const onAbort = () => {
           cleanup();
           reject(new TraversalCancellationError("Traversal cancelled by user"));
         };
-  
+
         if (signal) {
           signal.addEventListener("abort", onAbort, { once: true });
         }
-  
+
         const cleanup = () => {
           if (isCleanedUp) return;
           isCleanedUp = true;
@@ -1788,7 +1788,7 @@
             pollIntervalId = null;
           }
         };
-  
+
         const checkCondition = () => {
           if (isCleanedUp) return false;
           if (isReadyNow()) {
@@ -1798,10 +1798,10 @@
           }
           return false;
         };
-  
+
         // 1. Observe the smallest stable ancestor that survives question-view replacement
         let observedTarget = this.portal.getStableAssessmentAncestor();
-  
+
         const attachObserver = (target) => {
           if (!target) return;
           try {
@@ -1821,12 +1821,12 @@
             console.warn("[Acadrix Traverser] MutationObserver setup warning:", err);
           }
         };
-  
+
         attachObserver(observedTarget);
-  
+
         // Check condition once immediately after observer setup
         checkCondition();
-  
+
         // 2. Bounded fallback poller for slow/synchronous edge cases and ancestor re-arming
         pollIntervalId = setInterval(() => {
           if (isCleanedUp) return;
@@ -1836,7 +1836,7 @@
           }
           checkCondition();
         }, FALLBACK_POLL_INTERVAL_MS);
-  
+
         // 3. Deterministic safety timeout with actionable diagnostic payload
         timeoutId = setTimeout(() => {
           if (isCleanedUp) return;
@@ -1853,7 +1853,7 @@
         }, timeoutMs);
       });
     }
-  
+
     /**
      * Observes the paginator until the visible window identity changes.
      * Cleans up observers and timers deterministically.
@@ -1865,15 +1865,15 @@
     async waitForWindowChange(previousWindowId, timeoutMs = this.defaultTimeoutMs) {
       const isChangedNow = () => this.portal.getPaginatorWindowIdentity() !== previousWindowId;
       if (isChangedNow()) return true;
-  
+
       const paginator = this.portal.getPaginator() || this.portal.getStableAssessmentAncestor();
-  
+
       return new Promise((resolve) => {
         let timeoutId = null;
         let observer = null;
         let pollIntervalId = null;
         let isCleanedUp = false;
-  
+
         const cleanup = () => {
           if (isCleanedUp) return;
           isCleanedUp = true;
@@ -1890,7 +1890,7 @@
             pollIntervalId = null;
           }
         };
-  
+
         const check = () => {
           if (isCleanedUp) return false;
           if (isChangedNow()) {
@@ -1900,7 +1900,7 @@
           }
           return false;
         };
-  
+
         try {
           observer = new MutationObserver(() => {
             check();
@@ -1912,9 +1912,9 @@
             attributeFilter: ["class", "disabled", "aria-disabled"],
           });
         } catch {}
-  
+
         pollIntervalId = setInterval(check, FALLBACK_POLL_INTERVAL_MS);
-  
+
         timeoutId = setTimeout(() => {
           if (isCleanedUp) return;
           cleanup();
@@ -1922,7 +1922,7 @@
         }, timeoutMs);
       });
     }
-  
+
     /**
      * Advances the paginator window and verifies that the window identity changed.
      * Throws PaginatorAdvanceTimeoutError if the control is missing, disabled, or fails to change window.
@@ -1932,7 +1932,7 @@
      */
     async advanceWindow(timeoutMs = this.defaultTimeoutMs) {
       const previousWindowId = this.portal.getPaginatorWindowIdentity();
-  
+
       if (!this.portal.canAdvanceWindow()) {
         throw new PaginatorAdvanceTimeoutError({
           currentWindow: previousWindowId,
@@ -1940,7 +1940,7 @@
           timeoutMs,
         });
       }
-  
+
       const clicked = this.portal.advanceWindow();
       if (!clicked) {
         throw new PaginatorAdvanceTimeoutError({
@@ -1949,10 +1949,10 @@
           timeoutMs,
         });
       }
-  
+
       const changed = await this.waitForWindowChange(previousWindowId, timeoutMs);
       const freshWindowId = this.portal.getPaginatorWindowIdentity();
-  
+
       if (!changed || freshWindowId === previousWindowId) {
         throw new PaginatorAdvanceTimeoutError({
           currentWindow: previousWindowId,
@@ -1961,10 +1961,10 @@
           timeoutMs,
         });
       }
-  
+
       return freshWindowId;
     }
-  
+
     /**
      * Rewinds the paginator window and verifies that the window identity changed.
      * Throws PaginatorAdvanceTimeoutError if the control is missing, disabled, or fails to change window.
@@ -1974,7 +1974,7 @@
      */
     async rewindWindow(timeoutMs = this.defaultTimeoutMs) {
       const previousWindowId = this.portal.getPaginatorWindowIdentity();
-  
+
       if (!this.portal.canRewindWindow()) {
         throw new PaginatorAdvanceTimeoutError({
           currentWindow: previousWindowId,
@@ -1982,7 +1982,7 @@
           timeoutMs,
         });
       }
-  
+
       const clicked = this.portal.rewindWindow();
       if (!clicked) {
         throw new PaginatorAdvanceTimeoutError({
@@ -1991,10 +1991,10 @@
           timeoutMs,
         });
       }
-  
+
       const changed = await this.waitForWindowChange(previousWindowId, timeoutMs);
       const freshWindowId = this.portal.getPaginatorWindowIdentity();
-  
+
       if (!changed || freshWindowId === previousWindowId) {
         throw new PaginatorAdvanceTimeoutError({
           currentWindow: previousWindowId,
@@ -2003,10 +2003,10 @@
           timeoutMs,
         });
       }
-  
+
       return freshWindowId;
     }
-  
+
     /**
      * Navigates to a specific question chip, awaiting mutation readiness.
      * @param {HTMLButtonElement} chip
@@ -2022,7 +2022,7 @@
       }
       await this.waitForQuestionReady(logicalNumber, timeoutMs, signal);
     }
-  
+
     /**
      * Restores user to their originally active question and paginator window.
      * @param {number} targetNumber
@@ -2033,27 +2033,27 @@
         if (this.portal.getActiveLogicalNumber() === targetNumber) {
           return;
         }
-  
+
         // If target chip is not in current window, navigate windows to find it
         let attempts = 0;
         const maxWindowAttempts = 15;
-  
+
         while (attempts++ < maxWindowAttempts) {
           const chips = this.portal.getQuestionChips();
           const matchingChip = chips.find(
             (c) => this.portal.getChipLogicalNumber(c) === targetNumber
           );
-  
+
           if (matchingChip) {
             await this.navigateToQuestion(matchingChip, targetNumber, timeoutMs);
             return;
           }
-  
+
           // Determine navigation direction
           const numbers = chips
             .map((c) => this.portal.getChipLogicalNumber(c))
             .filter((n) => n !== null);
-  
+
           if (numbers.length === 0) {
             // If chips are unnumbered, rewind to initial window if target is 1
             if (targetNumber === 1 && this.portal.canRewindWindow()) {
@@ -2065,10 +2065,10 @@
               return;
             }
           }
-  
+
           const minVisible = numbers.length ? Math.min(...numbers) : 1;
           const maxVisible = numbers.length ? Math.max(...numbers) : 1;
-  
+
           if (targetNumber < minVisible && this.portal.canRewindWindow()) {
             await this.rewindWindow(timeoutMs);
           } else if (targetNumber > maxVisible && this.portal.canAdvanceWindow()) {
@@ -2077,7 +2077,7 @@
             break;
           }
         }
-  
+
         // Final check
         if (this.portal.getActiveLogicalNumber() !== targetNumber) {
           throw new Error(`Target question ${targetNumber} not reachable in paginator`);
@@ -2091,7 +2091,7 @@
         console.warn("[Acadrix Traverser] Restoration warning:", this.lastRestorationError.message);
       }
     }
-  
+
     /**
      * Traverses all questions in the assessment across all paginator windows.
      * Discovers chips dynamically and prevents duplicate captures.
@@ -2105,24 +2105,24 @@
     async traverseAll({ onProgress = null, onQuestion = null, timeoutMs = this.defaultTimeoutMs, signal = null } = {}) {
       this.lastRestorationError = null;
       let originalLogicalNumber = 1;
-  
+
       try {
         originalLogicalNumber = this.portal.getActiveLogicalNumber() || 1;
-  
+
         const checkAbort = () => {
           if (signal?.aborted) {
             throw new TraversalCancellationError("Traversal cancelled by user");
           }
         };
-  
+
         checkAbort();
-  
+
         // 2. Discover total expected questions from header metadata
         const totalExpected = this.portal.getTotalQuestionCount();
-  
+
         // 3. Logical deduplication registry
         const processedKeys = new Set();
-  
+
         // 4. Rewind to initial window if assessment supports pagination and questions exist before current view
         let rewindAttempts = 0;
         while (this.portal.canRewindWindow() && rewindAttempts++ < 15) {
@@ -2133,29 +2133,29 @@
             break;
           }
         }
-  
+
         // 5. Main traversal loop across paginator windows
         let hasMoreWindows = true;
         let windowCycleGuard = 0;
         const seenWindowIdentities = new Set();
-  
+
         while (hasMoreWindows && windowCycleGuard++ < 30) {
           checkAbort();
           const currentWindowId = this.portal.getPaginatorWindowIdentity();
           seenWindowIdentities.add(currentWindowId);
-  
+
           // Always query fresh chips from live DOM — no stale button references!
           const currentChips = this.portal.getQuestionChips();
-  
+
           for (let chipIdx = 0; chipIdx < currentChips.length; chipIdx++) {
             checkAbort();
             const chip = currentChips[chipIdx];
-            
+
             // Stable logical identity determination
             const explicitNumber = this.portal.getChipLogicalNumber(chip);
             let questionKey;
             let logicalNumber;
-  
+
             if (explicitNumber !== null) {
               questionKey = `num_${explicitNumber}`;
               logicalNumber = explicitNumber;
@@ -2164,20 +2164,20 @@
               questionKey = `win_${currentWindowId}_idx_${chipIdx}`;
               logicalNumber = processedKeys.size + 1;
             }
-  
+
             if (processedKeys.has(questionKey)) {
               continue; // Skip already traversed question
             }
-  
+
             const processedCount = processedKeys.size;
             if (onProgress) {
               onProgress(processedCount, totalExpected || currentChips.length);
             }
-  
+
             // Navigate and await mutation-aware readiness
             await this.navigateToQuestion(chip, logicalNumber, timeoutMs, signal);
             checkAbort();
-  
+
             // Verify target is confirmed active
             const verifiedActive = this.portal.getActiveLogicalNumber();
             if (verifiedActive !== null && verifiedActive !== logicalNumber) {
@@ -2186,10 +2186,10 @@
                 actual: verifiedActive,
               });
             }
-  
+
             // Mark question as processed
             processedKeys.add(questionKey);
-  
+
             // Invoke onQuestion callback with explicit, unambiguous context
             if (onQuestion) {
               const isReview = this.portal.isReviewMode();
@@ -2197,7 +2197,7 @@
               const reportedTotal =
                 totalExpected ||
                 (hasMoreWindows ? processedKeys.size + 1 : processedKeys.size);
-  
+
               await onQuestion({
                 index: logicalNumber - 1, // 0-based global index
                 number: logicalNumber,     // 1-based human question number
@@ -2208,13 +2208,13 @@
             }
             checkAbort();
           }
-  
+
           // Check if all expected questions have been visited
           if (totalExpected && processedKeys.size >= totalExpected) {
             hasMoreWindows = false;
             break;
           }
-  
+
           checkAbort();
           // Check if there are further windows to advance
           if (this.portal.canAdvanceWindow()) {
@@ -2234,7 +2234,7 @@
             hasMoreWindows = false;
           }
         }
-  
+
         if (onProgress) {
           onProgress(processedKeys.size, totalExpected || processedKeys.size);
         }
@@ -2250,7 +2250,7 @@
    * Clean SVG icons for Unfold / Acadrix UI components.
    * 18px/16px viewBox 0 0 24 24, stroke 1.75–2px, currentColor.
    */
-  
+
   const ICONS = Object.freeze({
     close: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
     launch: '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
@@ -2278,7 +2278,7 @@
    * Creates and encapsulates the Unfold / Acadrix UI boundary within an isolated ShadowRoot.
    * Top-level container uses z-index: 2147483647 while internal layers use --acx-z-* tokens.
    */
-  
+
   class ShadowHost {
     constructor(id = "unfold-root", css = "") {
       this.id = id;
@@ -2286,7 +2286,7 @@
       this.host = null;
       this.shadow = null;
     }
-  
+
     ensure() {
       if (typeof window !== "undefined") {
         window.__ensureStacks = window.__ensureStacks || [];
@@ -2303,10 +2303,10 @@
         const fontStyle = document.createElement("style");
         fontStyle.id = "acx-host-fonts";
         const getFontUrl = (name) => {
-          
+
           return `fonts/${name}`;
         };
-  
+
         fontStyle.textContent = `
           @font-face {
             font-family: "Satoshi Variable";
@@ -2402,7 +2402,7 @@
         `;
         document.head.appendChild(fontStyle);
       }
-  
+
       let host = document.getElementById(this.id);
       if (!host) {
         host = document.createElement("div");
@@ -2417,12 +2417,12 @@
       } else if (host.style) {
         host.style.zIndex = "2147483647";
       }
-  
+
       let shadow = host.shadowRoot;
       if (!shadow) {
         shadow = host.attachShadow({ mode: "open" });
       }
-  
+
       // Inject encapsulated styles if not present
       let style = shadow.getElementById("unfold-styles");
       if (!style) {
@@ -2433,12 +2433,12 @@
       } else if (this.css) {
         style.textContent = this.css;
       }
-  
+
       this.host = host;
       this.shadow = shadow;
       return shadow;
     }
-  
+
     setTheme(theme) {
       this._theme = theme;
       if (!this.host) return;
@@ -2448,14 +2448,14 @@
         this.host.removeAttribute("data-theme");
       }
     }
-  
+
     getTheme() {
       if (this.host) {
         return this.host.getAttribute("data-theme") || "system";
       }
       return this._theme || "system";
     }
-  
+
     setTextSize(size) {
       this._textSize = size;
       if (!this.host) return;
@@ -2465,14 +2465,14 @@
         this.host.removeAttribute("data-text-size");
       }
     }
-  
+
     getTextSize() {
       if (this.host) {
         return this.host.getAttribute("data-text-size") || "default";
       }
       return this._textSize || "default";
     }
-  
+
     toggleTheme() {
       const current = this.getTheme();
       const systemDark =
@@ -2484,19 +2484,19 @@
       this.setTheme(next);
       return next;
     }
-  
+
     get root() {
       return this.shadow || (this.host ? this.ensure() : null);
     }
-  
+
     $(selector) {
       return this.root.querySelector(selector);
     }
-  
+
     $$(selector) {
       return [...this.root.querySelectorAll(selector)];
     }
-  
+
     destroy() {
       if (this.host) {
         this.host.remove();
@@ -2512,9 +2512,9 @@
    * Mounts inside the isolated ShadowRoot.
    * Supports standard assessment mode and dedicated Programming Assignment fast-action mode.
    */
-  
-  
-  
+
+
+
   class LauncherButton {
     constructor(shadowHost) {
       this.shadowHost = shadowHost;
@@ -2526,7 +2526,7 @@
       this._toastTimer = null;
       this._outsideClickHandler = null;
     }
-  
+
     ensure(position = "bottom-center", onClick = null, options = {}) {
       const root = this.shadowHost.root;
       const pageType = options.pageType || "";
@@ -2535,23 +2535,23 @@
         pageType === "programming" ||
         Boolean(options.isProgramming);
       this.isProgramming = isProg;
-  
+
       if (options.shortcut) {
         this.shortcutHint = options.shortcut;
       }
       if (options.onQuickAction) {
         this.quickActionHandler = options.onQuickAction;
       }
-  
+
       let container = root.getElementById("saq-launcher");
       const expectedTag = isProg ? "DIV" : "BUTTON";
-  
+
       if (container && container.tagName !== expectedTag) {
         container.remove();
         container = null;
         this.element = null;
       }
-  
+
       if (!container) {
         if (isProg) {
           container = document.createElement("div");
@@ -2605,13 +2605,13 @@
       } else {
         container.dataset.pos = position;
       }
-  
+
       // Wire click events
       if (isProg) {
         const mainBtn = container.querySelector(".saq-launcher-main");
         const toggleBtn = container.querySelector(".saq-launcher-toggle");
         const menu = container.querySelector("#saq-launcher-menu");
-  
+
         if (onClick && onClick !== this.clickHandler) {
           if (this.clickHandler && mainBtn) {
             mainBtn.removeEventListener("click", this.clickHandler);
@@ -2623,7 +2623,7 @@
             this.clickHandler?.(e);
           };
         }
-  
+
         if (toggleBtn && !toggleBtn._wiredToggle) {
           toggleBtn._wiredToggle = true;
           toggleBtn.addEventListener("click", (e) => {
@@ -2644,7 +2644,7 @@
             }
           });
         }
-  
+
         if (menu && !menu._wiredActions) {
           menu._wiredActions = true;
           menu.addEventListener("click", (e) => {
@@ -2653,19 +2653,19 @@
             e.preventDefault();
             e.stopPropagation();
             const action = item.dataset.act;
-  
+
             // Close menu
             menu.hidden = true;
             menu.setAttribute("hidden", "");
             toggleBtn?.setAttribute("aria-expanded", "false");
-  
+
             if (action === "open-pa-reader") {
               if (typeof this.clickHandler === "function") this.clickHandler();
             } else if (typeof this.quickActionHandler === "function") {
               this.quickActionHandler(action);
             }
           });
-  
+
           menu.addEventListener("keydown", (e) => {
             if (e.key === "Escape") {
               e.preventDefault();
@@ -2689,7 +2689,7 @@
             }
           });
         }
-  
+
         // Outside click handler to close menu
         if (!this._outsideClickHandler) {
           this._outsideClickHandler = (e) => {
@@ -2716,18 +2716,18 @@
           container.addEventListener("click", this.clickHandler);
         }
       }
-  
+
       this.element = container;
       return container;
     }
-  
+
     show() {
       if (this.element) {
         this.element.classList.add("is-shown");
         this.element.setAttribute("aria-expanded", "false");
       }
     }
-  
+
     hide() {
       if (this.element) {
         this.element.classList.remove("is-shown");
@@ -2738,7 +2738,7 @@
         }
       }
     }
-  
+
     setExpanded(expanded) {
       if (this.element) {
         this.element.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -2746,7 +2746,7 @@
         if (mainBtn) mainBtn.setAttribute("aria-expanded", expanded ? "true" : "false");
       }
     }
-  
+
     setShortcutHint(shortcut) {
       this.shortcutHint = shortcut;
       if (this.element && shortcut) {
@@ -2759,7 +2759,7 @@
         }
       }
     }
-  
+
     focus() {
       const target = this.element?.querySelector?.(".saq-launcher-main") || this.element;
       if (target && typeof target.focus === "function") {
@@ -2770,13 +2770,13 @@
         }
       }
     }
-  
+
     setPosition(pos) {
       if (this.element) {
         this.element.dataset.pos = pos;
       }
     }
-  
+
     showToast(message, tone = "info", durationMs = 2500) {
       const root = this.shadowHost.root;
       if (!root) return;
@@ -2789,12 +2789,12 @@
         toast.setAttribute("aria-live", "polite");
         root.appendChild(toast);
       }
-  
+
       if (this._toastTimer) {
         clearTimeout(this._toastTimer);
         this._toastTimer = null;
       }
-  
+
       const iconHtml =
         tone === "success"
           ? ICONS.check
@@ -2803,17 +2803,17 @@
           : tone === "warn"
           ? ICONS.warn
           : ICONS.info;
-  
+
       toast.dataset.tone = tone;
       toast.innerHTML = `${iconHtml}<span>${escapeHtml(message)}</span>`;
       toast.classList.add("is-visible");
-  
+
       this._toastTimer = setTimeout(() => {
         toast.classList.remove("is-visible");
         this._toastTimer = null;
       }, durationMs);
     }
-  
+
     destroy() {
       if (this._outsideClickHandler) {
         if (typeof window !== "undefined") {
@@ -2827,7 +2827,7 @@
       }
       const root = this.shadowHost?.shadow;
       root?.getElementById("saq-launcher-toast")?.remove();
-  
+
       if (this.element) {
         if (this.clickHandler) {
           const main = this.element.querySelector?.(".saq-launcher-main");
@@ -2846,8 +2846,8 @@
    * Progress Overlay Component.
    * Displays loading progress during traversal inside the ShadowRoot.
    */
-  
-  
+
+
   class ProgressOverlay {
     constructor(shadowHost) {
       this.shadowHost = shadowHost;
@@ -2856,11 +2856,11 @@
       this.bar = null;
       this.count = null;
     }
-  
+
     show() {
       const root = this.shadowHost.root;
       let el = root.getElementById("saq-overlay");
-  
+
       if (!el) {
         el = document.createElement("div");
         el.id = "saq-overlay";
@@ -2878,13 +2878,13 @@
           </div>`;
         root.appendChild(el);
       }
-  
+
       this.element = el;
       this.track = el.querySelector(".saq-track");
       this.bar = el.querySelector(".saq-bar");
       this.count = el.querySelector(".saq-count");
     }
-  
+
     progress(done, total) {
       const ratio = total ? Math.min(1, Math.max(0, done / total)) : 0;
       const pct = Math.round(ratio * 100);
@@ -2898,7 +2898,7 @@
         this.bar.style.transform = `scaleX(${ratio})`;
       }
     }
-  
+
     async hide() {
       if (!this.element) return;
       this.element.setAttribute("data-leaving", "");
@@ -2911,7 +2911,7 @@
       }
       this.destroy();
     }
-  
+
     destroy() {
       if (this.element) {
         this.element.remove();
@@ -2925,36 +2925,36 @@
 
   // ── [Module: src/ui/reader-content.js] ──
   /** Shared Reader content renderer. */
-  
-  
-  
-  
+
+
+
+
   function renderContentNodes(nodes, options = {}) {
     if (!Array.isArray(nodes) || nodes.length === 0) return "";
     const { visualMath = false } = options;
-  
+
     return nodes
       .map((node) => {
         if (!node) return "";
-  
+
         const attrs = node.attributes || {};
         const childrenHtml =
           node.children && node.children.length > 0
             ? renderContentNodes(node.children, options)
             : "";
-  
+
         switch (node.type) {
           case ContentType.PARAGRAPH: {
             const content = childrenHtml || escapeHtml(node.value);
             return `<p>${content}</p>`;
           }
-  
+
           case ContentType.HEADING: {
             const level = Math.min(Math.max(attrs.level || 1, 1), 6);
             const content = childrenHtml || escapeHtml(node.value);
             return `<h${level}>${content}</h${level}>`;
           }
-  
+
           case ContentType.TEXT: {
             let text = escapeHtml(node.value);
             if (attrs.bold) text = `<strong>${text}</strong>`;
@@ -2965,21 +2965,21 @@
             if (attrs.sup) text = `<sup>${text}</sup>`;
             return text;
           }
-  
+
           case ContentType.INLINE_CODE:
             return `<code>${escapeHtml(node.value)}</code>`;
-  
+
           case ContentType.CODE_BLOCK: {
             const lang = attrs.language ? ` class="language-${escapeHtml(attrs.language)}"` : "";
             return `<pre><code${lang}>${escapeHtml(node.value)}</code></pre>`;
           }
-  
+
           case ContentType.MATH: {
             const format = attrs.format || MathFormat.TEX;
             const isDisplay = attrs.mathType === "display" || attrs.mathType === MathType.DISPLAY;
             const tex = node.value || "";
             const mathml = attrs.mathml || (format === MathFormat.MATHML ? tex : "");
-  
+
             if (visualMath) {
               return renderVisualMath(tex, {
                 isDisplay,
@@ -2987,7 +2987,7 @@
                 fallbackText: attrs.texUnavailable ? tex : "",
               });
             }
-  
+
             if (format === MathFormat.TEX) {
               return isDisplay
                 ? `<div class="katex-display math-tex">\\[${escapeHtml(node.value)}\\]</div>`
@@ -2997,44 +2997,44 @@
             }
             return `<span class="math-plain">${escapeHtml(node.value)}</span>`;
           }
-  
+
           case ContentType.LIST: {
             const tag = attrs.ordered ? "ol" : "ul";
             const start = attrs.ordered && attrs.start > 1 ? ` start="${attrs.start}"` : "";
             return `<${tag}${start}>${childrenHtml}</${tag}>`;
           }
-  
+
           case ContentType.LIST_ITEM: {
             const content = childrenHtml || escapeHtml(node.value);
             return `<li>${content}</li>`;
           }
-  
+
           case ContentType.BLOCKQUOTE: {
             const content = childrenHtml || escapeHtml(node.value);
             return `<blockquote>${content}</blockquote>`;
           }
-  
+
           case ContentType.TABLE: {
             const caption = attrs.caption ? `<caption>${escapeHtml(attrs.caption)}</caption>` : "";
             const rows = node.children || [];
-  
+
             const theadRows = [];
             const tbodyRows = [];
-  
+
             for (let i = 0; i < rows.length; i++) {
               const row = rows[i];
               const isHeaderRow =
                 row.children &&
                 row.children.length > 0 &&
                 row.children.every((c) => c.attributes?.isHeader);
-  
+
               if (isHeaderRow && tbodyRows.length === 0) {
                 theadRows.push(row);
               } else {
                 tbodyRows.push(row);
               }
             }
-  
+
             let tableInner = caption;
             if (theadRows.length > 0) {
               tableInner += `<thead>${renderContentNodes(theadRows, options)}</thead>`;
@@ -3044,13 +3044,13 @@
             } else if (theadRows.length === 0) {
               tableInner += `<tbody>${childrenHtml}</tbody>`;
             }
-  
+
             return `<div class="saq-table-wrap"><table class="saq-table">${tableInner}</table></div>`;
           }
-  
+
           case ContentType.TABLE_ROW:
             return `<tr>${childrenHtml}</tr>`;
-  
+
           case ContentType.TABLE_CELL: {
             const tag = attrs.isHeader ? "th" : "td";
             const colspan = attrs.colspan > 1 ? ` colspan="${attrs.colspan}"` : "";
@@ -3060,7 +3060,7 @@
             const content = childrenHtml || escapeHtml(node.value);
             return `<${tag}${colspan}${rowspan}${align}>${content}</${tag}>`;
           }
-  
+
           case ContentType.IMAGE: {
             const rawSrc = (attrs.src || "").trim();
             const isSafeSrc = /^(https?:|\/|data:image\/)/i.test(rawSrc);
@@ -3071,15 +3071,15 @@
             const height = attrs.height ? ` height="${escapeHtml(String(attrs.height))}"` : "";
             return `<img src="${src}" alt="${alt}"${title}${width}${height} loading="lazy" decoding="async" />`;
           }
-  
+
           case ContentType.FIGURE: {
             const caption = attrs.caption ? `<figcaption>${escapeHtml(attrs.caption)}</figcaption>` : "";
             return `<figure>${childrenHtml}${caption}</figure>`;
           }
-  
+
           case ContentType.SVG:
             return `<span class="saq-svg-wrap">${sanitizeSvgSource(node.value || "")}</span>`;
-  
+
           case ContentType.LINK: {
             const rawHref = (attrs.href || "").trim();
             const isSafeHref = /^(https?:|\/|#|mailto:)/i.test(rawHref);
@@ -3088,13 +3088,13 @@
             const content = childrenHtml || escapeHtml(node.value);
             return `<a href="${href}"${title} target="_blank" rel="noopener noreferrer">${content}</a>`;
           }
-  
+
           case ContentType.LINE_BREAK:
             return `<br />`;
-  
+
           case ContentType.HTML_BLOCK:
             return node.value || "";
-  
+
           default:
             return childrenHtml || escapeHtml(node.value || "");
         }
@@ -3104,61 +3104,104 @@
 
   // ── [Module: src/ui/reader-interactions.js] ──
   /** Shared Reader interaction behavior. */
-  
+
   const ZOOM_STEPS = [0.8, 0.9, 1.0, 1.15, 1.3, 1.5];
-  
-  function extractImportedCode(input, prefix = "", suffix = "") {
-    const text = String(input ?? "").replace(/^\uFEFF/, "").trim();
-    if (!text) return "";
-    const blocks = [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)];
-    let code = (blocks.at(-1)?.[1] ?? text).trim();
-    if (prefix && suffix) {
-      const start = code.indexOf(prefix);
-      const end = code.lastIndexOf(suffix);
-      if (start !== -1 && end > start) code = code.slice(start + prefix.length, end);
-    }
-    return code.replace(/^\s*code:\s*/i, "").trim();
-  }
-  
+
   function importProgrammingCode(reader) {
     const editor = reader.programmingEditor;
     if (!editor) return;
-    const pData = reader.documentModel?.questions?.[0]?.programmingData || {};
-    const prefix = editor.prefixCode ?? pData.prefixCode ?? "";
-    const suffix = editor.suffixCode ?? pData.suffixCode ?? "";
     const readClipboard = typeof navigator !== "undefined" ? navigator.clipboard?.readText : null;
-    const fallback = () => {
-      const pasted = typeof window !== "undefined" && window.prompt
-        ? window.prompt("Paste the completed editable code:", "")
-        : null;
-      if (pasted !== null) applyImportedCode(pasted);
-    };
-    const applyImportedCode = (input) => {
-      const code = extractImportedCode(input, prefix, suffix);
-      if (!code) {
-        reader.notify?.("No code found to import", "warning", 2500);
-        return;
-      }
-      editor.setCode(code);
-      reader.notify?.("Code imported into the editor", "success", 2500);
+    const pasteFromEditor = () => {
+      editor.editorView?.focus();
+      reader.notify?.("Clipboard access is unavailable. Paste with ⌘V in the code editor.", "info", 4000);
     };
     if (typeof readClipboard === "function") {
-      Promise.resolve(readClipboard.call(navigator)).then((text) => {
-        if (String(text ?? "").trim()) applyImportedCode(text);
-        else fallback();
-      }).catch(fallback);
-    } else {
-      fallback();
-    }
+      Promise.resolve().then(() => readClipboard.call(navigator)).then((text) => {
+        if (!String(text ?? "").trim()) {
+          editor.importCode(String(text ?? ""));
+          editor.editorView?.focus();
+          return;
+        }
+        const result = editor.importCode(String(text));
+        if (result.ok) reader.notify?.(result.mode === "merge" ? `Updated ${result.count} function(s) in the editor` : "Code imported into the editor", "success", 2500);
+      }).catch(pasteFromEditor);
+    } else pasteFromEditor();
   }
-  
+
+  function confirmRefresh(reader) {
+    const root = reader.shadowHost?.root;
+    if (!root) return;
+    const returnFocus = root.activeElement;
+    root.querySelector("[data-refresh-dialog]")?.remove();
+    const dialog = document.createElement("div");
+    dialog.className = "saq-dialog-modal";
+    dialog.dataset.refreshDialog = "";
+    dialog.setAttribute("role", "alertdialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.setAttribute("aria-labelledby", "saq-refresh-title");
+    dialog.innerHTML = `<div class="saq-dialog-backdrop"></div><div class="saq-dialog-content"><div class="saq-dialog-head"><h2 class="saq-dialog-title" id="saq-refresh-title">Discard editor changes?</h2></div><div class="saq-dialog-body"><p id="saq-refresh-description">Your unsaved code will be discarded when the assignment reloads.</p></div><div class="saq-dialog-footer"><button type="button" class="saq-btn saq-btn-secondary" data-refresh-cancel>Cancel</button><button type="button" class="saq-btn saq-btn-primary" data-refresh-confirm>Refresh</button></div></div></div>`;
+    dialog.setAttribute("aria-describedby", "saq-refresh-description");
+    const close = () => {
+      dialog.remove();
+      returnFocus?.focus?.();
+    };
+    dialog.querySelector("[data-refresh-cancel]").addEventListener("click", close);
+    dialog.querySelector(".saq-dialog-backdrop").addEventListener("click", close);
+    dialog.querySelector("[data-refresh-confirm]").addEventListener("click", () => {
+      close();
+      refreshReader(reader);
+    });
+    dialog.addEventListener("keydown", (event) => {
+      const actions = [...dialog.querySelectorAll("button:not(:disabled)")];
+      const active = root.activeElement;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        dialog.querySelector("[data-refresh-cancel]")?.click();
+      } else if (event.key === "Tab" && actions.length) {
+        if (!dialog.contains(active)) {
+          event.preventDefault();
+          (event.shiftKey ? actions.at(-1) : actions[0]).focus();
+        } else if (event.shiftKey && active === actions[0]) {
+          event.preventDefault();
+          actions.at(-1).focus();
+        } else if (!event.shiftKey && active === actions.at(-1)) {
+          event.preventDefault();
+          actions[0].focus();
+        }
+      }
+    });
+    root.appendChild(dialog);
+    dialog.querySelector("[data-refresh-cancel]").focus();
+  }
+
+  function refreshReader(reader) {
+    const exportMenu = reader.sheetElement?.querySelector("#saq-export-menu");
+    const splitArrow = reader.sheetElement?.querySelector("[data-act='toggle-export-menu']");
+    if (exportMenu) {
+      exportMenu.hidden = true;
+      exportMenu.setAttribute("hidden", "");
+      splitArrow?.setAttribute("aria-expanded", "false");
+    }
+    reader.closeAiPopover?.({ restoreFocus: false });
+    reader.onRefreshCallback?.();
+  }
+
   function handleReaderKeyDown(e) {
     if (!this.sheetElement || !this.isOpen()) return;
-  
+
     if (this.runReaderFeatureHook("handleKeydown", e)) return;
-  
+
     if (e.key === "Escape") {
-  
+
+      const refreshDialog = this.shadowHost?.root?.querySelector("[data-refresh-dialog]");
+      if (refreshDialog) {
+        e.preventDefault();
+        e.stopPropagation();
+        refreshDialog.querySelector("[data-refresh-cancel]")?.click();
+        return;
+      }
+
       if (this.isLightboxOpen?.()) {
         e.preventDefault();
         e.stopPropagation();
@@ -3177,7 +3220,7 @@
         return;
       }
     }
-  
+
     // Zoom Keyboard Shortcuts: Ctrl/Cmd + Plus/Minus/0
     if (e.metaKey || e.ctrlKey) {
       if (e.key === "=" || e.key === "+") {
@@ -3202,28 +3245,28 @@
         return;
       }
     }
-  
+
     if (e.defaultPrevented || e.key !== "Tab") return;
-  
-    const activeDialog = this.sheetElement.querySelector(".saq-dialog-modal:not([hidden])");
+
+    const activeDialog = this.shadowHost?.root?.querySelector(".saq-dialog-modal:not([hidden])");
     const focusScope = activeDialog || this.sheetElement;
     const focusables = Array.from(
       focusScope.querySelectorAll(
-        "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"
+        "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])"
       )
     ).filter((el) => {
-      if (el.hasAttribute("disabled")) return false;
-      if (el.closest?.("[hidden]")) return false;
+      if (el.closest?.("[hidden], [inert], [aria-hidden='true']")) return false;
+      if (el.getClientRects && el.getClientRects().length === 0) return false;
       return true;
     });
-  
+
     if (focusables.length === 0) return;
-  
+
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
     const active = this.shadowHost.root?.activeElement;
     const activeIsInScope = focusScope.contains(active);
-  
+
     if (!activeIsInScope) {
       e.preventDefault();
       (e.shiftKey ? last : first).focus?.();
@@ -3235,10 +3278,10 @@
       first.focus?.();
     }
   }
-  
+
   function handleReaderActionClick(e) {
     if (this.runReaderFeatureHook("handleActionClick", e)) return;
-  
+
     // Image & Diagram Click -> Open Expand View Lightbox
     const expandImgTrigger = e.target.closest?.("img, .saq-svg-wrap, [data-act='expand-image']");
     if (expandImgTrigger && !e.target.closest?.("button:not([data-act='expand-image']), a, input, textarea")) {
@@ -3261,7 +3304,7 @@
         return;
       }
     }
-  
+
     const splitGroup = this.sheetElement?.querySelector("#saq-export-split, .saq-dropdown-wrap");
     const exportMenu = this.sheetElement?.querySelector("#saq-export-menu");
     const splitArrow = this.sheetElement?.querySelector("[data-act='toggle-export-menu']");
@@ -3270,13 +3313,13 @@
       exportMenu.setAttribute("hidden", "");
       if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
     }
-  
+
     const btn = e.target.closest?.("[data-act]");
     if (!btn || btn.hasAttribute("disabled") || btn.classList.contains("is-busy")) return;
-  
+
     e.preventDefault();
     const action = btn.dataset.act;
-  
+
     // Lightbox Controls
     if (action === "close-lightbox") {
       this.closeLightbox?.();
@@ -3310,7 +3353,7 @@
       }
       return;
     }
-  
+
     // Text Zoom Controls
     if (action === "zoom-in") {
       const cur = this.getZoom?.() || 1.0;
@@ -3330,7 +3373,7 @@
       this.setZoom?.(1.0);
       return;
     }
-  
+
     if (action === "toggle-export-menu") {
       if (exportMenu) {
         const isExpanded = btn.getAttribute("aria-expanded") === "true";
@@ -3347,18 +3390,10 @@
       this.programmingEditor?.applyChanges?.();
     } else if (action === "refresh") {
       if (this.programmingEditor?.isModified()) {
-        const keepChanges = typeof window !== "undefined" && window.confirm
-          ? !window.confirm("You have unsaved Reader changes. Refresh from the assignment and discard them?")
-          : true;
-        if (keepChanges) return;
+        confirmRefresh(this);
+      } else {
+        refreshReader(this);
       }
-      if (exportMenu) {
-        exportMenu.hidden = true;
-        exportMenu.setAttribute("hidden", "");
-        if (splitArrow) splitArrow.setAttribute("aria-expanded", "false");
-      }
-      this.closeAiPopover?.({ restoreFocus: false });
-      if (this.onRefreshCallback) this.onRefreshCallback();
     } else if (action === "export-md" || action === "export-txt") {
       if (exportMenu) {
         exportMenu.hidden = true;
@@ -3432,7 +3467,7 @@
     } else if (action === "import-code") {
       importProgrammingCode(this);
     } else if (action === "copy-prompt-context" || action === "copy-prompt") {
-      const text = copyAiContext(this.documentModel);
+      const text = copyAiContext(this.documentModel, { editableCode: this.programmingEditor?.getCode?.() });
       const write = this.writeClipboardText ? this.writeClipboardText(text) : navigator.clipboard?.writeText?.(text);
       Promise.resolve(write).then(() => {
         this.notify?.("AI context prompt copied", "success", 2500);
@@ -3451,11 +3486,11 @@
       this.dismiss();
     }
   }
-  
-  
+
+
   function wireReaderDrag(grip, sheet) {
     if (!grip) return;
-  
+
     this.boundPointerMove = (e) => {
       if (!this.dragStart) return;
       const dy = Math.max(0, e.clientY - this.dragStart.y);
@@ -3464,26 +3499,26 @@
         this.backdropElement.style.opacity = String(Math.max(0, 1 - dy / (window.innerHeight * 0.6)));
       }
     };
-  
+
     this.boundPointerUp = (e) => {
       if (!this.dragStart) return;
       const dy = Math.max(0, e.clientY - this.dragStart.y);
       const velocity = dy / Math.max(1, Date.now() - this.dragStart.t);
-  
+
       grip.releasePointerCapture?.(e.pointerId);
       grip.removeEventListener("pointermove", this.boundPointerMove);
       grip.removeEventListener("pointerup", this.boundPointerUp);
-  
+
       sheet.classList.remove("is-dragging");
       sheet.style.transform = "";
       if (this.backdropElement) {
         this.backdropElement.style.opacity = "";
       }
-  
+
       this.dragStart = null;
       if (dy > 140 || velocity > 0.55) this.dismiss();
     };
-  
+
     grip.addEventListener("pointerdown", (e) => {
       if (e.button) return;
       this.dragStart = { y: e.clientY, t: Date.now() };
@@ -3500,25 +3535,25 @@
    * Encapsulated bottom sheet for assignment inspection, editing, and printing.
    * Mounts entirely within the isolated ShadowRoot using the Acadrix Design System.
    */
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+
+
   const readerFeatureFactories = [];
   if (typeof createReaderAiFeature === "function") {
     readerFeatureFactories.push(createReaderAiFeature);
   }
-  
-  
-  
+
+
+
   class ReaderDrawer {
     constructor(shadowHost, portal) {
       this.shadowHost = shadowHost;
@@ -3542,7 +3577,7 @@
         .map((factory) => factory(this))
         .filter(Boolean);
     }
-  
+
     runReaderFeatureHook(name, payload) {
       let handled = false;
       for (const feature of this.features) {
@@ -3553,7 +3588,7 @@
       }
       return handled;
     }
-  
+
     callReaderFeatureMethod(name, ...args) {
       for (const feature of this.features) {
         const method = feature?.[name];
@@ -3561,24 +3596,24 @@
       }
       return undefined;
     }
-  
+
     isDirectPdfAvailable() {
       return this.callReaderFeatureMethod("isDirectPdfAvailable") ?? false;
     }
-  
+
     setPdfFallbackMode(isFallback) {
       this.pdfDirectFallbackActive = Boolean(isFallback);
       this.runReaderFeatureHook("documentChange", { reason: "pdf-fallback" });
     }
-  
+
     isOpen() {
       return Boolean(this.sheetElement?.classList.contains("is-open"));
     }
-  
+
     isMounted() {
       return Boolean(this.sheetElement);
     }
-  
+
     build(
       documentModel,
       {
@@ -3591,25 +3626,25 @@
       } = {}
     ) {
       this.destroy(); // Clean up existing elements if any
-  
+
       this.onRefreshCallback = onRefresh;
       this.onDismissCallback = onDismiss;
       this.onExportCallback = onExport;
       this.onThemeCallback = onThemeChange;
       this.documentModel = documentModel;
-  
+
       const root = this.shadowHost.root;
       if (root) {
         root.querySelectorAll("#saq-backdrop, #saq-sheet").forEach((el) => el.remove());
       }
-  
+
       // 1. Backdrop
       const backdrop = document.createElement("div");
       backdrop.id = "saq-backdrop";
       backdrop.addEventListener("click", () => this.dismiss());
       root.appendChild(backdrop);
       this.backdropElement = backdrop;
-  
+
       // 2. Sheet
       const sheet = document.createElement("div");
       sheet.id = "saq-sheet";
@@ -3618,13 +3653,13 @@
       sheet.setAttribute("aria-labelledby", "saq-reader-title");
       sheet.tabIndex = -1;
       if (compact) sheet.classList.add("saq-compact");
-  
+
       const isReview = documentModel.metadata?.isReview;
       const isDark = this.shadowHost.getTheme?.() === "dark";
       const warnHtml = warningMessage
         ? `<div class="saq-warn" role="status">${ICONS.warn}<span>${warningMessage}</span></div>`
         : "";
-  
+
       const isProgramming =
         documentModel?.metadata?.family === AssessmentFamily.PROGRAMMING ||
         documentModel?.family === AssessmentFamily.PROGRAMMING ||
@@ -3634,7 +3669,7 @@
       const programmingData = isProgramming ? documentModel.questions?.[0]?.programmingData || {} : {};
       const progLangId = normalizeProgrammingLanguage(programmingData.language) || "javascript";
       const progLangLabel = LANGUAGE_REGISTRY[progLangId]?.canonicalName || "Code";
-  
+
       if (isProgramming) {
         sheet.classList.add("saq-programming-mode");
         sheet.innerHTML = `
@@ -3695,20 +3730,20 @@
           ${warnHtml}
           <div class="saq-scroll" tabindex="0" role="region" aria-label="Questions list"></div>`;
       }
-  
+
       this.renderBlocks(sheet.querySelector(".saq-scroll"), documentModel);
-  
+
       // Event delegation on header actions
       sheet.addEventListener("click", (e) => this.handleActionClick(e));
-  
+
       // Focus trap inside modal dialog
       this.boundKeyDown = (e) => this.handleKeyDown(e);
       sheet.addEventListener("keydown", this.boundKeyDown);
-  
+
       // Drag-to-dismiss gesture
       const grip = sheet.querySelector(".saq-grip");
       this.wireDrag(grip, sheet);
-  
+
       root.appendChild(sheet);
       this.sheetElement = sheet;
       if (root?.host) this.programmingEditor?.mount?.(root);
@@ -3716,7 +3751,7 @@
       this.runReaderFeatureHook("renderHeaderActions", { sheet, documentModel });
       this.runReaderFeatureHook("documentChange", { documentModel, reason: "build" });
     }
-  
+
     formatQuestionType(type) {
       if (!type || type === "unknown") return "";
       const lower = String(type).toLowerCase().trim();
@@ -3739,12 +3774,12 @@
       };
       return map[lower] || (lower.charAt(0).toUpperCase() + lower.slice(1));
     }
-  
+
     renderBlocks(scrollContainer, documentModel) {
       if (!scrollContainer) return;
       const inner = document.createElement("div");
       inner.className = "saq-inner acx-content";
-  
+
       if (!documentModel?.questions || documentModel.questions.length === 0) {
         const empty = document.createElement("div");
         empty.className = "saq-empty-state";
@@ -3753,14 +3788,14 @@
         scrollContainer.replaceChildren(inner);
         return;
       }
-  
+
       documentModel.questions.forEach((q, i) => {
         const b = document.createElement("div");
         const isProgQuestion = q.type === QuestionType.PROGRAMMING || Boolean(q.programmingData);
         b.className = isProgQuestion ? "saq-block saq-block-programming" : "saq-block";
         b.id = `saq-q-${i}`;
         b.dataset.q = String(i);
-  
+
         // 1. Question Header
         const qLabelText = isProgQuestion ? "Problem Statement" : (q.label || `Question ${i + 1}`);
         const typeLabel = isProgQuestion ? "" : this.formatQuestionType(q.type);
@@ -3769,7 +3804,7 @@
         const statusHtml = q.review?.statusText
           ? `<span class="saq-status ${q.review.isCorrect ? "correct" : "incorrect"}">${q.review.isCorrect ? "✓ " : "✕ "}${escapeHtml(q.review.statusText)}</span>`
           : "";
-  
+
         const headerHtml = isProgQuestion ? `
           <div class="saq-qheader saq-pa-qheader">
             <span class="saq-qlabel">${escapeHtml(qLabelText)}</span>
@@ -3800,7 +3835,7 @@
         if (!stemHtml || !stemHtml.trim()) {
           stemHtml = `<p class="saq-stem-empty">Content unavailable</p>`;
         }
-  
+
         // 3. Options rendering
         let optsHtml = "";
         if (q.options && q.options.length > 0) {
@@ -3830,16 +3865,16 @@
         } else if (q.rawHtml?.optsHtml) {
           optsHtml = q.rawHtml.optsHtml;
         }
-  
+
         // 4. Review feedback
         const feedbackHtml = q.review?.feedback
           ? `<div class="saq-feedback"><div class="saq-feedback-title">Feedback</div><div class="saq-feedback-body">${escapeHtml(q.review.feedback)}</div></div>`
           : "";
-  
+
         if (q.type === QuestionType.PROGRAMMING || q.programmingData) {
           const pData = q.programmingData || {};
           const lang = pData.language || "javascript";
-  
+
           // Partial extraction warning banner
           let warningBannerHtml = "";
           const isPartial = pData.extractionStatus === "PARTIAL" || (Array.isArray(pData.warnings) && pData.warnings.length > 0);
@@ -3853,7 +3888,7 @@
               </div>
             `;
           }
-  
+
           // Images section (if present and not embedded inline in stemHtml)
           let imagesHtml = "";
           if (Array.isArray(pData.images) && pData.images.length > 0) {
@@ -3875,7 +3910,7 @@
               `;
             }
           }
-  
+
           // Examples section
           let examplesHtml = "";
           if (Array.isArray(pData.examples) && pData.examples.length > 0) {
@@ -3897,7 +3932,7 @@
               </div>
             `;
           }
-  
+
           // Constraints section
           let constraintsHtml = "";
           if (Array.isArray(pData.constraints) && pData.constraints.length > 0) {
@@ -3910,7 +3945,7 @@
               </div>
             `;
           }
-  
+
           // Test Cases section
           let tcHtml = "";
           if (Array.isArray(pData.testCases) && pData.testCases.length > 0) {
@@ -3984,7 +4019,7 @@
               </div>
             `;
           }
-  
+
           const scaffoldUnavailable =
             (pData.hasPrefixCode && pData.prefixCode === null) ||
             (pData.hasSuffixCode && pData.suffixCode === null);
@@ -3997,7 +4032,7 @@
               <div data-programming-editor-slot></div>
             </div>
           `;
-  
+
           // Return Instructions section
           let returnInstructionsHtml = "";
           if (pData.returnInstructions && pData.returnInstructions.trim()) {
@@ -4008,11 +4043,11 @@
               </div>
             `;
           }
-  
+
           b.innerHTML = `
             ${headerHtml}
             ${warningBannerHtml}
-  
+
             <div class="saq-stem">${stemHtml}</div>
             ${imagesHtml}
             ${examplesHtml}
@@ -4022,7 +4057,7 @@
             ${returnInstructionsHtml}
             ${feedbackHtml}
           `;
-  
+
         } else {
           b.innerHTML = `
             ${headerHtml}
@@ -4031,10 +4066,12 @@
             ${feedbackHtml}
           `;
         }
-  
+
         const editorSlot = b.querySelector("[data-programming-editor-slot]");
         if (editorSlot) {
           const pData = q.programmingData || {};
+          let programStatus = null;
+          let applyButton = null;
           const editor = new ProgrammingCodeEditor({
             language: pData.language || "javascript",
             prefixCode: pData.prefixCode,
@@ -4051,9 +4088,9 @@
             },
             onStatus: (message, tone) => this.notify(message, tone),
             onStateChange: ({ status, modified, applying }) => {
-              const statusEl = this.sheetElement?.querySelector("#saq-program-sync-status");
-              if (statusEl) statusEl.textContent = status;
-              const applyButton = this.sheetElement?.querySelector("#saq-apply-programming-code");
+              programStatus ||= this.sheetElement?.querySelector("#saq-program-sync-status");
+              applyButton ||= this.sheetElement?.querySelector("#saq-apply-programming-code");
+              if (programStatus) programStatus.textContent = status;
               if (applyButton) {
                 applyButton.hidden = !modified;
                 applyButton.disabled = !modified || applying;
@@ -4065,37 +4102,37 @@
           this.programmingEditor = editor;
           editorSlot.appendChild(editor.render());
         }
-  
+
         // Prune empty feedback callouts in review mode
         b.querySelectorAll(".feedback").forEach((fb) => {
           const title = fb.querySelector(".title");
           const body = fb.textContent.replace(title?.textContent || "", "").trim();
           if (!body) fb.remove();
         });
-  
+
         // Make code blocks keyboard scrollable per §7
         b.querySelectorAll("pre").forEach((pre) => {
           pre.setAttribute("tabindex", "0");
         });
-  
+
         // Enforce read-only state on options and inputs, but keep action buttons active
         b.querySelectorAll(".saq-options input, .saq-options textarea, .saq-options select, .saq-options button").forEach((el) => {
           el.setAttribute("disabled", "true");
           el.setAttribute("tabindex", "-1");
         });
-  
+
         // Enhance any remaining unrendered math in block (e.g. from raw HTML, legacy snapshots)
         this.enhanceMathInBlock(b);
-  
+
         inner.appendChild(b);
       });
-  
+
       scrollContainer.replaceChildren(inner);
     }
-  
+
     enhanceMathInBlock(container) {
       if (!container || !container.querySelectorAll) return;
-  
+
       // 1. Render any unrendered .math-tex or .katex elements
       container.querySelectorAll(".math-tex, .katex-display.math-tex, span.katex.math-inline").forEach((el) => {
         if (el.querySelector(".katex-html") || el.querySelector("math")) return;
@@ -4111,7 +4148,7 @@
           }
         }
       });
-  
+
       // 2. Scan text nodes for raw \(...\) or \[...\] delimiters
       if (typeof document !== "undefined" && typeof document.createTreeWalker === "function") {
         try {
@@ -4139,17 +4176,17 @@
               }
             }
           );
-  
+
           const nodesToReplace = [];
           while (walker.nextNode()) {
             nodesToReplace.push(walker.currentNode);
           }
-  
+
           for (const textNode of nodesToReplace) {
             const text = textNode.nodeValue || "";
             const hasMath = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g.test(text);
             if (!hasMath) continue;
-  
+
             const span = document.createElement("span");
             span.innerHTML = text
               .replace(/\\\[([\s\S]*?)\\\]/g, (_, tex) => {
@@ -4158,7 +4195,7 @@
               .replace(/\\\(([\s\S]*?)\\\)/g, (_, tex) => {
                 return renderVisualMath(tex.trim(), { isDisplay: false });
               });
-  
+
             if (textNode.parentNode) {
               textNode.parentNode.replaceChild(span, textNode);
             }
@@ -4168,15 +4205,15 @@
         }
       }
     }
-  
+
     handleKeyDown(e) {
       return handleReaderKeyDown.call(this, e);
     }
-  
+
     handleActionClick(e) {
       return handleReaderActionClick.call(this, e);
     }
-  
+
     printFallbackWithTitle(docModel = this.documentModel) {
       const prevTitle = typeof document !== "undefined" ? document.title : "";
       let restored = false;
@@ -4192,7 +4229,7 @@
           } catch {}
         }
       };
-  
+
       try {
         const printTitle = buildExportFilename(docModel?.metadata || {}, "pdf").replace(/\.pdf$/i, "");
         if (typeof document !== "undefined" && printTitle) {
@@ -4207,14 +4244,14 @@
         throw err;
       }
     }
-  
+
     wireDrag(grip, sheet) {
       return wireReaderDrag.call(this, grip, sheet);
     }
-  
+
     show() {
       if (!this.sheetElement || !this.backdropElement) return;
-  
+
       this.startClock();
       requestAnimationFrame(() => {
         this.backdropElement?.classList.add("is-open");
@@ -4230,7 +4267,7 @@
         }
       });
     }
-  
+
     dismiss() {
       if (!this.isOpen()) return;
       this.closeAiPopover?.({ restoreFocus: false });
@@ -4242,13 +4279,13 @@
         this.onDismissCallback();
       }
     }
-  
+
     setCompact(isCompact) {
       if (this.sheetElement) {
         this.sheetElement.classList.toggle("saq-compact", Boolean(isCompact));
       }
     }
-  
+
     setExporting(isBusy, format = "") {
       if (!this.sheetElement) return;
       const btns = this.sheetElement.querySelectorAll(
@@ -4262,7 +4299,7 @@
           : format === "bundle"
           ? "export-bundle"
           : "";
-  
+
       btns.forEach((btn) => {
         if (isBusy) {
           btn.setAttribute("disabled", "true");
@@ -4278,7 +4315,7 @@
           btn.classList.remove("is-active-export");
         }
       });
-  
+
       if (isBusy) {
         const labelMap = {
           markdown: "Exporting Markdown…",
@@ -4288,7 +4325,7 @@
         this.notify(labelMap[format] || "Exporting…", "busy", 0);
       }
     }
-  
+
     setZoom(scale) {
       const valid = Math.min(1.6, Math.max(0.75, scale));
       this.currentZoom = valid;
@@ -4302,11 +4339,11 @@
         if (valBtn) valBtn.textContent = `${Math.round(valid * 100)}%`;
       }
     }
-  
+
     getZoom() {
       return this.currentZoom || 1.0;
     }
-  
+
     openLightbox({ src = "", alt = "", caption = "", svgHtml = "" } = {}) {
       const root = this.shadowHost?.root;
       if (!root) return;
@@ -4359,7 +4396,7 @@
         ? `<div class="saq-lightbox-svg-wrap">${svgHtml}</div>`
         : `<img class="saq-lightbox-img" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" />`;
       const captionHtml = caption ? `<div class="saq-lightbox-caption">${escapeHtml(caption)}</div>` : "";
-  
+
       lb.innerHTML = `
         <div class="saq-lightbox-backdrop" data-act="close-lightbox"></div>
         <div class="saq-lightbox-card">
@@ -4386,7 +4423,7 @@
       const closeBtn = lb.querySelector(".saq-lightbox-close-btn");
       closeBtn?.focus?.();
     }
-  
+
     closeLightbox() {
       const root = this.shadowHost?.root;
       if (!root) return;
@@ -4397,28 +4434,28 @@
         lb.setAttribute("hidden", "");
       }
     }
-  
+
     isLightboxOpen() {
       const root = this.shadowHost?.root;
       const lb = root?.querySelector("#saq-image-lightbox");
       return Boolean(lb && !lb.hidden && !lb.hasAttribute("hidden"));
     }
-  
+
     notify(message, tone = "info", durationMs = 3000) {
       if (!this.sheetElement) return;
       const bar = this.sheetElement.querySelector("#saq-status-bar");
       if (!bar) return;
-  
+
       if (this.statusTimer) {
         clearTimeout(this.statusTimer);
         this.statusTimer = null;
       }
-  
+
       if (!message) {
         this.clearStatus();
         return;
       }
-  
+
       bar.dataset.tone = tone;
       bar.setAttribute("role", tone === "error" ? "alert" : "status");
       const iconHtml =
@@ -4431,17 +4468,17 @@
           : tone === "warn"
           ? ICONS.warn
           : ICONS.info;
-  
+
       bar.innerHTML = `${iconHtml}<span>${escapeHtml(message)}</span>`;
       bar.classList.add("is-visible");
-  
+
       if (durationMs > 0) {
         this.statusTimer = setTimeout(() => {
           this.clearStatus();
         }, durationMs);
       }
     }
-  
+
     clearStatus() {
       if (this.statusTimer) {
         clearTimeout(this.statusTimer);
@@ -4455,7 +4492,7 @@
         bar.innerHTML = "";
       }
     }
-  
+
     startClock() {
       this.stopClock();
       const tick = () => {
@@ -4469,14 +4506,14 @@
       tick();
       this.clockInterval = setInterval(tick, 500);
     }
-  
+
     stopClock() {
       if (this.clockInterval) {
         clearInterval(this.clockInterval);
         this.clockInterval = null;
       }
     }
-  
+
     destroy() {
       this.runReaderFeatureHook("destroy");
       this.programmingEditor?.destroy();
@@ -4501,7 +4538,7 @@
       }
     }
   }
-  
+
   if (typeof attachReaderAiFeatures === "function") {
     attachReaderAiFeatures(ReaderDrawer);
   }
@@ -4511,7 +4548,7 @@
    * Runtime Lifecycle State Machine.
    * Manages explicit lifecycle states and transitions.
    */
-  
+
   const LifecycleState = Object.freeze({
     UNINITIALIZED: "uninitialized",
     IDLE: "idle",
@@ -4520,13 +4557,13 @@
     OPEN: "open",
     DESTROYED: "destroyed",
   });
-  
+
   class Lifecycle {
     constructor() {
       this.state = LifecycleState.UNINITIALIZED;
       this.listeners = new Set();
     }
-  
+
     transition(nextState) {
       const prevState = this.state;
       this.state = nextState;
@@ -4538,12 +4575,12 @@
         }
       });
     }
-  
+
     onChange(listener) {
       this.listeners.add(listener);
       return () => this.listeners.delete(listener);
     }
-  
+
     is(state) {
       return this.state === state;
     }
@@ -4554,22 +4591,22 @@
    * Acadrix Runtime Controller.
    * Coordinates detection, lifecycle, traversal, extraction, and Shadow DOM UI.
    */
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const DEFAULT_SHORTCUT = "Alt+Q";
-  
+
   class AcadrixRuntime {
     constructor({ css = "", extractor = null } = {}) {
       this.portal = portalAdapter;
@@ -4580,7 +4617,7 @@
       this.extractor = extractor || new ExtractorClass(this.portal);
       this.traverser = new QuestionTraverser(this.portal);
       this.lifecycle = new Lifecycle();
-  
+
       this.shadowHost = new ShadowHost("unfold-root", css);
       this.launcher = new LauncherButton(this.shadowHost);
       this.overlay = new ProgressOverlay(this.shadowHost);
@@ -4589,7 +4626,7 @@
         typeof ExportOrchestrator !== "undefined"
           ? new ExportOrchestrator(this)
           : null;
-  
+
       // Configuration state
       this.config = {
         enabled: true,
@@ -4600,14 +4637,14 @@
         launcherPos: "bottom-center",
         theme: "system",
       };
-  
+
       this.observer = null;
       this.boundKeydown = null;
       this.activeDocument = null;
       this.activeContextKey = null;
       this.isDestroyed = false;
     }
-  
+
     getContextKey() {
       const loc =
         typeof window !== "undefined" && window.location
@@ -4619,36 +4656,36 @@
       const pageType = this.portal?.detectPageType?.() || "";
       return `${loc}::${title}::${total}::${review}::${pageType}`;
     }
-  
+
     updateContextKey() {
       this.activeContextKey = this.getContextKey();
     }
-  
+
     invalidateDocument() {
       this.activeDocument = null;
       this.activeContextKey = null;
-  
+
     }
-  
+
     initialize() {
       this.isDestroyed = false;
       this.lifecycle.transition(LifecycleState.IDLE);
-  
+
       // 1. Load preferences
       this.loadSettings();
-  
+
       // 2. Attach global keyboard shortcut
       this.boundKeydown = (e) => this.handleKeydown(e);
       document.addEventListener("keydown", this.boundKeydown, true);
-  
+
       // 3. Lifecycle-managed mutation observer
       this.startObserver();
-  
-  
+
+
       // 4. Initial assessment check
       this.detect();
     }
-  
+
     loadSettings() {
       try {
         if (typeof chrome !== "undefined" && chrome?.storage?.local) {
@@ -4657,7 +4694,7 @@
             this.applySettings();
             this.detect();
           });
-  
+
           chrome.storage.onChanged?.addListener((changes) => {
             let needsDetect = false;
             for (const [key, change] of Object.entries(changes)) {
@@ -4674,7 +4711,7 @@
         // In page-world / bookmarklet context, chrome.storage is not available; defaults stick.
       }
     }
-  
+
     applySettings() {
       this.shadowHost.setTheme?.(this.config.theme);
       this.launcher.setPosition(this.config.launcherPos);
@@ -4684,23 +4721,23 @@
           : "Shortcut disabled"
       );
       this.reader.setCompact(this.config.compact);
-  
+
     }
-  
+
     startObserver() {
       this.stopObserver();
       const debouncedDetect = debounce(() => this.detect(), 250);
       this.observer = new MutationObserver(debouncedDetect);
       this.observer.observe(document.documentElement, { childList: true, subtree: true });
     }
-  
+
     stopObserver() {
       if (this.observer) {
         this.observer.disconnect();
         this.observer = null;
       }
     }
-  
+
     handleKeydown(e) {
       if (e.key === "Escape" && this.reader.isOpen()) {
         if (this.reader.isAiPopoverOpen?.()) {
@@ -4712,7 +4749,7 @@
         this.close();
         return;
       }
-  
+
       if (
         !this.config.enabled ||
         !this.config.openShortcutEnabled ||
@@ -4722,14 +4759,14 @@
       ) {
         return;
       }
-  
+
       if (shortcutFromEvent(e) === this.config.openShortcut && this.portal.detectAssessment()) {
         e.preventDefault();
         e.stopPropagation();
         this.open();
       }
     }
-  
+
     detect() {
       if (!this.config.enabled) {
         this.assignmentNavigation?.clear?.();
@@ -4738,17 +4775,17 @@
         this.destroyUi();
         return;
       }
-  
+
       this.assignmentNavigation?.update?.();
-  
+
       if (this.lifecycle.state === LifecycleState.TRAVERSING) {
         this.pendingDetectAfterTraversal = true;
         return;
       }
-  
+
       const pageType = this.portal.detectPageType ? this.portal.detectPageType() : (this.portal.detectAssessment() ? PortalPageType.ASSESSMENT : PortalPageType.UNKNOWN);
       const isEligible = isFabEligible(pageType);
-  
+
       if (isEligible) {
         if (
           this.activeDocument &&
@@ -4759,11 +4796,11 @@
           this.invalidateDocument();
           this.reader.destroy();
         }
-  
+
         const isBusyOrOpen =
           this.lifecycle.state === LifecycleState.TRAVERSING ||
           this.lifecycle.state === LifecycleState.OPEN;
-  
+
         if (!isBusyOrOpen) {
           this.lifecycle.transition(LifecycleState.ACTIVE);
         }
@@ -4775,7 +4812,7 @@
           shortcut: this.config.openShortcutEnabled && this.config.openShortcut ? this.config.openShortcut : "Shortcut disabled",
           onQuickAction: (act) => this.handleLauncherQuickAction(act),
         });
-  
+
         if (this.config.autoLauncher && !this.reader.isOpen() && !isBusyOrOpen) {
           this.launcher.show();
         }
@@ -4788,22 +4825,22 @@
         }
       }
     }
-  
+
     async open() {
       if (this.lifecycle.state === LifecycleState.TRAVERSING) {
         return;
       }
-  
+
       if (!this.portal.detectAssessment()) {
-        alert("Open an IITM quiz, assessment, or programming assignment first.");
+        this.launcher?.showToast?.("Open an IITM quiz, assessment, or programming assignment first.", "warn");
         return;
       }
-  
+
       if (this.reader.isOpen() && this.activeDocument) {
         this.reader.show();
         return;
       }
-  
+
       if (
         this.activeDocument &&
         this.activeContextKey &&
@@ -4812,7 +4849,7 @@
         this.invalidateDocument();
         this.reader.destroy();
       }
-  
+
       if (this.reader.isMounted() && this.activeDocument && !this.reader.isOpen()) {
         if (this.portal.isProgrammingAssignment?.()) {
           const editor = this.reader.programmingEditor;
@@ -4823,17 +4860,17 @@
           }
           return;
         }
-  
+
         this.launcher.setExpanded?.(true);
         this.launcher.hide();
         this.reader.show();
         this.lifecycle.transition(LifecycleState.OPEN);
         return;
       }
-  
+
       await this.refresh();
     }
-  
+
     /**
      * Dismisses the Reader drawer UI.
      * Policy A (Background Completion): Dismissing the Reader drawer while an export is in flight
@@ -4849,12 +4886,12 @@
       }
       this.lifecycle.transition(LifecycleState.ACTIVE);
     }
-  
+
     async refresh() {
       if (this.lifecycle.state === LifecycleState.TRAVERSING) {
         return;
       }
-  
+
       const extractionContextKey = this.getContextKey();
       // Invalidate any cached document immediately when a new extraction begins
       this.invalidateDocument();
@@ -4862,7 +4899,7 @@
       this.launcher.setExpanded?.(true);
       this.launcher.hide();
       this.overlay.show();
-  
+
       try {
         const isProgramming = Boolean(this.portal.isProgrammingAssignment?.());
         if (isProgramming) {
@@ -4885,7 +4922,7 @@
             isReview: this.portal.isReviewMode(),
             totalQuestions: this.portal.getTotalQuestionCount(),
           });
-  
+
           await this.traverser.traverseAll({
             onProgress: (done, total) => this.overlay.progress(done, total),
             onQuestion: async (context) => {
@@ -4893,10 +4930,10 @@
               assembler.addQuestion(questionNode);
             },
           });
-  
+
           this.activeDocument = assembler.build();
         }
-  
+
         const currentPageType = this.portal.detectPageType?.() || PortalPageType.UNKNOWN;
         if (!isFabEligible(currentPageType) || this.getContextKey() !== extractionContextKey) {
           this.invalidateDocument();
@@ -4906,17 +4943,17 @@
           this.detect();
           return;
         }
-  
+
         this.updateContextKey();
         await this.overlay.hide();
-  
+
         // Check if question count matches expected
         const totalExpected = this.portal.getTotalQuestionCount();
         const warningMessage =
           totalExpected && totalExpected !== this.activeDocument.length
             ? `Captured ${this.activeDocument.length} of ${totalExpected} questions — verify on the original assessment.`
             : "";
-  
+
         this.reader.build(this.activeDocument, {
           compact: this.config.compact,
           warningMessage,
@@ -4932,7 +4969,7 @@
             } catch {}
           },
         });
-  
+
         this.reader.show();
         this.lifecycle.transition(LifecycleState.OPEN);
       } catch (err) {
@@ -4952,7 +4989,7 @@
         this.lifecycle.transition(LifecycleState.ACTIVE);
       }
     }
-  
+
     formatExportErrorMessage(err) {
       if (!err) return "Unable to complete export. Please try refreshing the assessment.";
       switch (err.name) {
@@ -4972,7 +5009,7 @@
           return "Export could not be completed. Please refresh the assessment and try again.";
       }
     }
-  
+
     printWithIntelligentTitle(docModel = this.activeDocument) {
       const prevTitle = typeof document !== "undefined" ? document.title : "";
       let restored = false;
@@ -4988,7 +5025,7 @@
           } catch {}
         }
       };
-  
+
       try {
         const printTitle = buildExportFilename(docModel?.metadata || {}, "pdf").replace(/\.pdf$/i, "");
         if (typeof document !== "undefined" && printTitle) {
@@ -5003,7 +5040,7 @@
         throw err;
       }
     }
-  
+
     async handleExportAction(format, exportOptions = {}) {
       if (!this.orchestrator) {
         if (format === "pdf") {
@@ -5011,21 +5048,20 @@
         } else {
           const msg = "Markdown and Bundle export are available in the Acadrix Chrome Extension. Plain-text export is available there too.";
           this.reader.notify?.(msg, "warn", 4200);
-          alert(msg);
         }
         return;
       }
-  
-      
+
+
     }
-  
+
     async exportAssignment(request = {}) {
       if (!this.orchestrator) {
         throw new Error("Export orchestrator is not available.");
       }
       return this.orchestrator.export(request);
     }
-  
+
     async writeClipboardText(text) {
       if (!text) return false;
       if (this.reader && typeof this.reader.writeClipboardText === "function") {
@@ -5039,7 +5075,7 @@
       } catch {}
       return false;
     }
-  
+
     async ensureProgrammingDocument() {
       if (this.portal.detectPageType?.() !== PortalPageType.PROGRAMMING_ASSIGNMENT) {
         return null;
@@ -5064,20 +5100,20 @@
       }
       return null;
     }
-  
+
     async handleLauncherQuickAction(action) {
       if (action === "open-pa-reader") {
         this.open();
         return;
       }
-  
+
       try {
         const doc = await this.ensureProgrammingDocument();
         if (!doc) {
           this.launcher.showToast?.("Unable to extract programming assignment.", "error");
           return;
         }
-  
+
         if (action === "copy-pa-question") {
           const copyFn = typeof copyQuestion === "function" ? copyQuestion : null;
           const text = copyFn ? copyFn(doc) : "";
@@ -5122,7 +5158,7 @@
         this.launcher.showToast?.("Action failed: " + (err.message || "Unknown error"), "error");
       }
     }
-  
+
     destroyUi() {
       this.assignmentNavigation?.clear?.();
       this.launcher.destroy();
@@ -5133,7 +5169,7 @@
         document.getElementById("unfold-root")?.remove();
       }
     }
-  
+
     destroy() {
       this.isDestroyed = true;
       if (this.orchestrator) {
@@ -5158,39 +5194,39 @@
    * Assembles and launches the Acadrix runtime.
    * Provides backwards-compatible handles for toolbar popup and bookmarklet execution.
    */
-  
-  
+
+
   // __CSS__ placeholder will be inlined by build.mjs
   const CSS = typeof __CSS__ !== "undefined" ? __CSS__ : "";
-  
+
   (() => {
     "use strict";
-  
+
     // Prevent duplicate execution
     if (window.__acadrix || window.__unfold) {
       (window.__acadrix || window.__unfold).detect();
       return;
     }
-  
+
     const runtime = new AcadrixRuntime({ css: CSS });
     window.__acadrix = runtime;
     window.__unfold = runtime;
-  
+
     // Primary manual open handle
     window.__acadrixOpen = () => runtime.open();
     window.__unfoldOpen = window.__acadrixOpen;
-  
+
     // Backwards compatibility alias for popup.js and existing scripts
     window.__saqOpen = window.__acadrixOpen;
-  
-    
-  
+
+
+
     runtime.initialize();
-  
+
     // If invoked via bookmarklet in the page execution world, auto-open if quiz is present
     let isExtensionBundle = false;
-    
-  
+
+
     if (!isExtensionBundle && runtime.portal.detectAssessment()) {
       runtime.open();
     }
